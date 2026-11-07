@@ -2,7 +2,54 @@
 <html lang="fa" dir="rtl" class="scroll-smooth">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+  <!-- Anti-FOUC CSS Shield for App Mode Isolation (Feature 8) -->
+  <style id="app-mode-shield">
+    html.is-mobile-app #header-admin-btn,
+    html.is-mobile-app [data-admin-trigger],
+    html.is-mobile-app .admin-panel-trigger,
+    html.is-mobile-app #staff-login-modal {
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+  </style>
+  <!-- Early App Mode Detection Engine (Feature 7) -->
+  <script>
+    (function() {
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var mode = params.get('mode');
+        var source = params.get('source');
+
+        // Web mode reset escape hatch (?mode=web): clean up app mode flags and classes
+        if (mode === 'web') { try { localStorage.removeItem('HAMRAH_APP_MODE'); } catch (e) {} document.documentElement.classList.remove('is-mobile-app'); window.__HAMRAH_IS_APP_MODE = false; return; }
+
+        // Multi-signal App Mode detection (?mode=app, ?source=twa, localStorage, standalone, referrer)
+        var isApp = (mode === 'app') ||
+                    (source === 'twa') ||
+                    (function() {
+                      try { return localStorage.getItem('HAMRAH_APP_MODE') === '1'; }
+                      catch (e) { return false; }
+                    })() ||
+                    Boolean(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+                    Boolean(window.navigator && window.navigator.standalone === true) ||
+                    Boolean(document.referrer && (document.referrer.indexOf('android-app://') === 0 || document.referrer.indexOf('ir.bagherololum.hamrah') !== -1));
+
+        if (isApp) {
+          document.documentElement.classList.add('is-mobile-app');
+          try {
+            localStorage.setItem('HAMRAH_APP_MODE', '1');
+          } catch (e) {}
+          window.__HAMRAH_IS_APP_MODE = true;
+        } else {
+          window.__HAMRAH_IS_APP_MODE = false;
+        }
+      } catch (err) {
+        console.error('App mode detection failure:', err);
+      }
+    })();
+  </script>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
@@ -18,12 +65,13 @@
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="همراه باقرالعلوم | سامانه جامع مشاوره‌ای دبیرستان نمونه دولتی باقرالعلوم" />
   <meta name="twitter:description" content="سامانه هوشمند مشاوره تحصیلی و هدایت رشته دبیرستان باقرالعلوم" />
-  <meta name="theme-color" content="#0f172a" />
+  <meta name="theme-color" content="#0a1128" />
   <link rel="canonical" href="https://hamrah-bagherololum-copy.psyeducation-hadi.workers.dev/" />
   <link rel="manifest" href="manifest.json" />
-  <!-- High-Resolution Embedded Brand Favicon -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f172a'/%3E%3Cpath d='M16 6L4 12l12 6 12-6-12-6z' fill='%230d9488'/%3E%3Cpath d='M8 15.5v5c0 3 8 5 8 5s8-2 8-5v-5' fill='none' stroke='%2338bdf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%23fbbf24'/%3E%3C/svg%3E" />
-  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230f172a'/%3E%3Cpath d='M90 35L22 70l68 35 68-35-68-35z' fill='%230d9488'/%3E%3Cpath d='M45 90v30c0 18 45 30 45 30s45-12 45-30V90' fill='none' stroke='%2338bdf8' stroke-width='11' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='90' cy='92' r='12' fill='%23fbbf24'/%3E%3C/svg%3E" />
+  <!-- High-Resolution PWA Icons and Favicon -->
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a1128'/%3E%3Cpath d='M16 6L4 12l12 6 12-6-12-6z' fill='%2306b6d4'/%3E%3Cpath d='M8 15.5v5c0 3 8 5 8 5s8-2 8-5v-5' fill='none' stroke='%2338bdf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%23fbbf24'/%3E%3C/svg%3E" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <script src="https://cdn.tailwindcss.com/3.4.17" async onload="if(window.tailwind&&window.__HAMRAH_TW_CONFIG){window.tailwind.config=window.__HAMRAH_TW_CONFIG;}"></script>
   <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
   <script>
@@ -83,10 +131,63 @@
       font-family: 'Vazirmatn', Tahoma, sans-serif;
       box-sizing: border-box;
     }
-    body {
+    html, body {
       background-color: #f8fafc;
       color: #0f2442;
       overflow-x: hidden;
+      max-width: 100vw;
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Mobile UI Polish & Touch Ergonomics (Feature F-18) */
+    button,
+    a,
+    nav,
+    [role="button"],
+    .card,
+    .nav-item,
+    .tab-btn,
+    .btn,
+    .interactive-element {
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    /* Allow text selection for educational articles, reading materials, questions, and form inputs */
+    article,
+    article *,
+    p,
+    .selectable-text,
+    .prose,
+    input,
+    textarea {
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    /* Prevent mobile browser zoom on input focus by guaranteeing font-size >= 16px */
+    input[type="text"],
+    input[type="password"],
+    input[type="email"],
+    input[type="number"],
+    input[type="search"],
+    input[type="tel"],
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+
+    /* Safe Area insets for notch and gesture navigation bar (TWA & Standalone) */
+    body {
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      padding-left: env(safe-area-inset-left, 0px);
+      padding-right: env(safe-area-inset-right, 0px);
     }
     /* Custom Scrollbar */
     ::-webkit-scrollbar {
@@ -688,7 +789,7 @@
           
 
           <!-- Admin CMS Button -->
-          <button type="button" id="header-admin-btn" onclick="navigateTo('admin')" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-navy-900 text-white hover:bg-navy-800 shadow-sm transition flex items-center gap-1.5">
+          <button type="button" id="header-admin-btn" data-admin-trigger="true" onclick="navigateTo('admin')" class="admin-panel-trigger px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-navy-900 text-white hover:bg-navy-800 shadow-sm transition flex items-center gap-1.5">
             <svg class="w-4 h-4 text-turquoise-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             <span class="hidden sm:inline">پنل مدیریت</span>
           </button>
@@ -858,6 +959,91 @@
 
   <!-- Main Application Script -->
   <script>
+
+    // =========================================================================
+    // APP MODE PHYSICAL DOM PURGE ENGINE & MUTATIONOBSERVER GUARD (Feature 9)
+    // =========================================================================
+    function purgeAdminElementsFromDOM() {
+      const isAppMode = Boolean(
+        window.__HAMRAH_IS_APP_MODE ||
+        (typeof document !== 'undefined' && (
+          document.documentElement.classList.contains('is-mobile-app') ||
+          localStorage.getItem('HAMRAH_APP_MODE') === '1'
+        ))
+      );
+      if (!isAppMode) return;
+
+      // 1. Remove primary header admin button node: header-admin-btn remove()
+      const headerAdminBtn = document.getElementById('header-admin-btn');
+      if (headerAdminBtn) { headerAdminBtn.remove(); }
+
+      // 2. Remove all elements matching admin trigger selectors
+      const adminElements = document.querySelectorAll('#header-admin-btn, [data-admin-trigger], .admin-panel-trigger');
+      adminElements.forEach(function(el) { el.remove(); });
+    }
+
+    // Immediate execution for pre-parsed DOM nodes
+    purgeAdminElementsFromDOM();
+
+    // Lifecycle hooks for complete node removal
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', purgeAdminElementsFromDOM);
+    } else {
+      purgeAdminElementsFromDOM();
+    }
+    window.addEventListener('load', purgeAdminElementsFromDOM);
+
+    // Early window hashchange listener to sanitize hash in App Mode
+    window.addEventListener('hashchange', function() {
+      const isAppMode = Boolean(window.__HAMRAH_IS_APP_MODE || (document.documentElement && document.documentElement.classList.contains('is-mobile-app')) || (typeof localStorage !== 'undefined' && localStorage.getItem('HAMRAH_APP_MODE') === '1'));
+      if (isAppMode && window.location.hash && window.location.hash.includes('admin')) {
+        window.location.hash = '#/home';
+      }
+    });
+
+    // MutationObserver Backup Guard: permanently intercepts and destroys resurrected admin nodes
+    (function initAdminMutationObserver() {
+      const isAppMode = Boolean(
+        window.__HAMRAH_IS_APP_MODE ||
+        (typeof document !== 'undefined' && (
+          document.documentElement.classList.contains('is-mobile-app') ||
+          localStorage.getItem('HAMRAH_APP_MODE') === '1'
+        ))
+      );
+      if (!isAppMode) return;
+
+      try {
+        const observer = new MutationObserver(function(mutations) {
+          for (let i = 0; i < mutations.length; i++) {
+            const mut = mutations[i];
+            if (mut.addedNodes && mut.addedNodes.length > 0) {
+              for (let j = 0; j < mut.addedNodes.length; j++) {
+                const node = mut.addedNodes[j];
+                if (node.nodeType === 1) { // Node.ELEMENT_NODE
+                  if (
+                    node.id === 'header-admin-btn' ||
+                    node.hasAttribute('data-admin-trigger') ||
+                    node.classList.contains('admin-panel-trigger')
+                  ) {
+                    node.remove();
+                  } else if (node.querySelectorAll) {
+                    const nested = node.querySelectorAll('#header-admin-btn, [data-admin-trigger], .admin-panel-trigger');
+                    nested.forEach(function(el) { el.remove(); });
+                  }
+                }
+              }
+            }
+          }
+        });
+
+        const target = document.body || document.documentElement;
+        if (target) {
+          observer.observe(target, { childList: true, subtree: true });
+        }
+      } catch (err) {
+        console.warn('[AdminPurge] MutationObserver initialization error:', err);
+      }
+    })();
 
     // =========================================================================
     // 1. PERSISTENT DATABASE ENGINE (LocalStorage + IndexedDB Media Store)
@@ -2762,18 +2948,95 @@
       setTimeout(() => { if (el && el.parentNode) el.remove(); }, 4000);
     }
 
-    function openModal(htmlContent) {
+    // =========================================================================
+    // HARDWARE BACK BUTTON MODAL HANDLING & HISTORY API INTERCEPTOR (Feature F-19)
+    // =========================================================================
+    let isModalOpen = false;
+    let _ignoreNextPopstate = false;
+
+    function openModal(htmlContent, modalId) {
       const backdrop = document.getElementById('global-modal-backdrop');
       const box = document.getElementById('global-modal-box');
       if (!backdrop || !box) return;
+
       box.innerHTML = htmlContent;
       backdrop.classList.remove('hidden');
+
+      // Modal detection and state push: push history state when opening modals for Back button intercept
+      if (!isModalOpen) {
+        isModalOpen = true;
+        try {
+          history.pushState({ modalOpen: true, modalId: modalId || 'global-modal-box' }, '');
+        } catch (e) {
+          console.warn('[Hamrah History] history.pushState not available:', e);
+        }
+      } else {
+        try {
+          history.replaceState({ modalOpen: true, modalId: modalId || 'global-modal-box' }, '');
+        } catch (e) {}
+      }
     }
 
-    function closeModal() {
+    function closeModal(fromPopstate) {
       const backdrop = document.getElementById('global-modal-backdrop');
       if (backdrop) backdrop.classList.add('hidden');
+
+      // When a modal is closed via UI button or backdrop click, gracefully pop the history state
+      if (isModalOpen) {
+        isModalOpen = false;
+        if (!fromPopstate && window.history && history.state && history.state.modalOpen) {
+          _ignoreNextPopstate = true;
+          try {
+            history.back();
+          } catch (e) {
+            _ignoreNextPopstate = false;
+          }
+        }
+      }
     }
+
+    // Hardware Back Button listener on window popstate event
+    window.addEventListener('popstate', function(event) { // popstate modal listener: intercept hardware back button when modal is open or active
+      if (_ignoreNextPopstate) {
+        _ignoreNextPopstate = false;
+        return;
+      }
+
+      const backdrop = document.getElementById('global-modal-backdrop');
+      const isBackdropActive = backdrop && !backdrop.classList.contains('hidden');
+
+      // If a modal is open when popstate fires, intercept back event and dismiss modal gracefully
+      if (isModalOpen || isBackdropActive || (event.state && event.state.modalOpen)) {
+        closeModal(true);
+      }
+    });
+
+    // Backdrop click dismiss handling: close modal when user clicks on background overlay outside modal box
+    (function initModalBackdropListener() {
+      function attachListener() {
+        const backdrop = document.getElementById('global-modal-backdrop');
+        if (backdrop && !backdrop.__hasBackdropClickListener) {
+          backdrop.__hasBackdropClickListener = true;
+          backdrop.addEventListener('click', function(e) {
+            if (e.target === backdrop) {
+              closeModal();
+            }
+          });
+        }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', attachListener);
+      } else {
+        attachListener();
+      }
+    })();
+
+    // Desktop Escape key listener for modal dismissal
+    window.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && isModalOpen) {
+        closeModal();
+      }
+    });
 
     function logStudentActivity(actionText) {
       const now = '۱۴۰۵/۰۸/۱۴ - ' + new Date().toTimeString().slice(0, 5);
@@ -3838,9 +4101,11 @@
                 هر دسته‌بندی دارای زیرعنوان‌های تخصصی و درختواره موضوعی است. مشاور مدرسه می‌تواند از طریق پنل مدیریت، دسته‌ها و زیرعنوان‌های نامحدود جدیدی به این ساختار اضافه کند.
               </p>
             </div>
-            <button type="button" onclick="navigateTo('admin', {tab: 'categories'})" class="px-5 py-3 rounded-2xl bg-turquoise-500 hover:bg-turquoise-400 text-navy-950 font-black text-xs sm:text-sm shrink-0 self-start md:self-auto transition">
+            ${(window.__HAMRAH_IS_APP_MODE || (typeof document !== 'undefined' && document.documentElement.classList.contains('is-mobile-app'))) ? '' : `
+            <button type="button" data-admin-trigger="true" onclick="navigateTo('admin', {tab: 'categories'})" class="admin-panel-trigger px-5 py-3 rounded-2xl bg-turquoise-500 hover:bg-turquoise-400 text-navy-950 font-black text-xs sm:text-sm shrink-0 self-start md:self-auto transition">
               ⚙️ مدیریت دسته‌ها در پنل ادمین
             </button>
+            `}
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -3959,9 +4224,11 @@
                   <p class="text-xs sm:text-sm text-white/90 max-w-3xl leading-relaxed">${cat.description}</p>
                 </div>
               </div>
-              <button type="button" onclick="navigateTo('admin', {tab: 'categories'})" class="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/25 text-white text-xs font-bold self-start md:self-auto shrink-0">
+              ${(window.__HAMRAH_IS_APP_MODE || (typeof document !== 'undefined' && document.documentElement.classList.contains('is-mobile-app'))) ? '' : `
+              <button type="button" data-admin-trigger="true" onclick="navigateTo('admin', {tab: 'categories'})" class="admin-panel-trigger px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/25 text-white text-xs font-bold self-start md:self-auto shrink-0">
                 + افزودن زیرعنوان یا مطلب جدید
               </button>
+              `}
             </div>
           </div>
 
@@ -7133,6 +7400,9 @@
           viewport.innerHTML = renderHomeView();
       }
       syncCategoryCountBadges();
+      if (typeof purgeAdminElementsFromDOM === 'function') {
+        purgeAdminElementsFromDOM();
+      }
     }
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -8042,13 +8312,26 @@ const AuthService = {
   },
 
   updateHeaderBadges() {
-    const lbl = document.getElementById('header-user-label');
+    const isAppMode = Boolean(
+      window.__HAMRAH_IS_APP_MODE ||
+      (typeof document !== 'undefined' && (
+        document.documentElement.classList.contains('is-mobile-app') ||
+        localStorage.getItem('HAMRAH_APP_MODE') === '1'
+      ))
+    );
     const adminBtn = document.getElementById('header-admin-btn');
+    const lbl = document.getElementById('header-user-label');
     if (lbl) {
       lbl.textContent = (STATE.currentUser && !STATE.currentUser.isGuest)
         ? STATE.currentUser.name
         : 'پنل دانش‌آموز';
     }
+
+    if (isAppMode) {
+      if (adminBtn) adminBtn.remove();
+      return;
+    }
+
     if (adminBtn) {
       const pendingCount = WorkflowEngine.getPendingApprovalCount();
       const isStaff = this.isAuthenticatedStaff();
@@ -8593,6 +8876,17 @@ function updatePageSeoMetadata(title, description, canonicalPath, isNoIndex, sch
 navigateTo = function(view, params, skipHashUpdate) {
   const p = params || {};
 
+  // Milestone 2 Guard: navigateTo admin blocked if isAppMode / is-mobile-app / HAMRAH_APP_MODE
+  const isAppMode = Boolean(window.__HAMRAH_IS_APP_MODE || (document.documentElement && document.documentElement.classList.contains('is-mobile-app')) || (typeof localStorage !== 'undefined' && localStorage.getItem('HAMRAH_APP_MODE') === '1'));
+  if (view === 'admin' && isAppMode) {
+    console.warn('[Hamrah Security] navigateTo: Admin route access blocked in App Mode.');
+    if (typeof logAdminAction === 'function') {
+      logAdminAction('تلاش دسترسی به پنل مدیریت در حالت اپلیکیشن موبایل (مسدود شد)');
+    }
+    navigateTo('home', {}, skipHashUpdate);
+    return;
+  }
+
   // Defect #1 Fix: Block unauthenticated access to Admin Panel!
   if (view === 'admin' && !AuthService.isAuthenticatedStaff()) {
     logAdminAction('تلاش دسترسی غیرمجاز به پنل مدیریت (مسدود شد - نیازمند احراز هویت)');
@@ -8650,6 +8944,18 @@ navigateTo = function(view, params, skipHashUpdate) {
 function handleHashChangeRoute() {
   if (_suppressHashSync) return;
   const rawHash = (window.location.hash || '').replace(/^#\/?/, '').trim();
+  const isAppMode = Boolean(window.__HAMRAH_IS_APP_MODE || (document.documentElement && document.documentElement.classList.contains('is-mobile-app')) || (typeof localStorage !== 'undefined' && localStorage.getItem('HAMRAH_APP_MODE') === '1'));
+
+  // Milestone 2 Guard: Intercept direct hash navigation to admin in App Mode
+  if (isAppMode && (rawHash === 'admin' || rawHash.startsWith('admin/') || rawHash.includes('admin'))) {
+    console.warn('[Hamrah Security] Hash navigation to admin blocked in App Mode.');
+    _suppressHashSync = true;
+    window.location.hash = '#/home';
+    setTimeout(() => { _suppressHashSync = false; }, 50);
+    navigateTo('home', {}, true);
+    return;
+  }
+
   if (!rawHash || rawHash === 'home') {
     navigateTo('home', {}, true);
     return;
@@ -8780,11 +9086,12 @@ renderPostDetailView = function() {
     dateModified: post.updatedAt || post.createdAt
   });
 
-  const bannerHtml = !isPublic ? `
+  const isApp = Boolean(window.__HAMRAH_IS_APP_MODE || (typeof document !== 'undefined' && document.documentElement.classList.contains('is-mobile-app')));
+  const bannerHtml = (!isPublic && !isApp) ? `
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
       <div class="p-4 rounded-2xl bg-amber-100 border-2 border-amber-400 text-amber-950 flex flex-wrap items-center justify-between gap-3 text-xs font-bold">
         <span>👁️ حالت پیش‌نمایش مدیریتی: این مطلب در وضعیت «${WorkflowEngine.STATES[post.workflowState]?.label || post.workflowState}» است و برای عموم دانش‌آموزان قابل مشاهده نیست.</span>
-        <button type="button" onclick="navigateTo('admin', {tab: 'approvals'})" class="px-3.5 py-1.5 rounded-xl bg-navy-900 text-white">بازگشت به صف تأیید مدیر کل</button>
+        <button type="button" data-admin-trigger="true" onclick="navigateTo('admin', {tab: 'approvals'})" class="admin-panel-trigger px-3.5 py-1.5 rounded-xl bg-navy-900 text-white">بازگشت به صف تأیید مدیر کل</button>
       </div>
     </div>
   ` : '';
@@ -10562,7 +10869,13 @@ window.deletePrivateMessageByStudent = function(msgId) {
 };
 
 // Fix #1 & #2: Real Staff/User Login Modal with Password Hash Verification, Lockout & 2FA
+// Guard: openStaffLoginModal blocked if isAppMode / is-mobile-app / HAMRAH_APP_MODE
 window.openStaffLoginModal = function(redirectParams) {
+  const isAppMode = Boolean(window.__HAMRAH_IS_APP_MODE || (document.documentElement && document.documentElement.classList.contains('is-mobile-app')) || (typeof localStorage !== 'undefined' && localStorage.getItem('HAMRAH_APP_MODE') === '1'));
+  if (isAppMode) {
+    console.warn('[Hamrah Security] openStaffLoginModal blocked in Mobile App Mode.');
+    return;
+  }
   openSwitchUserModal(redirectParams);
 };
 
@@ -11653,6 +11966,11 @@ restoreDatabaseBackup = function(ev) {
 // Upgrade renderAdminView to include Approvals Queue, Media Library, Site Modules, Active Sessions, and Role Guards
 const _origRenderAdminView = renderAdminView;
 renderAdminView = function() {
+  const isAppMode = Boolean(window.__HAMRAH_IS_APP_MODE || (document.documentElement && document.documentElement.classList.contains('is-mobile-app')) || (typeof localStorage !== 'undefined' && localStorage.getItem('HAMRAH_APP_MODE') === '1'));
+  if (isAppMode) {
+    console.warn('[Hamrah Security] renderAdminView blocked in App Mode. Fallback to renderHomeView.');
+    return renderHomeView();
+  }
   if (!AuthService.isAuthenticatedStaff()) {
     openStaffLoginModal();
     return renderHomeView();
@@ -11999,6 +12317,9 @@ STATE.inlineTextEditActive = false;
 
 const LiveVisualCMS = {
   isActive() {
+    if (window.__HAMRAH_IS_APP_MODE || (typeof document !== 'undefined' && document.documentElement.classList.contains('is-mobile-app'))) {
+      return false;
+    }
     return AuthService.isAuthenticatedStaff() && STATE.liveEditMode !== false;
   },
 
@@ -15354,6 +15675,29 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
     }
   </style>
 
-  
+  <!-- Service Worker Registration Engine (Feature 17) -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
+          .then(function(registration) {
+            console.log('[PWA] ServiceWorker registration successful with scope:', registration.scope);
+            registration.onupdatefound = function() {
+              var installingWorker = registration.installing;
+              if (installingWorker) {
+                installingWorker.onstatechange = function() {
+                  if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    console.log('[PWA] New content is available; please refresh.');
+                  }
+                };
+              }
+            };
+          })
+          .catch(function(error) {
+            console.warn('[PWA] ServiceWorker registration failed:', error);
+          });
+      });
+    }
+  </script>
 </body>
 </html>

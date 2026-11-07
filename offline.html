@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fa-IR" dir="rtl" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ارتباط با اینترنت برقرار نیست | همراه باقرالعلوم</title>
+  <meta name="theme-color" content="#0f172a" />
+  <style>
+    /* Dark Navy Palette (navy, #0f172a, #0f2442, slate-900) - Zero CDN Dependencies */
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #0f2442;
+      --card-border: #1e3a5f;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-teal: #0d9488;
+      --accent-cyan: #38bdf8;
+      --accent-amber: #f59e0b;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    body {
+      background-color: #0f172a; /* slate-900 / navy */
+      color: var(--text-main);
+      font-family: 'Vazirmatn', Tahoma, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      text-align: center;
+      direction: rtl;
+    }
+    .offline-card {
+      background: linear-gradient(180deg, #0f2442 0%, #091936 100%);
+      border: 1.5px solid var(--card-border);
+      border-radius: 1.25rem;
+      padding: 2.5rem 2rem;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), 0 0 25px rgba(13, 148, 136, 0.15);
+    }
+    .icon-wrapper {
+      width: 96px;
+      height: 96px;
+      margin: 0 auto 1.5rem;
+      background: rgba(13, 148, 136, 0.15);
+      border: 2px solid rgba(56, 189, 248, 0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .icon-wrapper svg {
+      width: 52px;
+      height: 52px;
+      fill: none;
+      stroke: #38bdf8;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 0.75rem;
+      line-height: 1.4;
+    }
+    p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 0.4rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.825rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #f59e0b;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+    .retry-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      width: 100%;
+      background: linear-gradient(135deg, #0d9488 0%, #047857 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: 0.75rem;
+      padding: 0.9rem 1.75rem;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 20px -4px rgba(13, 148, 136, 0.4);
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .retry-btn:hover {
+      background: linear-gradient(135deg, #14b8a6 0%, #059669 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px -4px rgba(13, 148, 136, 0.5);
+    }
+    .retry-btn:active {
+      transform: translateY(0);
+    }
+    .tips {
+      margin-top: 1.75rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 0.85rem;
+      color: #64748b;
+      line-height: 1.6;
+      text-align: right;
+    }
+    .tips ul {
+      list-style-type: disc;
+      padding-right: 1.25rem;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <main class="offline-card">
+    <div class="icon-wrapper" aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        <line x1="1" y1="1" x2="23" y2="23"></line>
+        <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+        <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+        <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+        <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+        <line x1="12" y1="20" x2="12.01" y2="20"></line>
+      </svg>
+    </div>
+
+    <div class="status-badge">
+      <span class="status-dot"></span>
+      <span>حالت آفلاین</span>
+    </div>
+
+    <h1>ارتباط با اینترنت برقرار نیست</h1>
+    <p>
+      به نظر می‌رسد اتصال دستگاه شما به شبکه قطع شده است. برای مشاهده بخش‌های پویا، هدایت تحصیلی و آزمون‌ها، اتصال اینترنت الزامی است.
+    </p>
+
+    <button type="button" class="retry-btn" onclick="window.location.reload()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+      </svg>
+      <span>تلاش مجدد</span>
+    </button>
+
+    <section class="tips" aria-label="راهنمای عیب‌یابی">
+      <strong>راهکارهای رفع مشکل:</strong>
+      <ul>
+        <li>اتصال داده همراه (Cellular Data) یا Wi-Fi خود را بررسی نمایید.</li>
+        <li>از خاموش بودن حالت هواپیما (Airplane Mode) مطمئن شوید.</li>
+        <li>به محض اتصال مجدد به اینترنت، صفحه به صورت خودکار بارگذاری خواهد شد.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    // Automatic refresh when connection is restored
+    window.addEventListener('online', function() {
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>

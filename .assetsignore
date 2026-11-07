@@ -6,3 +6,12 @@
 .env*
 node_modules/
 wrangler.json
+.agents/
+*.keystore
+android.keystore
+KEYSTORE_CREDENTIALS.txt
+release-apk/
+android/
+tests/
+.github/
+*.md

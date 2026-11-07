@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand Primary Palette -->
+    <color name="colorPrimary">#0a1128</color>
+    <color name="colorPrimaryDark">#0a1128</color>
+    <color name="colorAccent">#06b6d4</color>
+
+    <!-- TWA Immersive Status Bar and Navigation Bar -->
+    <color name="navigationColor">#0a1128</color>
+    <color name="navigationColorDark">#0a1128</color>
+    <color name="navigation_bar_color">#0a1128</color>
+    <color name="navigation_bar_divider_color">#1e3a5f</color>
+    <color name="status_bar_color">#0a1128</color>
+
+    <!-- Splash Screen Background -->
+    <color name="splashColor">#0a1128</color>
+    <color name="splash_screen_background_color">#0a1128</color>
+    <color name="windowBackground">#0a1128</color>
+
+    <!-- Launcher & Adaptive Icon Elements -->
+    <color name="ic_launcher_background">#0a1128</color>
+    <color name="turquoise_500">#06b6d4</color>
+    <color name="navy_surface">#1e3a5f</color>
+    <color name="navy_deep">#09162a</color>
+    <color name="gold_400">#fbbf24</color>
+    <color name="white">#ffffff</color>
+</resources>

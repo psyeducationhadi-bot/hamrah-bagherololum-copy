@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Application & Launcher Name (100% Persian, RTL preserved) -->
+    <string name="app_name">همراه باقرالعلوم</string>
+    <string name="launcher_name">همراه باقرالعلوم</string>
+
+    <!-- Package & Authority -->
+    <string name="package_name" translatable="false">ir.bagherololum.hamrah</string>
+    <string name="file_provider_authority" translatable="false">ir.bagherololum.hamrah.fileprovider</string>
+    <string name="provider_authority" translatable="false">ir.bagherololum.hamrah.fileprovider</string>
+
+    <!-- TWA URL Configuration -->
+    <string name="default_web_url" translatable="false">https://hamrah-bagherololum-copy.psyeducation-hadi.workers.dev/?mode=app</string>
+    <string name="host_name" translatable="false">hamrah-bagherololum-copy.psyeducation-hadi.workers.dev</string>
+    <string name="mirror_host_name" translatable="false">psyeducationhadi-bot.github.io</string>
+    <string name="web_url_scheme" translatable="false">https</string>
+    <string name="web_url_path" translatable="false">/</string>
+
+    <!-- Digital Asset Links Statements for TWA Origin Verification (Google Play, Cafe Bazaar, Myket) -->
+    <string name="asset_statements" translatable="false">
+        [{\\\"relation\\\": [\\\"delegate_permission/common.handle_all_urls\\\", \\\"cafebazaar_twa\\\"], \\\"target\\\": {\\\"namespace\\\": \\\"web\\\", \\\"site\\\": \\\"https://hamrah-bagherololum-copy.psyeducation-hadi.workers.dev\\\"}},{\\\"relation\\\": [\\\"delegate_permission/common.handle_all_urls\\\", \\\"cafebazaar_twa\\\"], \\\"target\\\": {\\\"namespace\\\": \\\"web\\\", \\\"site\\\": \\\"https://psyeducationhadi-bot.github.io\\\"}}]
+    </string>
+
+    <!-- Splash Screen Settings -->
+    <string name="splash_screen_fade_out_duration" translatable="false">300</string>
+</resources>

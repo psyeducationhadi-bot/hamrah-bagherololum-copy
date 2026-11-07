@@ -1,0 +1,73 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'ir.bagherololum.hamrah'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "ir.bagherololum.hamrah"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        release {
+            def storeFilePath = project.findProperty('HAMRAH_RELEASE_STORE_FILE') ?: System.getenv('ANDROID_KEYSTORE_PATH') ?: 'android.keystore'
+            def keystoreFile = file(storeFilePath)
+            if (!keystoreFile.exists()) {
+                def inAppFile = file("${projectDir}/${storeFilePath}")
+                if (inAppFile.exists()) {
+                    keystoreFile = inAppFile
+                } else {
+                    def inRootFile = file("${rootDir}/../${storeFilePath}")
+                    if (inRootFile.exists()) {
+                        keystoreFile = inRootFile
+                    }
+                }
+            }
+
+            storeFile file(keystoreFile)
+            storeType 'PKCS12'
+            storePassword project.findProperty('HAMRAH_RELEASE_STORE_PASSWORD') ?: System.getenv('ANDROID_KEYSTORE_PASSWORD') ?: 'Hamrah2026Release!'
+            keyAlias project.findProperty('HAMRAH_RELEASE_KEY_ALIAS') ?: System.getenv('ANDROID_KEY_ALIAS') ?: 'hamrah-key'
+            keyPassword project.findProperty('HAMRAH_RELEASE_KEY_PASSWORD') ?: System.getenv('ANDROID_KEY_PASSWORD') ?: 'Hamrah2026Release!'
+
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+configurations.configureEach {
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+    implementation 'androidx.browser:browser:1.8.0'
+}

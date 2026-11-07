@@ -2,27 +2,42 @@
   "name": "همراه باقرالعلوم — دبیرستان نمونه دولتی پسرانه باقرالعلوم",
   "short_name": "همراه باقرالعلوم",
   "description": "مرجع اختصاصی مشاوره، برنامه‌ریزی درسی، هدایت تحصیلی و آزمون‌های خودارزیابی دانش‌آموزان",
-  "start_url": "./",
+  "start_url": "./?mode=app",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
+  "background_color": "#0a1128",
+  "theme_color": "#0a1128",
   "dir": "rtl",
   "lang": "fa-IR",
   "orientation": "portrait-primary",
-  "categories": ["education", "counseling"],
+  "categories": [
+    "education",
+    "counseling"
+  ],
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='42' fill='%230f172a'/%3E%3Cpath d='M96 38L24 76l72 38 72-38-72-38z' fill='%230d9488'/%3E%3Cpath d='M48 98v32c0 20 48 32 48 32s48-12 48-32V98' fill='none' stroke='%2338bdf8' stroke-width='12' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='96' cy='100' r='14' fill='%23fbbf24'/%3E%3C/svg%3E",
+      "src": "icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%230f172a'/%3E%3Cpath d='M256 96L64 200l192 104 192-104-192-104z' fill='%230d9488'/%3E%3Cpath d='M128 260v85c0 52 128 85 128 85s128-33 128-85v-85' fill='none' stroke='%2338bdf8' stroke-width='32' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='256' cy='266' r='36' fill='%23fbbf24'/%3E%3C/svg%3E",
+      "src": "icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

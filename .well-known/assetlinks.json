@@ -1,0 +1,26 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ir.bagherololum.hamrah",
+      "sha256_cert_fingerprints": [
+        "F2:11:BF:37:3C:30:60:2D:31:D4:28:32:D2:8A:B7:09:C4:AA:6A:29:6F:F3:01:43:19:2C:17:CA:1C:A4:56:FE"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "cafebazaar_twa"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ir.bagherololum.hamrah",
+      "sha256_cert_fingerprints": [
+        "F2:11:BF:37:3C:30:60:2D:31:D4:28:32:D2:8A:B7:09:C4:AA:6A:29:6F:F3:01:43:19:2C:17:CA:1C:A4:56:FE"
+      ]
+    }
+  }
+]

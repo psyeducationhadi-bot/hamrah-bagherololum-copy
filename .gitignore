@@ -3,3 +3,10 @@
 .env
 .env.*
 node_modules/
+.agents/
+__pycache__/
+*.py[cod]
+*$py.class
+.gradle/
+build/
+local.properties

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Additional Trusted Origins for TWA Fallback Verification -->
+    <string-array name="additional_trusted_origins" translatable="false">
+        <item>https://psyeducationhadi-bot.github.io</item>
+    </string-array>
+</resources>
