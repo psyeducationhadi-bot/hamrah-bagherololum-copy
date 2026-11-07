@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://hamrah-bagherololum.psyeducation-hadi.workers.dev/sitemap.xml
+Sitemap: https://hamrah-bagherololum-copy.psyeducation-hadi.workers.dev/sitemap.xml
