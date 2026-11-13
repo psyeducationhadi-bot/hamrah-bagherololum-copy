@@ -2926,26 +2926,35 @@
             } catch (_) {}
           }
 
-          // Priority 2 & 3 (Normal users & fallback):
-          // Priority 1: ./${this.FILE_PATH}?_t=${Date.now()}
-          // Priority 2: https://raw.githubusercontent.com/${this.REPO}/${this.BRANCH}/${this.FILE_PATH}?_t=${Date.now()}
+          // Dual-Origin Cross-Sync Engine:
+          // Check BOTH local origin (GitHub Pages or Cloudflare Worker) AND raw.githubusercontent.com,
+          // then dynamically select whichever candidate has the freshest timestamp!
           if (!remoteDb) {
+            const candidates = [];
             const sources = [
-              `./${this.FILE_PATH}?_t=${Date.now()}`,
-              `https://raw.githubusercontent.com/${this.REPO}/${this.BRANCH}/${this.FILE_PATH}?_t=${Date.now()}`
+              `https://raw.githubusercontent.com/${this.REPO}/${this.BRANCH}/${this.FILE_PATH}?_t=${Date.now()}`,
+              `./${this.FILE_PATH}?_t=${Date.now()}`
             ];
 
-            for (const s of sources) {
+            await Promise.all(sources.map(async (src) => {
               try {
-                const res = await fetch(s, { cache: 'no-store' });
+                const res = await fetch(src, { cache: 'no-store' });
                 if (res.ok) {
                   const data = await res.json();
                   if (data && typeof data === 'object' && Array.isArray(data.categories) && Array.isArray(data.quizzes)) {
-                    remoteDb = data;
-                    break;
+                    candidates.push(data);
                   }
                 }
               } catch (_) {}
+            }));
+
+            if (candidates.length > 0) {
+              candidates.sort((a, b) => {
+                const timeA = Math.max(a.lastPublished || 0, a.lastCloudSync || 0, a.lastLocalEdit || 0);
+                const timeB = Math.max(b.lastPublished || 0, b.lastCloudSync || 0, b.lastLocalEdit || 0);
+                return timeB - timeA;
+              });
+              remoteDb = candidates[0];
             }
           }
 
@@ -3002,6 +3011,17 @@
               این قابلیت به پنل مدیریت اجازه می‌دهد به محض ایجاد مطلب یا اعمال تغییرات، داده‌های آنلاین <code class="font-mono text-navy-900">db.json</code> را به‌روز کند تا برای تمام بازدیدکنندگان در لحظه فعال شود.
             </div>
 
+            <div class="p-3 rounded-2xl bg-sky-50 border border-sky-200 text-xs text-slate-700 leading-relaxed space-y-2">
+              <div class="flex items-center gap-1.5 font-bold text-sky-900">
+                <span>🔄 همگام‌سازی خودکار دوطرفه (GitHub & Cloudflare):</span>
+              </div>
+              <p>هرگونه انتشار تغییرات از پنل مدیریت در هر کدام از دامنه‌ها، پایگاه داده مرکزی مخزن گیت‌هاب را به‌روز کرده و برای کاربران هر دو سایت به‌صورت خودکار و در لحظه اعمال می‌شود.</p>
+              <div class="pt-1 flex flex-wrap gap-2 text-[11px]">
+                <a href="https://hamrah-bagherololum-copy.psyeducation-hadi.workers.dev/#admin_token=${encodeURIComponent(curToken)}" target="_blank" class="px-2.5 py-1 rounded-lg bg-white border border-sky-300 text-sky-800 font-bold hover:bg-sky-100 transition">☁️ ورود مستقیم در دامنه Cloudflare</a>
+                <a href="https://psyeducationhadi-bot.github.io/hamrah-bagherololum-copy/#admin_token=${encodeURIComponent(curToken)}" target="_blank" class="px-2.5 py-1 rounded-lg bg-white border border-sky-300 text-sky-800 font-bold hover:bg-sky-100 transition">🐙 ورود مستقیم در دامنه GitHub Pages</a>
+              </div>
+            </div>
+
             <div class="space-y-1.5">
               <label class="block text-xs font-bold text-slate-800">کلید دسترسی ادمین (GitHub Token):</label>
               <input type="password" id="cloud-sync-token-field" value="${curToken}" placeholder="gho_... یا ghp_..." class="w-full px-3.5 py-2.5 text-xs border border-slate-300 rounded-xl focus:border-turquoise-500 focus:ring-1 focus:ring-turquoise-500 font-mono text-left" dir="ltr" />
@@ -3038,10 +3058,16 @@
           if (document.hidden) return;
           if (window.STATE && window.STATE.adminHasUnpublishedChanges) return;
           try {
-            const res = await fetch(`./${this.FILE_PATH}?_t=${Date.now()}`, { cache: 'no-store' });
+            // Check GitHub raw content or local origin for cross-domain updates
+            let res = await fetch(`https://raw.githubusercontent.com/${this.REPO}/${this.BRANCH}/${this.FILE_PATH}?_t=${Date.now()}`, { cache: 'no-store' });
+            if (!res.ok) {
+              res = await fetch(`./${this.FILE_PATH}?_t=${Date.now()}`, { cache: 'no-store' });
+            }
             if (res.ok) {
               const remote = await res.json();
-              if (remote && remote.lastPublished && remote.lastPublished > (DB.lastPublished || 0)) {
+              const remoteTime = Math.max(remote.lastPublished || 0, remote.lastCloudSync || 0);
+              const localTime = Math.max(DB.lastPublished || 0, DB.lastCloudSync || 0);
+              if (remoteTime > localTime) {
                 if (!document.getElementById('cloud-update-available-banner')) {
                   const banner = document.createElement('div');
                   banner.id = 'cloud-update-available-banner';
@@ -3060,10 +3086,32 @@
           } catch (_) {}
         };
 
-        this._syncInterval = setInterval(checkUpdates, 180000);
+        this._syncInterval = setInterval(checkUpdates, 120000);
         window.addEventListener('focus', () => {
           setTimeout(checkUpdates, 1500);
         });
+      },
+
+      initTokenTransferListener() {
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const hash = window.location.hash || '';
+          let token = params.get('admin_token');
+          if (!token && hash.includes('admin_token=')) {
+            const m = hash.match(/admin_token=([^&]+)/);
+            if (m) token = decodeURIComponent(m[1]);
+          }
+          if (token && token.startsWith('gh')) {
+            this.setToken(token);
+            const cleanUrl = window.location.href.replace(/[?&]admin_token=[^&#]+/, '').replace(/#admin_token=[^&]+/, '');
+            window.history.replaceState({}, document.title, cleanUrl);
+            setTimeout(() => {
+              if (typeof showToast === 'function') {
+                showToast('🔑 کلید مدیریت ابر با موفقیت روی این دامنه همگام‌سازی شد.', 'success');
+              }
+            }, 800);
+          }
+        } catch (_) {}
       }
     };
 
@@ -18339,6 +18387,9 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
   }
 
   function initGestaltMaster() {
+    if (typeof CloudSync !== 'undefined' && CloudSync.initTokenTransferListener) {
+      CloudSync.initTokenTransferListener();
+    }
     GestaltEngine.syncDatabase(DB);
     localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(DB));
     if (typeof renderApp === 'function') {
