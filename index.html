@@ -3648,13 +3648,13 @@
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
               ${DB.shortTips.map(tip => `
-                <div class="p-3.5 rounded-2xl bg-gradient-to-br from-softyellow-50 to-white border border-softyellow-200 flex flex-col justify-between">
+                <div class="daily-tip-card p-4 rounded-2xl flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5" style="background: linear-gradient(135deg, #fffdf2 0%, #ffffff 100%) !important; border: 1.5px solid #fde68a !important;">
                   <div>
-                    <div class="flex items-center justify-between gap-2 mb-1.5">
-                      <span class="text-xs font-extrabold text-navy-900">${tip.title}</span>
-                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800">${tip.category}</span>
+                    <div class="flex items-center justify-between gap-2 mb-2">
+                      <span class="text-xs font-black text-navy-900" style="color: #0f2442 !important;">${tip.title}</span>
+                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0" style="background-color: #fef3c7 !important; color: #92400e !important; border: 1px solid #fde68a !important;">${tip.category}</span>
                     </div>
-                    <p class="text-xs text-slate-600 leading-relaxed">${tip.text}</p>
+                    <p class="text-xs text-slate-600 leading-relaxed" style="color: #334155 !important;">${tip.text}</p>
                   </div>
                 </div>
               `).join('')}
@@ -13557,7 +13557,7 @@ renderHomeView = function() {
   // Add Edit/Delete buttons to each Short Tip card on Home Page
   (DB.shortTips || []).forEach(tip => {
     const safeId = SecurityEngine.escapeHtml(tip.id);
-    const targetStr = `<p class="text-xs text-slate-600 leading-relaxed">${tip.text}</p>`;
+    const targetStr = `<p class="text-xs text-slate-600 leading-relaxed" style="color: #334155 !important;">${tip.text}</p>`;
     const replacementStr = `${targetStr}
       <div class="live-cms-control mt-2 pt-2 border-t border-amber-200/70 flex items-center justify-end gap-1.5 text-[11px]">
         <button type="button" onclick="LiveVisualCMS.openQuickTipModal('${safeId}')" class="px-2 py-0.5 rounded bg-turquoise-600 text-white font-bold">✏️ ویرایش</button>
@@ -15704,11 +15704,35 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
     .bg-softyellow-100 { background-color: #fef3c7 !important; }
     .bg-softyellow-50 { background-color: #fffbeb !important; }
 
+    /* Daily Short Tips Card - High Contrast & Harmonious */
+    .daily-tip-card,
+    .from-softyellow-50 {
+      background: linear-gradient(135deg, #fffdf2 0%, #ffffff 100%) !important;
+      background-color: #ffffff !important;
+      border: 1.5px solid #fde68a !important;
+    }
+    .daily-tip-card .text-navy-900,
+    .from-softyellow-50 .text-navy-900 {
+      color: #0f2442 !important;
+      font-weight: 800 !important;
+    }
+    .daily-tip-card .text-slate-600,
+    .from-softyellow-50 .text-slate-600 {
+      color: #334155 !important;
+      line-height: 1.75 !important;
+    }
+    .daily-tip-card .bg-amber-100,
+    .from-softyellow-50 .bg-amber-100 {
+      background-color: #fef3c7 !important;
+      color: #92400e !important;
+      border: 1px solid #fde68a !important;
+    }
+
     /* Guaranteed Gradient Engine: fixes Tailwind CDN async missing --tw-gradient-stops */
-    .bg-gradient-to-br,
-    .bg-gradient-to-r,
-    .bg-gradient-to-l,
-    .bg-gradient-to-b {
+    .bg-gradient-to-br:not(.from-softyellow-50):not(.daily-tip-card),
+    .bg-gradient-to-r:not(.from-softyellow-50):not(.daily-tip-card),
+    .bg-gradient-to-l:not(.from-softyellow-50):not(.daily-tip-card),
+    .bg-gradient-to-b:not(.from-softyellow-50):not(.daily-tip-card) {
       background-image: linear-gradient(135deg, #091936 0%, #0d254c 55%, #0d9488 100%) !important;
     }
     .from-navy-900.via-navy-800.to-turquoise-900,
