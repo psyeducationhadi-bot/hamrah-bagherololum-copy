@@ -73,7 +73,8 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a1128'/%3E%3Cpath d='M16 6L4 12l12 6 12-6-12-6z' fill='%2306b6d4'/%3E%3Cpath d='M8 15.5v5c0 3 8 5 8 5s8-2 8-5v-5' fill='none' stroke='%2338bdf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%23fbbf24'/%3E%3C/svg%3E" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <script src="https://cdn.tailwindcss.com/3.4.17" async onload="if(window.tailwind&&window.__HAMRAH_TW_CONFIG){window.tailwind.config=window.__HAMRAH_TW_CONFIG;}"></script>
-  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
   <script>
     window.tailwind = window.tailwind || {};
     tailwind.config = {
@@ -136,7 +137,9 @@
       color: #0f2442;
       overflow-x: hidden;
       max-width: 100vw;
-      font-size: 14px;
+      font-size: 15px;
+      line-height: 1.8;
+      letter-spacing: -0.012em;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       -webkit-tap-highlight-color: transparent;
@@ -219,12 +222,74 @@
     .animate-float {
       animation: floatSlow 4s ease-in-out infinite;
     }
+    .card-modern {
+      background-color: #ffffff;
+      border: 1px solid rgba(226, 232, 240, 0.85);
+      box-shadow: 0 4px 20px -2px rgba(15, 36, 66, 0.04), 0 2px 6px -1px rgba(15, 36, 66, 0.02);
+      border-radius: 1rem;
+      transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .card-modern:hover {
+      transform: translateY(-3px);
+      border-color: rgba(6, 182, 212, 0.4);
+      box-shadow: 0 16px 32px -6px rgba(15, 36, 66, 0.08), 0 6px 12px -3px rgba(6, 182, 212, 0.05);
+    }
     .card-elevated {
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1px solid rgba(226, 232, 240, 0.85);
+      box-shadow: 0 4px 16px -2px rgba(15, 36, 66, 0.04), 0 2px 6px -1px rgba(15, 36, 66, 0.02);
     }
     .card-elevated:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 18px 30px -10px rgba(15, 36, 66, 0.12), 0 8px 14px -6px rgba(6, 182, 212, 0.08);
+      transform: translateY(-3px);
+      border-color: rgba(6, 182, 212, 0.4);
+      box-shadow: 0 16px 32px -6px rgba(15, 36, 66, 0.09), 0 6px 14px -4px rgba(6, 182, 212, 0.08);
+    }
+
+    /* Night Reading Mode (حالت مطالعه شبانه) */
+    html.reading-mode,
+    html.reading-mode body {
+      background-color: #0c1421 !important;
+      color: #e2e8f0 !important;
+    }
+    html.reading-mode .bg-white {
+      background-color: #121c2c !important;
+      color: #e2e8f0 !important;
+      border-color: #1e293b !important;
+    }
+    html.reading-mode .text-navy-900,
+    html.reading-mode .text-navy-950 {
+      color: #f8fafc !important;
+    }
+    html.reading-mode .text-slate-600,
+    html.reading-mode .text-slate-700 {
+      color: #94a3b8 !important;
+    }
+    html.reading-mode .bg-slate-50,
+    html.reading-mode .bg-slate-100,
+    html.reading-mode .bg-slate-100\/80 {
+      background-color: #152238 !important;
+      border-color: #1e293b !important;
+    }
+    html.reading-mode #main-header {
+      background-color: rgba(12, 20, 33, 0.95) !important;
+      border-color: #1e293b !important;
+    }
+    html.reading-mode .card-modern,
+    html.reading-mode .cat-main-card,
+    html.reading-mode article {
+      background-color: #121c2c !important;
+      border-color: #1e293b !important;
+      box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.4) !important;
+    }
+    html.reading-mode .daily-tip-card {
+      background: linear-gradient(135deg, #16243b 0%, #111a28 100%) !important;
+      border-color: #b45309 !important;
+    }
+    html.reading-mode .daily-tip-card .text-navy-900 {
+      color: #fde68a !important;
+    }
+    html.reading-mode .daily-tip-card .text-slate-600 {
+      color: #cbd5e1 !important;
     }
     /* Article Typography & Callouts */
     .article-prose h2 {
@@ -346,7 +411,7 @@
        COMPLETE EMBEDDED RESPONSIVE & ANTI-OVERLAP CSS ENGINE (MOBILE + DESKTOP)
        ========================================================================= */
     html { direction: rtl; text-align: right; -webkit-text-size-adjust: 100%; }
-    body { margin: 0; font-family: 'Vazirmatn', Tahoma, Arial, sans-serif; line-height: 1.65; background-color: #f8fafc; color: #0f2442; overflow-x: hidden; }
+    body { margin: 0; font-family: 'Vazirmatn', Tahoma, Arial, sans-serif; line-height: 1.8; background-color: #f8fafc; color: #0f2442; overflow-x: hidden; }
     *, *::before, *::after { box-sizing: border-box; }
     article, div, section, main, aside { min-width: 0; }
     nav button, header button { flex-shrink: 0; }
@@ -685,7 +750,7 @@
     .border-white\/25 { border: 1px solid rgba(255,255,255,0.28) !important; }
     .border-softyellow-400\/40 { border: 1px solid rgba(251, 191, 36, 0.45) !important; }
     .border-turquoise-400\/30 { border: 1px solid rgba(34, 211, 238, 0.35) !important; }
-    #main-header nav button, #main-header .cursor-pointer span, #header-student-btn, #header-admin-btn {
+    #main-header nav button, #main-header .cursor-pointer span, #header-student-btn, #header-admin-btn, #reading-mode-toggle-btn {
       white-space: nowrap;
     }
 
@@ -780,6 +845,12 @@
             <div id="header-search-dropdown" class="hidden absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 p-3 z-50 max-h-96 overflow-y-auto"></div>
           </div>
 
+          <!-- Night Reading Mode Toggle Button -->
+          <button type="button" id="reading-mode-toggle-btn" onclick="toggleReadingMode()" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition flex items-center gap-1.5" title="تغییر حالت مطالعه شبانه">
+            <span class="text-sm">🌙</span>
+            <span class="hidden sm:inline">حالت مطالعه</span>
+          </button>
+
           <!-- Student Portal Button -->
           <button type="button" id="header-student-btn" onclick="handleUserPortalClick()" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-softblue-50 text-softblue-700 hover:bg-softblue-100 border border-softblue-200 transition flex items-center gap-1.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
@@ -839,6 +910,12 @@
         <button type="button" onclick="navigateTo('tools');toggleMobileMenu(false);" class="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-right">⏱️ ابزارهای دانش‌آموز</button>
         <button type="button" onclick="navigateTo('majors');toggleMobileMenu(false);" class="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-right">🎓 رشته‌ها و مشاغل</button>
         <button type="button" onclick="openCounselorModal();toggleMobileMenu(false);" class="p-2.5 rounded-xl bg-turquoise-50 text-turquoise-800 hover:bg-turquoise-100 text-right">👨‍🏫 معرفی مشاور</button>
+      </div>
+      <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+        <button type="button" onclick="toggleReadingMode();toggleMobileMenu(false);" class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition">
+          <span>🌙</span>
+          <span>تغییر حالت مطالعه شبانه</span>
+        </button>
       </div>
     </div>
   </header>
@@ -3373,7 +3450,7 @@
       const isCompleted = DB.studentData.completedPostIds.includes(post.id);
 
       return `
-        <article class="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-sm card-elevated flex flex-col justify-between">
+        <article class="card-modern rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm card-elevated flex flex-col justify-between">
           <div>
             <div class="relative cursor-pointer" onclick="navigateTo('post', {id: '${post.id}'})">
               ${renderPostCoverSvg(post, 'h-44')}
@@ -3383,22 +3460,22 @@
               </div>
               ${isCompleted ? `<span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-500 text-white shadow">✓ مطالعه‌شده</span>` : ''}
             </div>
-            <div class="p-4">
-              <div class="flex items-center justify-between text-[11px] text-slate-500 mb-1.5">
-                <button type="button" onclick="navigateTo('category', {id: '${post.categoryId}'})" class="text-turquoise-700 font-bold hover:underline truncate max-w-[190px]">${cat ? cat.title : 'دسته‌بندی عمومی'}</button>
+            <div class="p-4 sm:p-5">
+              <div class="flex items-center justify-between text-xs text-slate-500 mb-2">
+                <button type="button" onclick="navigateTo('category', {id: '${post.categoryId}'})" class="text-turquoise-700 font-bold hover:underline truncate max-w-[200px]">${cat ? cat.title : 'دسته‌بندی عمومی'}</button>
                 <span>👁️ ${(post.views || 0).toLocaleString('fa-IR')} بازدید</span>
               </div>
-              <h3 onclick="navigateTo('post', {id: '${post.id}'})" class="text-sm sm:text-base font-extrabold text-navy-900 hover:text-turquoise-600 cursor-pointer line-clamp-2 leading-relaxed mb-2">${post.title}</h3>
-              <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-3">${post.summary || ''}</p>
+              <h3 onclick="navigateTo('post', {id: '${post.id}'})" class="text-[15px] sm:text-base font-extrabold text-navy-900 hover:text-turquoise-600 cursor-pointer line-clamp-2 leading-relaxed mb-2">${post.title}</h3>
+              <p class="text-xs sm:text-[13px] text-slate-600 line-clamp-2 leading-relaxed mb-3">${post.summary || ''}</p>
             </div>
           </div>
-          <div class="px-4 py-3 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between text-xs">
+          <div class="px-4 py-3 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between text-xs">
             <span class="text-slate-500 font-medium">⏱️ ${post.readingTime || '۵ دقیقه'}</span>
             <div class="flex items-center gap-1.5">
-              <button type="button" onclick="toggleBookmarkPost('${post.id}')" class="p-1.5 rounded-lg border ${isBookmarked ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-white border-slate-200 text-slate-500 hover:text-rose-600'}" title="ذخیره در علاقه‌مندی‌ها">
+              <button type="button" onclick="toggleBookmarkPost('${post.id}')" class="p-1.5 rounded-xl border ${isBookmarked ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-white border-slate-200 text-slate-500 hover:text-rose-600'}" title="ذخیره در علاقه‌مندی‌ها">
                 ${isBookmarked ? '❤️' : '🤍'}
               </button>
-              <button type="button" onclick="navigateTo('post', {id: '${post.id}'})" class="px-3 py-1.5 rounded-xl bg-navy-900 hover:bg-turquoise-600 text-white font-bold transition">مشاهده مطلب ←</button>
+              <button type="button" onclick="navigateTo('post', {id: '${post.id}'})" class="px-3.5 py-1.5 rounded-xl bg-navy-900 hover:bg-turquoise-600 text-white font-bold transition">مطالعه مطلب ←</button>
             </div>
           </div>
         </article>
@@ -3461,6 +3538,30 @@
       const show = typeof forceState === 'boolean' ? forceState : drawer.classList.contains('hidden');
       drawer.classList.toggle('hidden', !show);
     }
+
+    function toggleReadingMode() {
+      const isReading = document.documentElement.classList.toggle('reading-mode');
+      try {
+        localStorage.setItem('HAMRAH_READING_MODE', isReading ? '1' : '0');
+      } catch (e) {}
+      updateReadingModeBtn();
+    }
+
+    function updateReadingModeBtn() {
+      const btn = document.getElementById('reading-mode-toggle-btn');
+      const isReading = document.documentElement.classList.contains('reading-mode');
+      if (btn) {
+        btn.innerHTML = isReading
+          ? '<span class="text-amber-400 text-sm">☀️</span><span class="hidden sm:inline text-amber-300">حالت روز</span>'
+          : '<span class="text-slate-600 text-sm">🌙</span><span class="hidden sm:inline">حالت مطالعه</span>';
+        btn.title = isReading ? 'تغییر به حالت روز' : 'تغییر به حالت مطالعه شبانه';
+      }
+    }
+    try {
+      if (localStorage.getItem('HAMRAH_READING_MODE') === '1') {
+        document.documentElement.classList.add('reading-mode');
+      }
+    } catch (e) {}
 
     function handleHeaderSearch(query) {
       const dropdown = document.getElementById('header-search-dropdown');
@@ -3683,30 +3784,30 @@
                 ? window.getCategoryInlineGradient(cat.color, idx)
                 : 'linear-gradient(135deg, #0d254c 0%, #0d9488 100%)';
               return `
-                <div onclick="navigateTo('category', {id: '${cat.id}'})" class="cat-main-card rounded-2xl p-5 border-2 border-slate-200/90 hover:border-turquoise-500 shadow-md card-elevated cursor-pointer flex flex-col justify-between group relative overflow-hidden" style="background: linear-gradient(180deg, #ffffff 0%, #f3f8fe 100%);">
+                <div onclick="navigateTo('category', {id: '${cat.id}'})" class="cat-main-card card-modern rounded-2xl p-5 border border-slate-200/80 hover:border-turquoise-400 cursor-pointer flex flex-col justify-between group relative overflow-hidden">
                   <div class="absolute top-0 right-0 left-0 h-1.5" style="background: ${inlineGrad};"></div>
                   <div>
                     <div class="flex items-start justify-between gap-3 mb-3.5 pt-1">
-                      <div class="w-13 h-13 w-12 h-12 rounded-2xl bg-gradient-to-br ${cat.color || 'from-navy-800 to-turquoise-600'} text-white flex items-center justify-center text-2xl shadow-md group-hover:scale-105 transition" style="background: ${inlineGrad}; color: #ffffff !important;">
+                      <div class="w-12 h-12 rounded-2xl text-white flex items-center justify-center text-2xl shadow-md group-hover:scale-105 group-hover:shadow-lg transition-transform duration-300" style="background: ${inlineGrad}; color: #ffffff !important;">
                         ${cat.icon}
                       </div>
                       <div class="flex flex-col items-end gap-1">
                         <span class="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-navy-900 text-white shadow-sm" style="background-color: #0d254c; color: #ffffff;">
                           دسته ${typeof toPersianDigits === 'function' ? toPersianDigits(cat.order || (idx + 1)) : (cat.order || (idx + 1))}
                         </span>
-                        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-turquoise-50 text-turquoise-900 border border-turquoise-200">
+                        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-turquoise-50 text-turquoise-900 border border-turquoise-200/80">
                           ${typeof toPersianDigits === 'function' ? toPersianDigits(subCount) : subCount} زیرعنوان • ${typeof toPersianDigits === 'function' ? toPersianDigits(postCount) : postCount} مطلب
                         </span>
                       </div>
                     </div>
-                    <h3 class="text-base font-black text-navy-950 group-hover:text-turquoise-700 transition mb-2 leading-snug" style="color: #06152d;">${cat.title}</h3>
-                    <p class="text-xs text-slate-700 font-semibold leading-relaxed line-clamp-2" style="color: #1e293b;">${cat.description}</p>
-                    <div class="mt-3 flex flex-wrap gap-1">
-                      ${(cat.subcategories || []).slice(0, 3).map(s => `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-200/80 text-navy-900" style="background-color: #e2e8f0; color: #0f172a;">${typeof getSubcategoryVisualMeta === 'function' ? getSubcategoryVisualMeta(cat, s, 0).icon : '🔹'} ${s.title}</span>`).join('')}
-                      ${subCount > 3 ? `<span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-turquoise-100 text-turquoise-900">+${typeof toPersianDigits === 'function' ? toPersianDigits(subCount - 3) : (subCount - 3)} زیرعنوان دیگر</span>` : ''}
+                    <h3 class="text-[15px] sm:text-base font-black text-navy-950 group-hover:text-turquoise-700 transition mb-2 leading-snug" style="color: #09162a;">${cat.title}</h3>
+                    <p class="text-xs sm:text-[13px] text-slate-600 font-medium leading-relaxed line-clamp-2" style="color: #334155;">${cat.description}</p>
+                    <div class="mt-3.5 flex flex-wrap gap-1">
+                      ${(cat.subcategories || []).slice(0, 3).map(s => `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/60 transition">${typeof getSubcategoryVisualMeta === 'function' ? getSubcategoryVisualMeta(cat, s, 0).icon : '🔹'} ${s.title}</span>`).join('')}
+                      ${subCount > 3 ? `<span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-turquoise-50 text-turquoise-800 border border-turquoise-200/60">+${typeof toPersianDigits === 'function' ? toPersianDigits(subCount - 3) : (subCount - 3)} زیرعنوان دیگر</span>` : ''}
                     </div>
                   </div>
-                  <div class="mt-4 pt-3 border-t border-slate-200/90 flex items-center justify-between text-xs font-extrabold text-navy-900 group-hover:text-turquoise-700">
+                  <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-navy-900 group-hover:text-turquoise-700">
                     <span>مشاهده ${typeof toPersianDigits === 'function' ? toPersianDigits(subCount) : subCount} زیرعنوان و مطالب</span>
                     <span class="w-6 h-6 rounded-full bg-navy-900 text-white flex items-center justify-center group-hover:bg-turquoise-600 group-hover:-translate-x-1 transition" style="background-color: #0d254c; color: #ffffff;">←</span>
                   </div>
@@ -3812,15 +3913,15 @@
 
               <div class="space-y-4">
                 ${audioPosts.map(aud => `
-                  <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+                  <div class="card-modern rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm space-y-3">
                     <div class="flex items-start gap-3">
-                      <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center text-2xl shrink-0 shadow">🎧</div>
+                      <div class="w-12 h-12 rounded-2xl text-white flex items-center justify-center text-2xl shrink-0 shadow" style="background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%) !important;">🎧</div>
                       <div class="min-w-0 flex-1">
-                        <h3 onclick="navigateTo('post', {id: '${aud.id}'})" class="text-sm font-extrabold text-navy-900 hover:text-turquoise-600 cursor-pointer leading-snug">${aud.title}</h3>
-                        <p class="text-[11px] text-slate-500 mt-0.5">${aud.author} • مدت: ${aud.audioDuration || '۰۸:۰۰'}</p>
+                        <h3 onclick="navigateTo('post', {id: '${aud.id}'})" class="text-[15px] font-extrabold text-navy-900 hover:text-turquoise-600 cursor-pointer leading-snug">${aud.title}</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">${aud.author} • مدت: ${aud.audioDuration || '۰۸:۰۰'}</p>
                       </div>
                     </div>
-                    <p class="text-xs text-slate-600 leading-relaxed">${aud.summary}</p>
+                    <p class="text-xs sm:text-[13px] text-slate-600 leading-relaxed">${aud.summary}</p>
                     ${renderCustomAudioPlayer(aud.id, aud.audioUrl, aud.audioTranscript)}
                     <div class="pt-1 flex justify-end">
                       <button type="button" onclick="navigateTo('post', {id: '${aud.id}'})" class="text-xs font-bold text-turquoise-700 hover:underline">مشاهده متن کامل و نکات اپیزود ←</button>
@@ -13575,8 +13676,8 @@ renderHomeView = function() {
   // Add Edit/Delete buttons on each Category Card on Home Page
   (DB.categories || []).forEach(cat => {
     const safeCatId = SecurityEngine.escapeHtml(cat.id);
-    const needle = `onclick="navigateTo('category', {id: '${cat.id}'})" class="bg-white rounded-2xl p-5`;
-    const targetFooter = `<div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-turquoise-600">`;
+    const needle = `onclick="navigateTo('category', {id: '${cat.id}'})"`;
+    const targetFooter = `<div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-navy-900 group-hover:text-turquoise-700">`;
     if (html.includes(needle)) {
       const idx = html.indexOf(needle);
       const footerIdx = html.indexOf(targetFooter, idx);
@@ -15620,15 +15721,17 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
        and crisp, dark, high-contrast Persian typography across every section.
        ============================================================================ */
     html, body {
-      background: linear-gradient(180deg, #dfe9f5 0%, #eaf2fa 45%, #e2ecf7 100%) !important;
-      color: #091936 !important;
+      background-color: #f8fafc !important;
+      background-image: none !important;
+      color: #0f2442 !important;
     }
 
-    /* Section background differentiation so the site never feels flat or lifeless white */
+    /* Soft alternating section background for visual rhythm without dark mud */
     #app-main > section:nth-of-type(even) {
-      background: linear-gradient(180deg, #dce7f5 0%, #e7f0fa 100%) !important;
-      border-top: 1px solid #cbd5e1 !important;
-      border-bottom: 1px solid #cbd5e1 !important;
+      background-color: #f1f5f9 !important;
+      background-image: none !important;
+      border-top: 1px solid rgba(226, 232, 240, 0.8) !important;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.8) !important;
     }
 
     /* High-contrast text rules on light surfaces */
@@ -15709,17 +15812,20 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
     .from-softyellow-50 {
       background: linear-gradient(135deg, #fffdf2 0%, #ffffff 100%) !important;
       background-color: #ffffff !important;
-      border: 1.5px solid #fde68a !important;
+      border: 1px solid #fde68a !important;
+      box-shadow: 0 4px 16px -2px rgba(245, 158, 11, 0.08) !important;
     }
     .daily-tip-card .text-navy-900,
     .from-softyellow-50 .text-navy-900 {
       color: #0f2442 !important;
+      font-size: 14px !important;
       font-weight: 800 !important;
     }
     .daily-tip-card .text-slate-600,
     .from-softyellow-50 .text-slate-600 {
       color: #334155 !important;
-      line-height: 1.75 !important;
+      font-size: 13.5px !important;
+      line-height: 1.8 !important;
     }
     .daily-tip-card .bg-amber-100,
     .from-softyellow-50 .bg-amber-100 {
@@ -15729,10 +15835,10 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
     }
 
     /* Guaranteed Gradient Engine: fixes Tailwind CDN async missing --tw-gradient-stops */
-    .bg-gradient-to-br:not(.from-softyellow-50):not(.daily-tip-card),
-    .bg-gradient-to-r:not(.from-softyellow-50):not(.daily-tip-card),
-    .bg-gradient-to-l:not(.from-softyellow-50):not(.daily-tip-card),
-    .bg-gradient-to-b:not(.from-softyellow-50):not(.daily-tip-card) {
+    .bg-gradient-to-br:not(.from-softyellow-50):not(.daily-tip-card):not(.from-amber-500):not(.from-rose-500):not(.from-indigo-600):not(.from-purple-600):not(.from-emerald-500):not(.from-teal-500):not(.from-cyan-600),
+    .bg-gradient-to-r:not(.from-softyellow-50):not(.daily-tip-card):not(.from-amber-500):not(.from-rose-500):not(.from-indigo-600):not(.from-purple-600):not(.from-emerald-500):not(.from-teal-500):not(.from-cyan-600),
+    .bg-gradient-to-l:not(.from-softyellow-50):not(.daily-tip-card):not(.from-amber-500):not(.from-rose-500):not(.from-indigo-600):not(.from-purple-600):not(.from-emerald-500):not(.from-teal-500):not(.from-cyan-600),
+    .bg-gradient-to-b:not(.from-softyellow-50):not(.daily-tip-card):not(.from-amber-500):not(.from-rose-500):not(.from-indigo-600):not(.from-purple-600):not(.from-emerald-500):not(.from-teal-500):not(.from-cyan-600) {
       background-image: linear-gradient(135deg, #091936 0%, #0d254c 55%, #0d9488 100%) !important;
     }
     .from-navy-900.via-navy-800.to-turquoise-900,
@@ -15787,28 +15893,30 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
       background-image: linear-gradient(135deg, #0284c7 0%, #0d254c 100%) !important;
     }
 
-    /* Card elevation & vibrant top accent borders across all content cards */
+    /* Card elevation & modern ambient borders across all content cards */
     article.card-elevated,
     .card-elevated {
-      background: linear-gradient(180deg, #ffffff 0%, #f5f9ff 100%) !important;
-      border: 1.5px solid #cbd5e1 !important;
-      box-shadow: 0 10px 24px -8px rgba(9, 25, 54, 0.12), 0 4px 10px -3px rgba(13, 148, 136, 0.08) !important;
+      background: #ffffff !important;
+      border: 1px solid rgba(226, 232, 240, 0.85) !important;
+      box-shadow: 0 4px 20px -2px rgba(15, 36, 66, 0.04), 0 2px 6px -1px rgba(15, 36, 66, 0.02) !important;
+      border-radius: 1rem !important;
     }
     article.card-elevated {
-      border-top: 4px solid #0d9488 !important;
+      border-top: 3.5px solid #06b6d4 !important;
     }
     article.card-elevated:nth-child(3n+1) {
-      border-top-color: #0d254c !important;
+      border-top-color: #0f2442 !important;
     }
     article.card-elevated:nth-child(3n+2) {
-      border-top-color: #0d9488 !important;
+      border-top-color: #06b6d4 !important;
     }
     article.card-elevated:nth-child(3n+3) {
-      border-top-color: #2563eb !important;
+      border-top-color: #3b82f6 !important;
     }
     .card-elevated:hover {
-      border-color: #0d9488 !important;
-      box-shadow: 0 18px 34px -8px rgba(9, 25, 54, 0.2), 0 6px 14px -4px rgba(20, 184, 166, 0.18) !important;
+      border-color: rgba(6, 182, 212, 0.4) !important;
+      box-shadow: 0 16px 32px -6px rgba(15, 36, 66, 0.09), 0 6px 14px -4px rgba(6, 182, 212, 0.08) !important;
+      transform: translateY(-3px);
     }
 
     /* Subcategory graphical cards active state */
