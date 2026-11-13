@@ -15699,5 +15699,1658 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
       });
     }
   </script>
+  <!-- =========================================================================
+     HAMRAH BAGHEROLOLUM - GESTALT UNIFIED CMS & RELATIONAL SYNC ENGINE
+     ========================================================================= -->
+<script id="hamrah-gestalt-master-engine">
+(function() {
+  'use strict';
+
+  // ۱. توابع پایه فارسی‌سازی اعداد و پاکسازی شماره‌های ثابت از ابتدای عناوین
+  function toFaNum(val) {
+    if (val === null || val === undefined) return '';
+    return String(val).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+  }
+  window.toPersianDigits = toFaNum;
+
+  function stripNumberPrefix(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/^[\s\u200c]*[۰-۹0-9]+(?:[\s\.\-\)_،:؛]+|[۰-۹0-9]*[\s\.\-\)_،:؛]+)/, '')
+      .trim();
+  }
+
+  // ۲. هسته یکپارچه‌ساز گشتالتی (Single Source of Truth & Cascade Sync)
+  const GestaltEngine = {
+    syncDatabase(db) {
+      if (!db || typeof db !== 'object') return;
+
+      // الف) تنظیمات سراسری و کلیدهای نمایش/حذف هر بخش از سایت
+      db.siteSettings = db.siteSettings || {};
+      const ss = db.siteSettings;
+      ss.siteTitle = ss.siteTitle || 'همراه باقرالعلوم';
+      ss.schoolName = ss.schoolName || 'دبیرستان نمونه دولتی پسرانه باقرالعلوم';
+      ss.versionBadge = ss.versionBadge || 'نسخه جامع';
+      ss.counselorLeadName = ss.counselorLeadName || 'محمد هادی برخوری مهنی';
+      ss.counselorLeadDegree = ss.counselorLeadDegree || 'مشاور مدرسه و مدیر کل سامانه';
+      ss.counselorPhone = ss.counselorPhone || '09136527398';
+      ss.officeHours = ss.officeHours || 'شنبه 7 الی 14';
+      ss.schoolAddress = ss.schoolAddress || 'دبیرستان نمونه دولتی پسرانه باقرالعلوم — طبقه اول، واحد مشاوره، روان‌شناسی و هدایت تحصیلی';
+      ss.topBarBadge = ss.topBarBadge || 'اطلاعیه مهم';
+      ss.topBarAnnouncement = ss.topBarAnnouncement || 'برای شناخت بهتر خودت، یادگیری مؤثرتر و ساختن آینده‌ای موفق‌تر';
+      ss.heroBadge = ss.heroBadge || ('مرجع اختصاصی مشاوره و هدایت تحصیلی ' + ss.schoolName);
+      ss.heroTitle = ss.heroTitle || 'برای شناخت بهتر خودت، یادگیری مؤثرتر و ساختن آینده‌ای موفق‌تر';
+      ss.heroSubtitle = ss.heroSubtitle || 'همراه تو در مسیر یادگیری، رشد فردی و رسیدن به آینده‌ای که شایسته آن هستی.';
+      ss.counselorSectionHeading = ss.counselorSectionHeading || ('واحد مشاوره ' + ss.schoolName);
+      ss.counselorMissionText = ss.counselorMissionText || 'سامانه «همراه باقرالعلوم» با هدف ارائه محتوای علمی، مشاوره‌ای، برنامه‌ریزی تحصیلی، کنکور و مهارت‌های زندگی برای دانش‌آموزان پایه‌های دهم، یازدهم و دوازدهم طراحی شده است.';
+      ss.footerSubtitle = ss.footerSubtitle || 'واحد مشاوره و هدایت تحصیلی';
+      ss.footerDescription = ss.footerDescription || ('مرجع تخصصی و جامع محتوای مشاوره‌ای، آموزشی، تحصیلی، روان‌شناختی و مهارت‌های زندگی ویژه دانش‌آموزان ' + ss.schoolName + '.');
+      ss.copyrightText = ss.copyrightText || ('© تمامی حقوق مادی و معنوی برای «' + ss.siteTitle + '» (' + ss.schoolName + ') محفوظ است.');
+
+      ss.modulesVisibility = Object.assign({
+        showTopBar: true,
+        showShortTips: true,
+        showCategories: true,
+        showFeaturedPosts: true,
+        showMediaSection: true,
+        showAnnouncements: true,
+        showCounselorBox: true,
+        showHomeFaq: true,
+        showCalendar: true
+      }, ss.modulesVisibility || {});
+
+      // ب) انتشار خودکار نام، سمت و ساعت حضور مشاور در کل ساختارهای وابسته
+      const cName = ss.counselorLeadName.trim();
+      const cDegree = ss.counselorLeadDegree.trim();
+      const cFull = `${cName} (${cDegree})`;
+
+      if (Array.isArray(db.users)) {
+        db.users.forEach(u => {
+          if (u.roleId !== 'role-student') {
+            u.name = cName;
+            u.roleLabel = cDegree;
+          }
+        });
+      }
+
+      if (!Array.isArray(db.counselorsList) || db.counselorsList.length === 0) {
+        db.counselorsList = [{
+          id: 'cns-1',
+          icon: '🎓',
+          name: cName,
+          role: `${cDegree} — ${ss.schoolName}`,
+          bio: ss.counselorMissionText,
+          schedule: ss.officeHours
+        }];
+      } else {
+        db.counselorsList[0].name = cName;
+        db.counselorsList[0].role = `${cDegree} — ${ss.schoolName}`;
+        db.counselorsList[0].bio = ss.counselorMissionText;
+        db.counselorsList[0].schedule = ss.officeHours;
+      }
+
+      // ج) شماره‌گذاری ۱۰۰٪ خودکار دسته‌بندی‌های اصلی (۱ تا آخر) و زیرعنوان‌ها (۱-۱، ۱-۲...)
+      if (Array.isArray(db.categories)) {
+        const flatSubList = [];
+        let activeNumberCounter = 0;
+
+        db.categories.forEach((cat, idx) => {
+          cat.order = idx + 1;
+          const rawClean = stripNumberPrefix(cat.cleanTitle || cat.title);
+          cat.cleanTitle = rawClean;
+
+          if (cat.active !== false) {
+            activeNumberCounter++;
+            cat.displayNumber = activeNumberCounter;
+            cat.title = `${toFaNum(activeNumberCounter)}. ${rawClean}`;
+          } else {
+            cat.displayNumber = idx + 1;
+            cat.title = `${toFaNum(idx + 1)}. ${rawClean}`;
+          }
+          cat.approvedBy = cFull;
+
+          if (!Array.isArray(cat.subcategories)) cat.subcategories = [];
+          cat.subcategories.forEach((sub, sIdx) => {
+            sub.order = sIdx + 1;
+            sub.cleanTitle = stripNumberPrefix(sub.cleanTitle || sub.title);
+            sub.title = sub.cleanTitle;
+            if (sub.parentId && !cat.subcategories.some(x => x.id === sub.parentId && x.id !== sub.id)) {
+              sub.parentId = null;
+            }
+            flatSubList.push({
+              id: sub.id,
+              categoryId: cat.id,
+              parentId: sub.parentId || null,
+              title: sub.cleanTitle,
+              order: sub.order,
+              approvalStatus: 'Approved'
+            });
+          });
+        });
+        db.subcategories = flatSubList;
+      }
+
+      // د) یکپارچه‌سازی مطالب، فیلم‌ها و پادکست‌ها + حذف زنجیره‌ای موارد داخل زباله‌دان
+      const validCatIds = new Set((db.categories || []).map(c => c.id));
+      const firstCat = (db.categories && db.categories[0]) ? db.categories[0] : null;
+      const trashedMediaUrls = new Set();
+
+      if (Array.isArray(db.posts)) {
+        db.posts.forEach(p => {
+          p.author = cFull;
+          p.approvedBy = cFull;
+
+          if (!validCatIds.has(p.categoryId) && firstCat) {
+            p.categoryId = firstCat.id;
+          }
+          const parentCat = (db.categories || []).find(c => c.id === p.categoryId);
+          if (parentCat && Array.isArray(parentCat.subcategories) && parentCat.subcategories.length > 0) {
+            if (!parentCat.subcategories.some(s => s.id === p.subcategoryId)) {
+              p.subcategoryId = parentCat.subcategories[0].id;
+            }
+          }
+
+          if (p.status !== 'published') {
+            if (p.videoUrl) trashedMediaUrls.add(p.videoUrl.trim());
+            if (p.aparatHash) trashedMediaUrls.add(`https://www.aparat.com/v/${p.aparatHash.trim()}`);
+            if (p.audioUrl) trashedMediaUrls.add(p.audioUrl.trim());
+          }
+        });
+      }
+
+      const publishedPosts = (db.posts || []).filter(p => p.status === 'published');
+      const publishedPostIds = new Set(publishedPosts.map(p => p.id));
+
+      // همگام‌سازی جدول پیوست‌ها (DB.attachments)
+      const allActiveAttachments = [];
+      publishedPosts.forEach(p => {
+        (p.attachments || []).forEach(att => {
+          allActiveAttachments.push({
+            ...att,
+            postId: p.id,
+            approvalStatus: 'Approved'
+          });
+        });
+      });
+      db.attachments = allActiveAttachments;
+
+      // همگام‌سازی جدول تگ‌ها (DB.tags)
+      const tagCounter = new Map();
+      publishedPosts.forEach(p => {
+        (p.tags || []).forEach(t => {
+          const cleanTag = String(t).trim();
+          if (cleanTag) tagCounter.set(cleanTag, (tagCounter.get(cleanTag) || 0) + 1);
+        });
+      });
+      db.tags = Array.from(tagCounter.entries()).map(([name, usageCount], i) => ({
+        id: 'tag-' + (i + 1),
+        name,
+        slug: name.replace(/\s+/g, '-'),
+        usageCount
+      }));
+
+      // پاکسازی خودکار ارجاعات شکسته در سؤالات پرتکرار (FAQs)
+      if (Array.isArray(db.faqs)) {
+        db.faqs.forEach(f => {
+          if (Array.isArray(f.relatedPostIds)) {
+            f.relatedPostIds = f.relatedPostIds.filter(pid => publishedPostIds.has(pid));
+          }
+          if (f.mediaUrl && trashedMediaUrls.has(f.mediaUrl.trim())) {
+            f.mediaUrl = '';
+            f.mediaType = 'none';
+          }
+          if (f.categoryId && !validCatIds.has(f.categoryId) && firstCat) {
+            f.categoryId = firstCat.id;
+          }
+        });
+      }
+
+      // شماره‌گذاری خودکار آزمون‌ها و پاکسازی پیشنهادهای حذف‌شده در تفاسیر آزمون
+      if (Array.isArray(db.quizzes)) {
+        const flatQ = [];
+        const flatOpt = [];
+        db.quizzes.forEach((qz, qzIdx) => {
+          const cleanQzTitle = stripNumberPrefix(qz.cleanTitle || qz.title);
+          qz.cleanTitle = cleanQzTitle;
+          qz.title = `${toFaNum(qzIdx + 1)}. ${cleanQzTitle}`;
+
+          (qz.interpretations || []).forEach(interp => {
+            if (Array.isArray(interp.recommendedPosts)) {
+              interp.recommendedPosts = interp.recommendedPosts.filter(pid => publishedPostIds.has(pid));
+            }
+          });
+
+          (qz.questions || []).forEach((qItem, qIdx) => {
+            const qId = `${qz.id}_q${qIdx + 1}`;
+            const cleanQ = stripNumberPrefix(qItem.q);
+            qItem.q = `${toFaNum(qIdx + 1)}. ${cleanQ}`;
+            flatQ.push({ id: qId, quizId: qz.id, order: qIdx + 1, questionText: qItem.q });
+            (qItem.options || []).forEach((opt, oIdx) => {
+              flatOpt.push({
+                id: `${qId}_opt${oIdx + 1}`,
+                questionId: qId,
+                quizId: qz.id,
+                text: opt.text,
+                score: opt.score,
+                dimension: opt.dimension || null
+              });
+            });
+          });
+        });
+        db.quizQuestions = flatQ;
+        db.quizOptions = flatOpt;
+      }
+
+      // همگام‌سازی مسیرهای یادگیری (learningPaths & learningPathSteps)
+      if (Array.isArray(db.learningPaths)) {
+        const syncedSteps = [];
+        db.learningPaths.forEach(lp => {
+          if (Array.isArray(lp.postIds)) {
+            lp.postIds = lp.postIds.filter(pid => publishedPostIds.has(pid));
+            lp.postIds.forEach((pid, idx) => {
+              syncedSteps.push({
+                id: `${lp.id}_step_${idx + 1}`,
+                pathId: lp.id,
+                postId: pid,
+                stepOrder: idx + 1
+              });
+            });
+          }
+        });
+        db.learningPathSteps = syncedSteps;
+      }
+
+      // یکسان‌سازی کامل دو جدول رشته‌های دانشگاهی (majorsDirectory & majors)
+      if (Array.isArray(db.majorsDirectory)) {
+        db.majors = JSON.parse(JSON.stringify(db.majorsDirectory));
+      } else if (Array.isArray(db.majors)) {
+        db.majorsDirectory = JSON.parse(JSON.stringify(db.majors));
+      }
+
+      // پاکسازی پنل دانش‌آموز از مطالب حذف‌شده
+      if (db.studentData) {
+        ['bookmarkedPostIds', 'completedPostIds', 'recentlyViewedPostIds'].forEach(k => {
+          if (Array.isArray(db.studentData[k])) {
+            db.studentData[k] = db.studentData[k].filter(pid => publishedPostIds.has(pid));
+          }
+        });
+        if (Array.isArray(db.studentData.readingLists)) {
+          db.studentData.readingLists.forEach(rl => {
+            if (Array.isArray(rl.postIds)) {
+              rl.postIds = rl.postIds.filter(pid => publishedPostIds.has(pid));
+            }
+          });
+        }
+      }
+
+      // اصلاح غلط املایی احتمالی در نکات کوتاه
+      if (Array.isArray(db.shortTips)) {
+        db.shortTips.forEach(t => {
+          if (t.title) t.title = t.title.replace('جادو  مرور', 'جادوی مرور');
+        });
+      }
+    },
+
+    // ۳. همگام‌سازی گشتالتی تمام عناصر DOM (هدر، فوتر، نوار اعلان، صفحه اصلی و صفحات داخلی)
+    syncDOM() {
+      if (typeof DB === 'undefined' || !DB.siteSettings) return;
+      const ss = DB.siteSettings;
+      const vis = ss.modulesVisibility || {};
+      const activeCats = (DB.categories || []).filter(c => c.active !== false);
+      const publishedPosts = (DB.posts || []).filter(p => p.status === 'published');
+
+      // ۱) عنوان مرورگر
+      document.title = `${ss.siteTitle} | سامانه جامع مشاوره‌ای ${ss.schoolName}`;
+
+      // ۲) شمارنده دسته‌بندی‌ها در تمام نقاط سایت (رفع باگ خط ۶۶۰)
+      const countFa = toFaNum(activeCats.length);
+      document.querySelectorAll('.js-cat-count').forEach(el => {
+        el.textContent = countFa;
+      });
+
+      // ۳) نوار اطلاعیه بالای صفحه (#top-announcement-bar - خط ۴۲۰)
+      const topBar = document.getElementById('top-announcement-bar');
+      if (topBar) {
+        if (vis.showTopBar === false) {
+          topBar.classList.add('hidden');
+        } else {
+          topBar.classList.remove('hidden');
+          const badgeEl = topBar.querySelector('span.rounded-full');
+          if (badgeEl) badgeEl.textContent = ss.topBarBadge || 'اطلاعیه مهم';
+          const textEl = document.getElementById('top-announcement-text');
+          if (textEl) {
+            const latestAnn = (Array.isArray(DB.announcements) && DB.announcements.length > 0 && vis.showAnnouncements !== false)
+              ? DB.announcements[0].title
+              : ss.topBarAnnouncement;
+            textEl.textContent = latestAnn || ss.heroTitle;
+          }
+          const topCalBtn = topBar.querySelector('button[onclick*="calendar"]');
+          if (topCalBtn) topCalBtn.style.display = (vis.showCalendar === false) ? 'none' : '';
+        }
+      }
+
+      // ۴) هدر اصلی (#main-header - خط ۴۳۸)
+      const header = document.getElementById('main-header');
+      if (header) {
+        const brandTitle = header.querySelector('.text-lg.font-black, .sm\\:text-xl.font-black');
+        if (brandTitle) brandTitle.textContent = ss.siteTitle;
+        const brandBadge = header.querySelector('.bg-turquoise-50.text-turquoise-700');
+        if (brandBadge) brandBadge.textContent = ss.versionBadge || 'نسخه جامع';
+        const brandSchool = header.querySelector('p.text-slate-500');
+        if (brandSchool) brandSchool.textContent = ss.schoolName;
+      }
+
+      // ۵) فوتر سایت (#main-footer - خطوط ۵۶۲ تا ۶۵۷)
+      const footer = document.getElementById('main-footer');
+      if (footer) {
+        const cols = footer.querySelectorAll('.grid > div');
+        if (cols[0]) {
+          const fTitle = cols[0].querySelector('h4');
+          if (fTitle) fTitle.textContent = ss.siteTitle;
+          const fSub = cols[0].querySelector('p.text-turquoise-400');
+          if (fSub) fSub.textContent = ss.footerSubtitle;
+          const fDesc = cols[0].querySelector('p.text-slate-400');
+          if (fDesc) fDesc.textContent = ss.footerDescription;
+        }
+        // اتصال پویا و زنده ستون سوم فوتر (محورهای کلیدی) به دسته‌بندی‌های واقعی
+        if (cols[2]) {
+          const ul = cols[2].querySelector('ul');
+          if (ul) {
+            ul.innerHTML = activeCats.slice(0, 6).map(c => `
+              <li>
+                <button type="button" onclick="navigateTo('category', {id: '${c.id}'})" class="hover:text-softyellow-400 transition text-right">
+                  ${c.title}
+                </button>
+              </li>
+            `).join('');
+          }
+        }
+        // اتصال پویا و زنده ستون چهارم فوتر (آدرس، ساعت حضور و تلفن مشاور)
+        if (cols[3]) {
+          const pTags = cols[3].querySelectorAll('p');
+          if (pTags[0]) pTags[0].innerHTML = `<span class="text-turquoise-400 mt-0.5">📍</span><span>${ss.schoolAddress}</span>`;
+          if (pTags[1]) pTags[1].innerHTML = `<span class="text-turquoise-400">🕘</span><span>ساعات مراجعه حضوری: ${ss.officeHours}</span>`;
+          if (pTags[2]) pTags[2].innerHTML = `<span class="text-turquoise-400">☎️</span><span>تلفن مستقیم مشاور (${ss.counselorLeadName}): ${ss.counselorPhone}</span>`;
+        }
+        const footerCalLink = footer.querySelector('button[onclick*="navigateTo(\'calendar\')"]');
+        if (footerCalLink) footerCalLink.style.display = (vis.showCalendar === false) ? 'none' : '';
+        const copyP = footer.querySelector('.pt-6.flex p');
+        if (copyP) copyP.textContent = ss.copyrightText;
+      }
+
+      // ۶) مدیریت گشتالتی صفحه اصلی (حذف خودکار کادرهای خالی و حفظ تقارن بصری)
+      if (typeof STATE !== 'undefined' && STATE.currentView === 'home') {
+        const vp = document.getElementById('app-viewport');
+        if (vp) {
+          const sections = vp.querySelectorAll(':scope > section');
+
+          // بخش ۱: هیرو (خط ۱۵۷۱)
+          if (sections[0]) {
+            const hBadge = sections[0].querySelector('.inline-flex span:last-child');
+            if (hBadge) hBadge.textContent = ss.heroBadge;
+            const h1 = sections[0].querySelector('h1');
+            if (h1) h1.textContent = `«${ss.heroTitle}»`;
+            const hSub = sections[0].querySelector('p.text-slate-200');
+            if (hSub) hSub.textContent = ss.heroSubtitle;
+          }
+
+          // بخش ۲: نکات کوتاه مشاوره‌ای روز (خط ۱۶۰۷)
+          if (sections[1]) {
+            const hasTips = Array.isArray(DB.shortTips) && DB.shortTips.length > 0 && vis.showShortTips !== false;
+            sections[1].style.display = hasTips ? '' : 'none';
+          }
+
+          // بخش ۳: دسته‌بندی‌های اصلی (خط ۱۶۲۸)
+          if (sections[2]) {
+            sections[2].style.display = (vis.showCategories === false) ? 'none' : '';
+            const catH2 = sections[2].querySelector('h2');
+            if (catH2) catH2.textContent = `${toFaNum(activeCats.length)} دسته‌بندی اصلی ${ss.siteTitle}`;
+          }
+
+          // بخش ۴: مطالب پیشنهادی و تازه‌ترین مطالب (خط ۱۶۷۸)
+          if (sections[3]) {
+            sections[3].style.display = (vis.showFeaturedPosts === false) ? 'none' : '';
+          }
+
+          // بخش ۵: ویدئوها و پادکست‌ها (خط ۱۶۸۲ - مدیریت هوشمند کادر خالی در صورت حذف تمام فیلم‌ها یا پادکست‌ها)
+          if (sections[4]) {
+            const videoPosts = publishedPosts.filter(p => p.contentType === 'video' || p.mediaFormat === 'video' || p.aparatHash || p.videoUrl);
+            const audioPosts = publishedPosts.filter(p => p.contentType === 'audio' || p.mediaFormat === 'audio' || p.audioUrl);
+            const vidCol = sections[4].querySelector('.lg\\:col-span-7');
+            const audCol = sections[4].querySelector('.lg\\:col-span-5');
+
+            if (vis.showMediaSection === false || (videoPosts.length === 0 && audioPosts.length === 0)) {
+              sections[4].style.display = 'none';
+            } else {
+              sections[4].style.display = '';
+              if (vidCol && audCol) {
+                if (videoPosts.length === 0) {
+                  vidCol.style.display = 'none';
+                  audCol.style.display = '';
+                  audCol.className = 'lg:col-span-12 space-y-4';
+                } else if (audioPosts.length === 0) {
+                  audCol.style.display = 'none';
+                  vidCol.style.display = '';
+                  vidCol.className = 'lg:col-span-12 space-y-4';
+                } else {
+                  vidCol.style.display = '';
+                  audCol.style.display = '';
+                  vidCol.className = 'lg:col-span-7 space-y-4';
+                  audCol.className = 'lg:col-span-5 space-y-4';
+                }
+              }
+            }
+          }
+
+          // بخش ۶: اطلاعیه‌ها و معرفی مشاور (خط ۱۷۱۸)
+          if (sections[5]) {
+            const cols = sections[5].querySelectorAll('.grid > div');
+            const annCard = cols[0];
+            const cnsCard = cols[1];
+            const hasAnns = Array.isArray(DB.announcements) && DB.announcements.length > 0 && vis.showAnnouncements !== false;
+            const showCns = vis.showCounselorBox !== false;
+
+            if (!hasAnns && !showCns) {
+              sections[5].style.display = 'none';
+            } else {
+              sections[5].style.display = '';
+              if (annCard) {
+                annCard.style.display = hasAnns ? '' : 'none';
+                annCard.className = (!showCns && hasAnns)
+                  ? 'lg:col-span-12 bg-navy-950/70 rounded-3xl p-6 border border-navy-800 flex flex-col justify-between space-y-5'
+                  : 'lg:col-span-6 bg-navy-950/70 rounded-3xl p-6 border border-navy-800 flex flex-col justify-between space-y-5';
+              }
+              if (cnsCard) {
+                cnsCard.style.display = showCns ? '' : 'none';
+                cnsCard.className = (!hasAnns && showCns)
+                  ? 'lg:col-span-12 bg-gradient-to-br from-navy-800 to-navy-950 rounded-3xl p-6 border border-turquoise-500/30 flex flex-col justify-between space-y-5'
+                  : 'lg:col-span-6 bg-gradient-to-br from-navy-800 to-navy-950 rounded-3xl p-6 border border-turquoise-500/30 flex flex-col justify-between space-y-5';
+                const cH2 = cnsCard.querySelector('h2');
+                if (cH2) cH2.textContent = ss.counselorSectionHeading;
+                const cSub = cnsCard.querySelector('p.text-xs.text-slate-300');
+                if (cSub) cSub.textContent = `با مسئولیت ${ss.counselorLeadName} (${ss.counselorLeadDegree}) • ساعات حضور: ${ss.officeHours}`;
+                const cMission = cnsCard.querySelector('p.text-xs.sm\\:text-sm.text-slate-200');
+                if (cMission) cMission.textContent = ss.counselorMissionText;
+              }
+            }
+          }
+
+          // بخش ۷: سؤالات پرتکرار در صفحه اصلی (خط ۱۷۵۵)
+          if (sections[6]) {
+            const approvedFaqs = (DB.faqs || []).filter(f => f.approved);
+            sections[6].style.display = (vis.showHomeFaq === false || approvedFaqs.length === 0) ? 'none' : '';
+          }
+        }
+      }
+
+      // ۷) اصلاح عبارت ثابت «۱۹گانه» در سایدبار صفحه دسته‌بندی تکی (خط ۲۰۲۸)
+      if (typeof STATE !== 'undefined' && STATE.currentView === 'category') {
+        const vp = document.getElementById('app-viewport');
+        if (vp) {
+          vp.querySelectorAll('h3').forEach(h3 => {
+            if (h3.textContent.includes('سایر دسته‌بندی‌های')) {
+              h3.textContent = `سایر دسته‌بندی‌های ${toFaNum(activeCats.length)}‌گانه`;
+            }
+          });
+        }
+      }
+
+      // ۸) مخفی‌سازی تب تقویم در صفحه ابزارها در صورت غیرفعال شدن تقویم
+      if (typeof STATE !== 'undefined' && STATE.currentView === 'tools') {
+        const vp = document.getElementById('app-viewport');
+        if (vp && vis.showCalendar === false) {
+          const calTabBtn = vp.querySelector('button[onclick*="tab: \'calendar\'"]');
+          if (calTabBtn) calTabBtn.style.display = 'none';
+        }
+      }
+
+      this.renderAdminFloatingCommandBar();
+    },
+
+    renderAdminFloatingCommandBar() {
+      const isAppMode = Boolean(window.__HAMRAH_IS_APP_MODE || document.documentElement.classList.contains('is-mobile-app'));
+      if (isAppMode) return;
+
+      const isStaff = (typeof AuthService !== 'undefined' && AuthService.isAuthenticatedStaff && AuthService.isAuthenticatedStaff());
+      let bar = document.getElementById('hamrah-gestalt-command-bar');
+
+      if (!isStaff) {
+        if (bar) bar.remove();
+        return;
+      }
+
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'hamrah-gestalt-command-bar';
+        bar.setAttribute('data-admin-trigger', 'true');
+        bar.className = 'fixed bottom-5 right-5 z-50 flex flex-col gap-2';
+        document.body.appendChild(bar);
+      }
+
+      const dirty = window.STATE && window.STATE.adminHasUnpublishedChanges;
+      bar.innerHTML = `
+        <div class="flex items-center gap-2 bg-navy-950/95 text-white p-2 rounded-2xl shadow-2xl border-2 border-turquoise-400 backdrop-blur-md">
+          <button type="button" onclick="UnifiedCMSStudio.openStudio('categories')" class="px-4 py-2 rounded-xl bg-gradient-to-r from-turquoise-500 to-softblue-600 text-navy-950 font-black text-xs hover:opacity-95 transition flex items-center gap-1.5 shadow">
+            <span>🛠️ میز فرمان و ویرایش ۱۰۰٪ سایت</span>
+          </button>
+          <button type="button" onclick="CloudSync.publishToCloud()" class="px-3.5 py-2 rounded-xl ${dirty ? 'bg-amber-400 text-navy-950 animate-pulse' : 'bg-emerald-600 text-white'} font-black text-xs hover:opacity-95 transition">
+            ${dirty ? '☁️ انتشار آنلاین تغییرات (!)' : '☁️ انتشار در سرور'}
+          </button>
+        </div>
+      `;
+    }
+  };
+
+  // ۴. بازنویسی (Override) توابع رندر معیوب در index_2.html
+  // الف) اصلاح تابع renderFaqAccordionItem (خط ۱۸۵۸) برای فیلتر کردن فیلم‌ها و مطالب حذف‌شده
+  window.renderFaqAccordionItem = function(faq, openByDefault) {
+    const cat = (DB.categories || []).find(c => c.id === faq.categoryId);
+    const relatedPosts = (faq.relatedPostIds || [])
+      .map(pid => (DB.posts || []).find(p => p.id === pid && p.status === 'published'))
+      .filter(Boolean);
+    const isStaff = (typeof AuthService !== 'undefined' && AuthService.isAuthenticatedStaff && AuthService.isAuthenticatedStaff());
+
+    return `
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <button type="button" onclick="toggleFaqItem('${faq.id}')" class="w-full p-4 sm:p-5 text-right flex items-center justify-between gap-4 hover:bg-slate-50 transition">
+          <div class="flex items-start gap-3">
+            <span class="w-7 h-7 rounded-xl bg-turquoise-50 text-turquoise-700 border border-turquoise-200 font-black text-sm flex items-center justify-center shrink-0 mt-0.5">؟</span>
+            <div>
+              <h3 class="text-sm sm:text-base font-extrabold text-navy-900 leading-snug">${faq.question}</h3>
+              <p class="text-[11px] text-slate-400 mt-1">${cat ? cat.title : 'عمومی'} • پرسش از: ${faq.askedByPublic || faq.askedBy || 'دانش‌آموز مدرسه'}</p>
+            </div>
+          </div>
+          <span id="faq-icon-${faq.id}" class="text-slate-400 font-bold text-lg transition-transform ${openByDefault ? 'rotate-180' : ''}">⌄</span>
+        </button>
+        <div id="faq-body-${faq.id}" class="${openByDefault ? '' : 'hidden'} px-5 pb-5 pt-2 border-t border-slate-100 bg-slate-50/50 space-y-3">
+          <p class="text-xs sm:text-sm text-slate-700 leading-loose">${faq.answer}</p>
+          ${relatedPosts.length ? `
+            <div class="pt-2 flex flex-wrap items-center gap-2">
+              <span class="text-xs font-bold text-navy-900">📌 مطالب مرتبط برای مطالعه بیشتر:</span>
+              ${relatedPosts.map(rp => `
+                <button type="button" onclick="navigateTo('post', {id: '${rp.id}'})" class="px-3 py-1 rounded-xl bg-white border border-turquoise-200 text-turquoise-700 text-xs font-bold hover:bg-turquoise-50">
+                  ${rp.title} ←
+                </button>
+              `).join('')}
+            </div>
+          ` : ''}
+          ${isStaff ? `
+            <div class="pt-2 border-t border-slate-200/60 flex justify-end gap-2 text-xs">
+              <button type="button" onclick="UnifiedCMSStudio.editFaqPrompt('${faq.id}')" class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 font-bold">✏️ ویرایش سؤال و پاسخ</button>
+              <button type="button" onclick="UnifiedCMSStudio.deleteFaqItem('${faq.id}')" class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 border border-rose-200 font-bold">🗑️ حذف سؤال</button>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  };
+
+  // ب) اصلاح تابع openCounselorModal (خط ۲۸۹۰) برای خواندن پویا از اطلاعات مشاور
+  window.openCounselorModal = function() {
+    GestaltEngine.syncDatabase(DB);
+    const ss = DB.siteSettings || {};
+    const list = (Array.isArray(DB.counselorsList) && DB.counselorsList.length) ? DB.counselorsList : [{
+      id: 'cns-1',
+      icon: '🎓',
+      name: ss.counselorLeadName,
+      role: `${ss.counselorLeadDegree} — ${ss.schoolName}`,
+      bio: ss.counselorMissionText,
+      schedule: ss.officeHours
+    }];
+    const isStaff = (typeof AuthService !== 'undefined' && AuthService.isAuthenticatedStaff && AuthService.isAuthenticatedStaff());
+
+    openModal(`
+      <div class="space-y-5 text-right">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+          <h3 class="text-lg font-black text-navy-900">👨‍🏫 ${ss.counselorSectionHeading}</h3>
+          <button type="button" onclick="closeModal()" class="text-slate-400 hover:text-rose-600 font-bold text-lg">✕</button>
+        </div>
+        <div class="grid grid-cols-1 ${list.length > 1 ? 'sm:grid-cols-2' : ''} gap-4 text-xs">
+          ${list.map(c => `
+            <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+              <div class="flex items-center gap-3">
+                <span class="text-3xl">${c.icon || '🎓'}</span>
+                <div>
+                  <h4 class="font-black text-navy-900 text-base">${c.name}</h4>
+                  <p class="text-turquoise-700 font-bold text-xs mt-0.5">${c.role}</p>
+                </div>
+              </div>
+              <p class="text-slate-600 leading-relaxed pt-1">${c.bio || ss.counselorMissionText}</p>
+              <div class="pt-2 border-t border-slate-200/80 flex flex-wrap gap-4 text-navy-900 font-bold">
+                <span>🕘 ساعات حضور: ${c.schedule || ss.officeHours}</span>
+                <span>☎️ تلفن تماس: ${ss.counselorPhone}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="p-4 rounded-2xl bg-turquoise-50 border border-turquoise-200 text-xs text-navy-900 leading-relaxed">
+          <strong>📍 آدرس:</strong> ${ss.schoolAddress}
+        </div>
+        <div class="flex flex-wrap justify-between items-center gap-2">
+          ${isStaff ? `
+            <button type="button" onclick="closeModal();UnifiedCMSStudio.openStudio('identity')" class="px-4 py-2.5 rounded-xl bg-amber-500 text-navy-950 text-xs font-black">
+              ✏️ ویرایش مشخصات مشاور و مدرسه
+            </button>
+          ` : '<span></span>'}
+          <button type="button" onclick="closeModal();openAskCounselorModal()" class="px-5 py-2.5 rounded-xl bg-navy-900 text-white text-xs font-bold">
+            ✉️ ارسال سؤال برای مشاور
+          </button>
+        </div>
+      </div>
+    `);
+  };
+
+  // ۵. استودیوی جامع مدیریت و ویرایش ۱۰۰٪ اجزای سایت (UnifiedCMSStudio)
+  window.UnifiedCMSStudio = {
+    activeTab: 'categories',
+
+    openStudio(tab) {
+      if (typeof AuthService !== 'undefined' && !AuthService.isAuthenticatedStaff()) {
+        showToast('لطفاً ابتدا با حساب مدیریت وارد شوید.', 'warning');
+        if (typeof openStaffLoginModal === 'function') openStaffLoginModal();
+        return;
+      }
+      this.activeTab = tab || this.activeTab || 'categories';
+      GestaltEngine.syncDatabase(DB);
+
+      const tabs = [
+        { id: 'categories', label: '📂 عناوین اصلی و فرعی (جابجایی ۳ و ۶ / تبدیل)' },
+        { id: 'modules', label: '🗓️ تقویم، نکات روز، اطلاعیه‌ها و حذف بخش‌ها' },
+        { id: 'identity', label: '👨‍🏫 نام مشاور، هدر، فوتر و کل سایت' },
+        { id: 'posts', label: '🎬 مقالات، فیلم‌ها و پادکست‌ها (یکپارچه)' },
+        { id: 'faqs_quizzes', label: '❓ سؤالات پرتکرار و آزمون‌ها' },
+        { id: 'majors_paths', label: '🎓 رشته‌ها و مسیرهای یادگیری' }
+      ];
+
+      let bodyHtml = '';
+      if (this.activeTab === 'categories') bodyHtml = this.renderCategoriesTab();
+      else if (this.activeTab === 'modules') bodyHtml = this.renderModulesTab();
+      else if (this.activeTab === 'identity') bodyHtml = this.renderIdentityTab();
+      else if (this.activeTab === 'posts') bodyHtml = this.renderPostsTab();
+      else if (this.activeTab === 'faqs_quizzes') bodyHtml = this.renderFaqsAndQuizzesTab();
+      else if (this.activeTab === 'majors_paths') bodyHtml = this.renderMajorsAndPathsTab();
+
+      openModal(`
+        <div class="space-y-4 text-right">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+            <div>
+              <h2 class="text-base sm:text-xl font-black text-navy-900">🛠️ میز فرمان و ویرایشگر جامع ۱۰۰٪ اجزای سایت</h2>
+              <p class="text-[11px] text-slate-500">تمامی تغییرات به صورت زنجیره‌ای و خودکار در کل صفحات سایت هماهنگ می‌شوند.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="CloudSync.publishToCloud()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow">
+                ☁️ انتشار دائمی در سرور
+              </button>
+              <button type="button" onclick="closeModal()" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-600 font-bold text-sm">✕</button>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-1.5 border-b border-slate-200 pb-3">
+            ${tabs.map(t => `
+              <button type="button" onclick="UnifiedCMSStudio.openStudio('${t.id}')" class="px-3 py-2 rounded-xl text-xs font-extrabold transition ${this.activeTab === t.id ? 'bg-navy-900 text-turquoise-300 shadow' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
+                ${t.label}
+              </button>
+            `).join('')}
+          </div>
+
+          <div class="space-y-5 max-h-[68vh] overflow-y-auto pr-1">
+            ${bodyHtml}
+          </div>
+        </div>
+      `, 'unified-cms-studio-modal');
+    },
+
+    // ==================== TAB 1: CATEGORIES & SUBCATEGORIES ====================
+    renderCategoriesTab() {
+      const cats = DB.categories || [];
+      return `
+        <!-- تعویض مستقیم دو شماره (مثلاً تعویض ۳ و ۶) -->
+        <div class="p-4 rounded-2xl bg-turquoise-50 border border-turquoise-200 space-y-3">
+          <h3 class="text-xs sm:text-sm font-black text-navy-900">🔄 جابجایی مستقیم جای دو عنوان اصلی با شماره (مثلاً تعویض شماره ۳ و ۶)</h3>
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <span class="font-bold">تعویض جای شماره:</span>
+            <input id="cms-swap-a" type="number" min="1" max="${cats.length}" placeholder="مثلاً 3" class="w-24 px-3 py-2 rounded-xl border border-slate-300 font-black text-center bg-white" />
+            <span class="font-bold">با شماره:</span>
+            <input id="cms-swap-b" type="number" min="1" max="${cats.length}" placeholder="مثلاً 6" class="w-24 px-3 py-2 rounded-xl border border-slate-300 font-black text-center bg-white" />
+            <button type="button" onclick="UnifiedCMSStudio.swapCategoriesByNumber()" class="px-4 py-2 rounded-xl bg-navy-900 hover:bg-turquoise-600 text-white font-black transition">
+              ⚡ جابجا کن و شماره‌ها را خودکار بروز کن
+            </button>
+          </div>
+        </div>
+
+        <!-- افزودن عنوان اصلی یا فرعی جدید -->
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+          <h3 class="text-xs sm:text-sm font-black text-navy-900">➕ افزودن عنوان اصلی یا فرعی جدید (شماره‌گذاری خودکار)</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 text-xs">
+            <div class="sm:col-span-3">
+              <select id="cms-add-cat-level" onchange="document.getElementById('cms-add-cat-parent-box').classList.toggle('hidden', this.value==='main')" class="w-full px-3 py-2 rounded-xl border bg-white font-bold">
+                <option value="main">عنوان اصلی جدید</option>
+                <option value="sub">عنوان فرعی (زیرعنوان)</option>
+              </select>
+            </div>
+            <div id="cms-add-cat-parent-box" class="sm:col-span-4 hidden">
+              <select id="cms-add-cat-parent" class="w-full px-3 py-2 rounded-xl border bg-white font-bold">
+                ${cats.map(c => `<option value="${c.id}">زیرمجموعه: ${c.title}</option>`).join('')}
+              </select>
+            </div>
+            <div class="sm:col-span-2">
+              <input id="cms-add-cat-icon" type="text" value="🎯" placeholder="آیکون" class="w-full px-3 py-2 rounded-xl border text-center bg-white" />
+            </div>
+            <div class="sm:col-span-5">
+              <input id="cms-add-cat-title" type="text" placeholder="نام عنوان (بدون عدد)..." class="w-full px-3 py-2 rounded-xl border font-bold bg-white" />
+            </div>
+            <div class="sm:col-span-9">
+              <input id="cms-add-cat-desc" type="text" placeholder="توضیحات علمی و مشاوره‌ای این عنوان..." class="w-full px-3 py-2 rounded-xl border bg-white" />
+            </div>
+            <div class="sm:col-span-3">
+              <button type="button" onclick="UnifiedCMSStudio.addCategoryOrSub()" class="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black">
+                + ثبت و شماره‌گذاری
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- لیست عناوین اصلی و فرعی -->
+        <div class="space-y-3">
+          ${cats.map((cat, idx) => `
+            <div class="p-4 rounded-2xl border-2 ${cat.active === false ? 'border-rose-200 bg-rose-50/30' : 'border-slate-200 bg-white'} space-y-3 shadow-sm">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-1 rounded-lg bg-navy-900 text-turquoise-300 font-black text-xs">ردیف ${toFaNum(idx + 1)}</span>
+                  <span class="text-xl">${cat.icon || '📘'}</span>
+                  <strong class="text-sm font-black text-navy-900">${cat.title}</strong>
+                  ${cat.active === false ? `<span class="px-2 py-0.5 rounded bg-rose-100 text-rose-700 text-[10px] font-bold">مخفی</span>` : ''}
+                </div>
+                <div class="flex flex-wrap items-center gap-1 text-xs">
+                  <button type="button" onclick="UnifiedCMSStudio.moveCategory(${idx}, -1)" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold" title="انتقال به بالا">⬆️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.moveCategory(${idx}, 1)" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold" title="انتقال به پایین">⬇️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.demoteMainCategory('${cat.id}')" class="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold">
+                    ↳ تبدیل به زیرعنوان فرعی
+                  </button>
+                  <button type="button" onclick="UnifiedCMSStudio.editCategoryPrompt('${cat.id}')" class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 font-bold">✏️ ویرایش</button>
+                  <button type="button" onclick="UnifiedCMSStudio.toggleCategoryActive('${cat.id}')" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold">${cat.active === false ? '👁️ نمایش' : '🙈 مخفی'}</button>
+                  <button type="button" onclick="UnifiedCMSStudio.deleteCategory('${cat.id}')" class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 border border-rose-200 font-bold">🗑️ حذف</button>
+                </div>
+              </div>
+
+              <p class="text-xs text-slate-500">${cat.description || ''}</p>
+
+              <!-- زیرعنوان‌ها -->
+              <div class="pr-4 border-r-2 border-turquoise-300 space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-extrabold text-slate-500">زیرعنوان‌های این دسته (${toFaNum((cat.subcategories || []).length)} مورد):</span>
+                </div>
+                ${(cat.subcategories || []).map((sub, sIdx) => `
+                  <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div class="flex items-center gap-1.5">
+                      <span class="px-2 py-0.5 rounded bg-slate-200 text-navy-900 font-bold text-[10px]">${toFaNum(idx + 1)}-${toFaNum(sIdx + 1)}</span>
+                      <span>${sub.icon || '🔹'}</span>
+                      <span class="font-bold text-navy-900">${sub.title}</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1">
+                      <button type="button" onclick="UnifiedCMSStudio.moveSubcategory('${cat.id}', ${sIdx}, -1)" class="px-1.5 py-0.5 rounded bg-white border text-[11px]">⬆️</button>
+                      <button type="button" onclick="UnifiedCMSStudio.moveSubcategory('${cat.id}', ${sIdx}, 1)" class="px-1.5 py-0.5 rounded bg-white border text-[11px]">⬇️</button>
+                      <button type="button" onclick="UnifiedCMSStudio.promoteSubToMain('${cat.id}', '${sub.id}')" class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">
+                        ↰ تبدیل به عنوان اصلی
+                      </button>
+                      <button type="button" onclick="UnifiedCMSStudio.moveSubToAnotherCat('${cat.id}', '${sub.id}')" class="px-2 py-0.5 rounded bg-softblue-50 text-softblue-700 border border-softblue-200 text-[11px] font-bold">
+                        ⇄ انتقال به دسته دیگر
+                      </button>
+                      <button type="button" onclick="UnifiedCMSStudio.editSubPrompt('${cat.id}', '${sub.id}')" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-bold">✏️</button>
+                      <button type="button" onclick="UnifiedCMSStudio.deleteSub('${cat.id}', '${sub.id}')" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200 text-[11px] font-bold">🗑️</button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    },
+
+    swapCategoriesByNumber() {
+      const a = parseInt(document.getElementById('cms-swap-a')?.value, 10) - 1;
+      const b = parseInt(document.getElementById('cms-swap-b')?.value, 10) - 1;
+      if (isNaN(a) || isNaN(b) || a < 0 || b < 0 || a >= DB.categories.length || b >= DB.categories.length) {
+        return showToast(`لطفاً دو شماره معتبر بین ۱ تا ${toFaNum(DB.categories.length)} وارد کنید.`, 'warning');
+      }
+      const temp = DB.categories[a];
+      DB.categories[a] = DB.categories[b];
+      DB.categories[b] = temp;
+      this.commit(`تعویض مستقیم جای عنوان شماره ${a + 1} و ${b + 1}`);
+    },
+
+    moveCategory(idx, dir) {
+      const target = idx + dir;
+      if (target < 0 || target >= DB.categories.length) return;
+      const temp = DB.categories[idx];
+      DB.categories[idx] = DB.categories[target];
+      DB.categories[target] = temp;
+      this.commit('جابجایی ترتیب دسته‌بندی‌ها');
+    },
+
+    addCategoryOrSub() {
+      const level = document.getElementById('cms-add-cat-level')?.value || 'main';
+      const parentId = document.getElementById('cms-add-cat-parent')?.value;
+      const icon = document.getElementById('cms-add-cat-icon')?.value.trim() || '🎯';
+      const rawTitle = document.getElementById('cms-add-cat-title')?.value.trim();
+      const desc = document.getElementById('cms-add-cat-desc')?.value.trim() || '';
+      if (!rawTitle) return showToast('لطفاً نام عنوان را وارد کنید.', 'warning');
+      const clean = stripNumberPrefix(rawTitle);
+
+      if (level === 'main') {
+        DB.categories.push({
+          id: 'cat-' + Date.now(),
+          order: DB.categories.length + 1,
+          active: true,
+          icon,
+          color: 'from-softblue-500 to-navy-900',
+          cleanTitle: clean,
+          title: clean,
+          slug: 'cat-' + Date.now(),
+          description: desc || clean,
+          subcategories: [{ id: 'sub-' + Date.now(), parentId: null, title: 'مباحث تخصصی ' + clean, icon, description: desc }]
+        });
+        this.commit(`افزودن عنوان اصلی «${clean}»`);
+      } else {
+        const cat = DB.categories.find(c => c.id === parentId) || DB.categories[0];
+        if (!cat) return;
+        cat.subcategories = cat.subcategories || [];
+        cat.subcategories.push({ id: 'sub-' + Date.now(), parentId: null, title: clean, icon, description: desc });
+        this.commit(`افزودن زیرعنوان «${clean}»`);
+      }
+    },
+
+    editCategoryPrompt(catId) {
+      const cat = DB.categories.find(c => c.id === catId);
+      if (!cat) return;
+      const t = prompt('نام عنوان اصلی (شماره به صورت خودکار گذاشته می‌شود):', cat.cleanTitle || stripNumberPrefix(cat.title));
+      if (t === null) return;
+      const ic = prompt('آیکون:', cat.icon || '📘');
+      const ds = prompt('توضیحات:', cat.description || '');
+      if (t.trim()) {
+        cat.cleanTitle = stripNumberPrefix(t.trim());
+        cat.title = cat.cleanTitle;
+      }
+      if (ic !== null && ic.trim()) cat.icon = ic.trim();
+      if (ds !== null) cat.description = ds.trim();
+      this.commit(`ویرایش دسته‌بندی «${cat.cleanTitle}»`);
+    },
+
+    toggleCategoryActive(catId) {
+      const cat = DB.categories.find(c => c.id === catId);
+      if (!cat) return;
+      cat.active = (cat.active === false) ? true : false;
+      this.commit(`تغییر وضعیت نمایش دسته «${cat.cleanTitle}»`);
+    },
+
+    deleteCategory(catId) {
+      if (DB.categories.length <= 1) return showToast('حداقل یک دسته‌بندی باید باقی بماند.', 'warning');
+      const cat = DB.categories.find(c => c.id === catId);
+      if (!cat) return;
+      if (!confirm(`آیا از حذف «${cat.title}» مطمئن هستید؟ شماره‌گذاری بقیه عناوین خودکار مرتب می‌شود.`)) return;
+      const fallback = DB.categories.find(c => c.id !== catId);
+      (DB.posts || []).forEach(p => {
+        if (p.categoryId === catId && fallback) {
+          p.categoryId = fallback.id;
+          p.subcategoryId = (fallback.subcategories && fallback.subcategories[0]) ? fallback.subcategories[0].id : '';
+        }
+      });
+      DB.categories = DB.categories.filter(c => c.id !== catId);
+      this.commit(`حذف دسته‌بندی «${cat.cleanTitle}»`);
+    },
+
+    demoteMainCategory(sourceCatId) {
+      const sourceCat = DB.categories.find(c => c.id === sourceCatId);
+      if (!sourceCat || DB.categories.length <= 1) return;
+      const others = DB.categories.filter(c => c.id !== sourceCatId);
+      const menu = others.map((c, i) => `${i + 1}: ${c.title}`).join('\n');
+      const pick = prompt(`عنوان «${sourceCat.cleanTitle}» زیرمجموعه کدام دسته شود؟ شماره را وارد کنید:\n${menu}`, '1');
+      if (!pick) return;
+      const targetCat = others[parseInt(pick, 10) - 1];
+      if (!targetCat) return showToast('شماره نامعتبر است.', 'warning');
+
+      const newSubId = 'sub-demoted-' + Date.now();
+      targetCat.subcategories = targetCat.subcategories || [];
+      targetCat.subcategories.push({
+        id: newSubId,
+        parentId: null,
+        title: sourceCat.cleanTitle,
+        icon: sourceCat.icon || '🔹',
+        description: sourceCat.description || ''
+      });
+      (sourceCat.subcategories || []).forEach(s => {
+        targetCat.subcategories.push({ ...s, parentId: newSubId });
+      });
+      (DB.posts || []).forEach(p => {
+        if (p.categoryId === sourceCatId) {
+          p.categoryId = targetCat.id;
+          p.subcategoryId = newSubId;
+        }
+      });
+      DB.categories = DB.categories.filter(c => c.id !== sourceCatId);
+      this.commit(`تبدیل عنوان اصلی «${sourceCat.cleanTitle}» به زیرعنوان در «${targetCat.cleanTitle}»`);
+    },
+
+    promoteSubToMain(catId, subId) {
+      const cat = DB.categories.find(c => c.id === catId);
+      if (!cat) return;
+      const sub = (cat.subcategories || []).find(s => s.id === subId);
+      if (!sub) return;
+
+      const newCatId = 'cat-promoted-' + Date.now();
+      const children = (cat.subcategories || []).filter(s => s.parentId === subId).map(s => ({ ...s, parentId: null }));
+      const newCat = {
+        id: newCatId,
+        order: DB.categories.length + 1,
+        active: true,
+        icon: sub.icon || cat.icon || '📘',
+        color: sub.color || cat.color || 'from-turquoise-600 to-navy-900',
+        cleanTitle: stripNumberPrefix(sub.title),
+        title: stripNumberPrefix(sub.title),
+        slug: 'cat-' + Date.now(),
+        description: sub.description || `مباحث تخصصی ${sub.title}`,
+        subcategories: children.length ? children : [{
+          id: 'sub-def-' + Date.now(),
+          parentId: null,
+          title: 'مباحث اصلی ' + stripNumberPrefix(sub.title),
+          icon: sub.icon || '🔹',
+          description: sub.description || ''
+        }]
+      };
+
+      cat.subcategories = (cat.subcategories || []).filter(s => s.id !== subId && s.parentId !== subId);
+      DB.categories.push(newCat);
+      (DB.posts || []).forEach(p => {
+        if (p.subcategoryId === subId) {
+          p.categoryId = newCatId;
+          p.subcategoryId = newCat.subcategories[0].id;
+        }
+      });
+      this.commit(`تبدیل زیرعنوان «${sub.title}» به عنوان اصلی مستقل`);
+    },
+
+    moveSubcategory(catId, sIdx, dir) {
+      const cat = DB.categories.find(c => c.id === catId);
+      if (!cat || !Array.isArray(cat.subcategories)) return;
+      const target = sIdx + dir;
+      if (target < 0 || target >= cat.subcategories.length) return;
+      const temp = cat.subcategories[sIdx];
+      cat.subcategories[sIdx] = cat.subcategories[target];
+      cat.subcategories[target] = temp;
+      this.commit('جابجایی زیرعنوان');
+    },
+
+    moveSubToAnotherCat(sourceCatId, subId) {
+      const sourceCat = DB.categories.find(c => c.id === sourceCatId);
+      if (!sourceCat) return;
+      const sub = (sourceCat.subcategories || []).find(s => s.id === subId);
+      if (!sub) return;
+      const others = DB.categories.filter(c => c.id !== sourceCatId);
+      const menu = others.map((c, i) => `${i + 1}: ${c.title}`).join('\n');
+      const pick = prompt(`زیرعنوان «${sub.title}» به کدام دسته منتقل شود؟\n${menu}`, '1');
+      if (!pick) return;
+      const targetCat = others[parseInt(pick, 10) - 1];
+      if (!targetCat) return;
+
+      sourceCat.subcategories = sourceCat.subcategories.filter(s => s.id !== subId);
+      sub.parentId = null;
+      targetCat.subcategories = targetCat.subcategories || [];
+      targetCat.subcategories.push(sub);
+      (DB.posts || []).forEach(p => {
+        if (p.subcategoryId === subId) p.categoryId = targetCat.id;
+      });
+      this.commit(`انتقال زیرعنوان «${sub.title}» به «${targetCat.cleanTitle}»`);
+    },
+
+    editSubPrompt(catId, subId) {
+      const cat = DB.categories.find(c => c.id === catId);
+      if (!cat) return;
+      const sub = (cat.subcategories || []).find(s => s.id === subId);
+      if (!sub) return;
+      const t = prompt('نام زیرعنوان:', sub.title);
+      if (t === null) return;
+      const ic = prompt('آیکون:', sub.icon || '🔹');
+      const ds = prompt('توضیحات:', sub.description || '');
+      if (t.trim()) sub.title = stripNumberPrefix(t.trim());
+      if (ic !== null && ic.trim()) sub.icon = ic.trim();
+      if (ds !== null) sub.description = ds.trim();
+      this.commit(`ویرایش زیرعنوان «${sub.title}»`);
+    },
+
+    deleteSub(catId, subId) {
+      const cat = DB.categories.find(c => c.id === catId);
+      if (!cat) return;
+      if (!confirm('آیا این زیرعنوان حذف شود؟')) return;
+      cat.subcategories = (cat.subcategories || []).filter(s => s.id !== subId && s.parentId !== subId);
+      this.commit('حذف زیرعنوان');
+    },
+
+    // ==================== TAB 2: CALENDAR, TIPS, ANNOUNCEMENTS & MODULE VISIBILITY ====================
+    renderModulesTab() {
+      const vis = DB.siteSettings.modulesVisibility || {};
+      const switches = [
+        { key: 'showTopBar', label: 'نوار اطلاعیه بالای سایت' },
+        { key: 'showShortTips', label: 'کادر نکات کوتاه مشاوره‌ای روز' },
+        { key: 'showCategories', label: 'کادر دسته‌بندی‌ها در صفحه اصلی' },
+        { key: 'showFeaturedPosts', label: 'کادر مطالب پیشنهادی در صفحه اصلی' },
+        { key: 'showMediaSection', label: 'کادر ویدئو و پادکست در صفحه اصلی' },
+        { key: 'showAnnouncements', label: 'کادر اطلاعیه‌های مدرسه' },
+        { key: 'showCounselorBox', label: 'کادر معرفی مشاور در صفحه اصلی' },
+        { key: 'showHomeFaq', label: 'کادر سؤالات پرتکرار در صفحه اصلی' },
+        { key: 'showCalendar', label: 'تقویم آموزشی در کل سایت' }
+      ];
+
+      return `
+        <!-- کلیدهای حذف/نمایش کل بخش‌ها -->
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+          <h3 class="text-xs sm:text-sm font-black text-navy-900">👁️ حذف یا نمایش کامل هر یک از بخش‌های سایت</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+            ${switches.map(sw => `
+              <label class="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200 cursor-pointer">
+                <span class="font-bold text-navy-900">${sw.label}</span>
+                <input type="checkbox" ${vis[sw.key] !== false ? 'checked' : ''} onchange="UnifiedCMSStudio.setModuleVis('${sw.key}', this.checked)" class="w-4 h-4 accent-turquoise-600" />
+              </label>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- مدیریت تقویم آموزشی -->
+        <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs sm:text-sm font-black text-navy-900">🗓️ مدیریت کامل تقویم آموزشی (${toFaNum((DB.calendarEvents || []).length)} رویداد)</h3>
+            <button type="button" onclick="UnifiedCMSStudio.clearAllCalendar()" class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 text-[11px] font-bold">🗑️ حذف تمام رویدادها</button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 text-xs bg-slate-50 p-3 rounded-xl border">
+            <input id="cms-cal-date" type="text" placeholder="تاریخ (۱۴۰۵/۰۹/۱۰)" class="sm:col-span-2 px-2.5 py-2 rounded-lg border bg-white" />
+            <input id="cms-cal-day" type="text" placeholder="روز (شنبه)" class="sm:col-span-2 px-2.5 py-2 rounded-lg border bg-white" />
+            <input id="cms-cal-title" type="text" placeholder="عنوان رویداد تقویم..." class="sm:col-span-4 px-2.5 py-2 rounded-lg border bg-white font-bold" />
+            <input id="cms-cal-type" type="text" placeholder="نوع (آزمون/کارگاه)" class="sm:col-span-2 px-2.5 py-2 rounded-lg border bg-white" />
+            <button type="button" onclick="UnifiedCMSStudio.addCalEvent()" class="sm:col-span-2 py-2 rounded-lg bg-navy-900 text-white font-bold">+ ثبت رویداد</button>
+          </div>
+          <div class="space-y-1.5">
+            ${(DB.calendarEvents || []).map((ev, i) => `
+              <div class="p-2.5 rounded-xl bg-slate-50 border flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div>
+                  <span class="px-2 py-0.5 rounded bg-navy-900 text-turquoise-300 font-bold">${ev.day} ${ev.date}</span>
+                  <strong class="mr-2 text-navy-900">${ev.title}</strong>
+                  <span class="text-slate-500">(${ev.type || 'عمومی'} - ${ev.grade || 'همه پایه‌ها'})</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('calendarEvents', ${i}, -1)" class="px-1.5 py-0.5 border rounded bg-white">⬆️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('calendarEvents', ${i}, 1)" class="px-1.5 py-0.5 border rounded bg-white">⬇️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.editCalEvent(${i})" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border font-bold">✏️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.removeItem('calendarEvents', ${i})" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border font-bold">🗑️</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- مدیریت نکات کوتاه روز -->
+        <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3">
+          <h3 class="text-xs sm:text-sm font-black text-navy-900">💡 مدیریت نکات کوتاه مشاوره‌ای روز (${toFaNum((DB.shortTips || []).length)} نکته)</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 text-xs bg-slate-50 p-3 rounded-xl border">
+            <input id="cms-tip-title" type="text" placeholder="عنوان نکته..." class="sm:col-span-3 px-2.5 py-2 rounded-lg border bg-white font-bold" />
+            <input id="cms-tip-cat" type="text" placeholder="دسته‌بندی (تمرکز)" class="sm:col-span-2 px-2.5 py-2 rounded-lg border bg-white" />
+            <input id="cms-tip-text" type="text" placeholder="متن نکته..." class="sm:col-span-5 px-2.5 py-2 rounded-lg border bg-white" />
+            <button type="button" onclick="UnifiedCMSStudio.addTip()" class="sm:col-span-2 py-2 rounded-lg bg-navy-900 text-white font-bold">+ افزودن نکته</button>
+          </div>
+          <div class="space-y-1.5">
+            ${(DB.shortTips || []).map((t, i) => `
+              <div class="p-2.5 rounded-xl bg-softyellow-50/60 border border-softyellow-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div class="max-w-xl"><strong class="text-navy-900">${t.title} (${t.category}):</strong> <span class="text-slate-600">${t.text}</span></div>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('shortTips', ${i}, -1)" class="px-1.5 py-0.5 border rounded bg-white">⬆️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('shortTips', ${i}, 1)" class="px-1.5 py-0.5 border rounded bg-white">⬇️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.editTip(${i})" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border font-bold">✏️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.removeItem('shortTips', ${i})" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border font-bold">🗑️</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- مدیریت اطلاعیه‌ها -->
+        <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3">
+          <h3 class="text-xs sm:text-sm font-black text-navy-900">📢 مدیریت اطلاعیه‌ها و اخبار مدرسه (${toFaNum((DB.announcements || []).length)} اطلاعیه)</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 text-xs bg-slate-50 p-3 rounded-xl border">
+            <input id="cms-ann-title" type="text" placeholder="عنوان اطلاعیه..." class="sm:col-span-4 px-2.5 py-2 rounded-lg border bg-white font-bold" />
+            <input id="cms-ann-badge" type="text" placeholder="برچسب (فوری/کارگاه)" class="sm:col-span-2 px-2.5 py-2 rounded-lg border bg-white" />
+            <input id="cms-ann-body" type="text" placeholder="متن کامل اطلاعیه..." class="sm:col-span-4 px-2.5 py-2 rounded-lg border bg-white" />
+            <button type="button" onclick="UnifiedCMSStudio.addAnn()" class="sm:col-span-2 py-2 rounded-lg bg-navy-900 text-white font-bold">+ ثبت اطلاعیه</button>
+          </div>
+          <div class="space-y-1.5">
+            ${(DB.announcements || []).map((a, i) => `
+              <div class="p-2.5 rounded-xl bg-slate-50 border flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div><span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">${a.badge}</span> <strong class="mr-1 text-navy-900">${a.title}</strong></div>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="UnifiedCMSStudio.editAnn(${i})" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border font-bold">✏️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.removeItem('announcements', ${i})" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border font-bold">🗑️</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    },
+
+    setModuleVis(key, val) {
+      DB.siteSettings.modulesVisibility[key] = Boolean(val);
+      this.commit('تغییر وضعیت نمایش بخش‌های سایت');
+    },
+
+    addCalEvent() {
+      const date = document.getElementById('cms-cal-date')?.value.trim() || '۱۴۰۵/۰۹/۰۱';
+      const day = document.getElementById('cms-cal-day')?.value.trim() || 'شنبه';
+      const title = document.getElementById('cms-cal-title')?.value.trim();
+      const type = document.getElementById('cms-cal-type')?.value.trim() || 'کارگاه مشاوره';
+      if (!title) return showToast('عنوان رویداد را وارد کنید.', 'warning');
+      DB.calendarEvents = DB.calendarEvents || [];
+      DB.calendarEvents.push({ id: 'ev-' + Date.now(), date, day, title, type, grade: 'همه پایه‌ها', approvalStatus: 'Approved' });
+      this.commit(`افزودن رویداد تقویم «${title}»`);
+    },
+
+    editCalEvent(i) {
+      const ev = DB.calendarEvents[i];
+      if (!ev) return;
+      const t = prompt('عنوان رویداد:', ev.title);
+      if (t === null) return;
+      const d = prompt('تاریخ:', ev.date);
+      const dy = prompt('روز هفته:', ev.day);
+      const tp = prompt('نوع:', ev.type);
+      const gr = prompt('پایه:', ev.grade || 'همه پایه‌ها');
+      if (t.trim()) ev.title = t.trim();
+      if (d !== null) ev.date = d.trim();
+      if (dy !== null) ev.day = dy.trim();
+      if (tp !== null) ev.type = tp.trim();
+      if (gr !== null) ev.grade = gr.trim();
+      this.commit('ویرایش رویداد تقویم');
+    },
+
+    clearAllCalendar() {
+      if (!confirm('آیا تمام رویدادهای تقویم پاک شوند؟')) return;
+      DB.calendarEvents = [];
+      this.commit('پاکسازی کامل تقویم');
+    },
+
+    addTip() {
+      const title = document.getElementById('cms-tip-title')?.value.trim();
+      const category = document.getElementById('cms-tip-cat')?.value.trim() || 'مشاوره';
+      const text = document.getElementById('cms-tip-text')?.value.trim();
+      if (!title || !text) return showToast('عنوان و متن نکته را وارد کنید.', 'warning');
+      DB.shortTips = DB.shortTips || [];
+      DB.shortTips.push({ id: 'tip-' + Date.now(), title, category, text });
+      this.commit(`افزودن نکته روز «${title}»`);
+    },
+
+    editTip(i) {
+      const t = DB.shortTips[i];
+      if (!t) return;
+      const ti = prompt('عنوان نکته:', t.title);
+      if (ti === null) return;
+      const ca = prompt('دسته‌بندی نکته:', t.category);
+      const tx = prompt('متن نکته:', t.text);
+      if (ti.trim()) t.title = ti.trim();
+      if (ca !== null) t.category = ca.trim();
+      if (tx !== null) t.text = tx.trim();
+      this.commit('ویرایش نکته کوتاه مشاوره‌ای');
+    },
+
+    addAnn() {
+      const title = document.getElementById('cms-ann-title')?.value.trim();
+      const badge = document.getElementById('cms-ann-badge')?.value.trim() || 'اطلاعیه';
+      const content = document.getElementById('cms-ann-body')?.value.trim();
+      if (!title) return showToast('عنوان اطلاعیه را وارد کنید.', 'warning');
+      DB.announcements = DB.announcements || [];
+      DB.announcements.unshift({ id: 'ann-' + Date.now(), title, badge, date: '۱۴۰۵/۰۸/۲۲', grade: 'همه پایه‌ها', content: content || title });
+      this.commit(`افزودن اطلاعیه «${title}»`);
+    },
+
+    editAnn(i) {
+      const a = DB.announcements[i];
+      if (!a) return;
+      const ti = prompt('عنوان اطلاعیه:', a.title);
+      if (ti === null) return;
+      const bd = prompt('برچسب:', a.badge);
+      const co = prompt('متن اطلاعیه:', a.content);
+      if (ti.trim()) a.title = ti.trim();
+      if (bd !== null) a.badge = bd.trim();
+      if (co !== null) a.content = co.trim();
+      this.commit('ویرایش اطلاعیه');
+    },
+
+    moveItem(key, idx, dir) {
+      const arr = DB[key];
+      if (!Array.isArray(arr)) return;
+      const target = idx + dir;
+      if (target < 0 || target >= arr.length) return;
+      const temp = arr[idx];
+      arr[idx] = arr[target];
+      arr[target] = temp;
+      this.commit(`جابجایی آیتم در ${key}`);
+    },
+
+    removeItem(key, idx) {
+      const arr = DB[key];
+      if (!Array.isArray(arr)) return;
+      arr.splice(idx, 1);
+      this.commit(`حذف آیتم از ${key}`);
+    },
+
+    // ==================== TAB 3: IDENTITY & GLOBAL SYNC ====================
+    renderIdentityTab() {
+      const ss = DB.siteSettings || {};
+      return `
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-4 text-xs">
+          <h3 class="text-sm font-black text-navy-900">👨‍🏫 یکپارچه‌سازی مشخصات مشاور، هدر، فوتر و کل صفحات سایت</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold mb-1">نام مشاور و مدیر کل (تغییر هم‌زمان در کل سایت و مقالات):</label>
+              <input id="cms-id-name" type="text" value="${ss.counselorLeadName || ''}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" />
+            </div>
+            <div>
+              <label class="block font-bold mb-1">عنوان / سمت مشاور:</label>
+              <input id="cms-id-role" type="text" value="${ss.counselorLeadDegree || ''}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" />
+            </div>
+            <div>
+              <label class="block font-bold mb-1">نام برند سایت (هدر و فوتر):</label>
+              <input id="cms-id-brand" type="text" value="${ss.siteTitle || ''}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" />
+            </div>
+            <div>
+              <label class="block font-bold mb-1">نام دبیرستان:</label>
+              <input id="cms-id-school" type="text" value="${ss.schoolName || ''}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" />
+            </div>
+            <div>
+              <label class="block font-bold mb-1">تلفن تماس مشاور (در فوتر و مودال مشاور):</label>
+              <input id="cms-id-phone" type="text" value="${ss.counselorPhone || ''}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" />
+            </div>
+            <div>
+              <label class="block font-bold mb-1">ساعات حضور و مراجعه (در فوتر، صفحه اصلی و مودال):</label>
+              <input id="cms-id-hours" type="text" value="${ss.officeHours || ''}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block font-bold mb-1">آدرس واحد مشاوره (در فوتر و مودال):</label>
+              <input id="cms-id-addr" type="text" value="${ss.schoolAddress || ''}" class="w-full px-3 py-2 rounded-xl border bg-white" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block font-bold mb-1">تیتر اصلی صفحه اول (Hero Title):</label>
+              <input id="cms-id-hero" type="text" value="${ss.heroTitle || ''}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block font-bold mb-1">زیرعنوان صفحه اول (Hero Subtitle):</label>
+              <input id="cms-id-herosub" type="text" value="${ss.heroSubtitle || ''}" class="w-full px-3 py-2 rounded-xl border bg-white" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block font-bold mb-1">متن نوار اطلاعیه بالای سایت:</label>
+              <input id="cms-id-top" type="text" value="${ss.topBarAnnouncement || ''}" class="w-full px-3 py-2 rounded-xl border bg-white" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block font-bold mb-1">متن معرفی واحد مشاوره در صفحه اصلی:</label>
+              <textarea id="cms-id-mission" rows="2" class="w-full px-3 py-2 rounded-xl border bg-white">${ss.counselorMissionText || ''}</textarea>
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block font-bold mb-1">متن کپی‌رایت فوتر:</label>
+              <input id="cms-id-copy" type="text" value="${ss.copyrightText || ''}" class="w-full px-3 py-2 rounded-xl border bg-white" />
+            </div>
+          </div>
+          <button type="button" onclick="UnifiedCMSStudio.saveIdentity()" class="w-full py-3 rounded-xl bg-navy-900 hover:bg-turquoise-600 text-white font-black text-sm transition">
+            💾 ذخیره و انتشار آنی در کل نقاط سایت
+          </button>
+        </div>
+      `;
+    },
+
+    saveIdentity() {
+      const ss = DB.siteSettings;
+      ss.counselorLeadName = document.getElementById('cms-id-name')?.value.trim() || ss.counselorLeadName;
+      ss.counselorLeadDegree = document.getElementById('cms-id-role')?.value.trim() || ss.counselorLeadDegree;
+      ss.siteTitle = document.getElementById('cms-id-brand')?.value.trim() || ss.siteTitle;
+      ss.schoolName = document.getElementById('cms-id-school')?.value.trim() || ss.schoolName;
+      ss.counselorPhone = document.getElementById('cms-id-phone')?.value.trim() || ss.counselorPhone;
+      ss.officeHours = document.getElementById('cms-id-hours')?.value.trim() || ss.officeHours;
+      ss.schoolAddress = document.getElementById('cms-id-addr')?.value.trim() || ss.schoolAddress;
+      ss.heroTitle = document.getElementById('cms-id-hero')?.value.trim() || ss.heroTitle;
+      ss.heroSubtitle = document.getElementById('cms-id-herosub')?.value.trim() || ss.heroSubtitle;
+      ss.topBarAnnouncement = document.getElementById('cms-id-top')?.value.trim() || ss.topBarAnnouncement;
+      ss.counselorMissionText = document.getElementById('cms-id-mission')?.value.trim() || ss.counselorMissionText;
+      ss.copyrightText = document.getElementById('cms-id-copy')?.value.trim() || ss.copyrightText;
+      this.commit(`بروزرسانی سراسری اطلاعات مشاور (${ss.counselorLeadName}) و سایت`);
+    },
+
+    // ==================== TAB 4: POSTS, VIDEOS & PODCASTS ====================
+    renderPostsTab() {
+      const posts = DB.posts || [];
+      return `
+        <div class="space-y-3 text-xs">
+          <div class="flex flex-wrap items-center justify-between gap-2 p-3 rounded-2xl bg-slate-50 border">
+            <span class="font-black text-navy-900">🎬 مدیریت یکپارچه مطالب، ویدئوها و پادکست‌ها (${toFaNum(posts.length)} مورد)</span>
+            <button type="button" onclick="closeModal();navigateTo('admin', {tab: 'editor'})" class="px-3.5 py-2 rounded-xl bg-turquoise-500 text-navy-950 font-black">
+              + ثبت مطلب / ویدئو / پادکست جدید
+            </button>
+          </div>
+          <div class="space-y-2">
+            ${posts.map((p, idx) => {
+              const cat = (DB.categories || []).find(c => c.id === p.categoryId);
+              const pub = p.status === 'published';
+              return `
+                <div class="p-3 rounded-2xl border ${pub ? 'bg-white border-slate-200' : 'bg-rose-50/40 border-rose-200'} flex flex-wrap items-center justify-between gap-2">
+                  <div class="max-w-xl space-y-0.5">
+                    <div class="flex items-center gap-2">
+                      <span class="px-2 py-0.5 rounded font-bold text-[10px] ${pub ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                        ${pub ? 'منتشرشده در سایت' : 'حذف‌شده (در زباله‌دان)'}
+                      </span>
+                      <span class="text-slate-500 font-bold">${cat ? cat.title : ''}</span>
+                    </div>
+                    <p class="font-extrabold text-navy-900 text-sm">${p.title}</p>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-1">
+                    <button type="button" onclick="UnifiedCMSStudio.moveItem('posts', ${idx}, -1)" class="px-1.5 py-1 border rounded bg-slate-50">⬆️</button>
+                    <button type="button" onclick="UnifiedCMSStudio.moveItem('posts', ${idx}, 1)" class="px-1.5 py-1 border rounded bg-slate-50">⬇️</button>
+                    <button type="button" onclick="UnifiedCMSStudio.editPostQuickPrompt('${p.id}')" class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border font-bold">✏️ ویرایش سریع</button>
+                    <button type="button" onclick="UnifiedCMSStudio.togglePostPublish('${p.id}')" class="px-2.5 py-1 rounded-lg font-bold ${pub ? 'bg-amber-100 text-amber-900' : 'bg-emerald-600 text-white'}">
+                      ${pub ? '🗑️ حذف از صفحات سایت' : '♻️ بازیابی به سایت'}
+                    </button>
+                    <button type="button" onclick="UnifiedCMSStudio.deletePostForever('${p.id}')" class="px-2.5 py-1 rounded-lg bg-rose-600 text-white font-bold">✕ حذف دائمی</button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    },
+
+    editPostQuickPrompt(postId) {
+      const p = (DB.posts || []).find(x => x.id === postId);
+      if (!p) return;
+      const t = prompt('عنوان مطلب / فیلم / پادکست:', p.title);
+      if (t === null) return;
+      const s = prompt('چکیده / خلاصه:', p.summary || '');
+      const v = prompt('لینک یا کد ویدئوی آپارات (در صورت وجود):', p.videoUrl || p.aparatHash || '');
+      if (t.trim()) p.title = t.trim();
+      if (s !== null) p.summary = s.trim();
+      if (v !== null) {
+        p.videoUrl = v.trim();
+        p.aparatHash = (typeof extractAparatHash === 'function') ? extractAparatHash(v.trim()) : '';
+      }
+      this.commit(`ویرایش مطلب «${p.title}»`);
+    },
+
+    togglePostPublish(postId) {
+      const p = (DB.posts || []).find(x => x.id === postId);
+      if (!p) return;
+      p.status = (p.status === 'published') ? 'trash' : 'published';
+      p.workflowState = (p.status === 'published') ? 'Published' : 'Archived';
+      this.commit(`تغییر وضعیت نمایش «${p.title}» در کل سایت`);
+    },
+
+    deletePostForever(postId) {
+      const p = (DB.posts || []).find(x => x.id === postId);
+      if (!p) return;
+      if (!confirm(`آیا «${p.title}» به صورت دائمی و زنجیره‌ای از کل سایت حذف شود؟`)) return;
+      DB.posts = (DB.posts || []).filter(x => x.id !== postId);
+      this.commit(`حذف دائمی و زنجیره‌ای «${p.title}»`);
+    },
+
+    // ==================== TAB 5: FAQS & QUIZZES ====================
+    renderFaqsAndQuizzesTab() {
+      return `
+        <!-- مدیریت بانک سؤالات پرتکرار -->
+        <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 text-xs">
+          <h3 class="text-sm font-black text-navy-900">❓ مدیریت بانک سؤالات پرتکرار (${toFaNum((DB.faqs || []).length)} سؤال)</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 bg-slate-50 p-3 rounded-xl border">
+            <select id="cms-faq-cat" class="sm:col-span-3 px-2.5 py-2 rounded-lg border bg-white font-bold">
+              ${(DB.categories || []).map(c => `<option value="${c.id}">${c.title}</option>`).join('')}
+            </select>
+            <input id="cms-faq-q" type="text" placeholder="متن پرسش دانش‌آموز..." class="sm:col-span-4 px-2.5 py-2 rounded-lg border bg-white font-bold" />
+            <input id="cms-faq-a" type="text" placeholder="پاسخ علمی مشاور..." class="sm:col-span-3 px-2.5 py-2 rounded-lg border bg-white" />
+            <button type="button" onclick="UnifiedCMSStudio.addFaq()" class="sm:col-span-2 py-2 rounded-lg bg-navy-900 text-white font-bold">+ ثبت سؤال</button>
+          </div>
+          <div class="space-y-1.5">
+            ${(DB.faqs || []).map((f, i) => `
+              <div class="p-2.5 rounded-xl bg-slate-50 border flex flex-wrap items-center justify-between gap-2">
+                <div class="max-w-xl"><strong class="text-navy-900">؟ ${f.question}</strong></div>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('faqs', ${i}, -1)" class="px-1.5 py-0.5 border rounded bg-white">⬆️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('faqs', ${i}, 1)" class="px-1.5 py-0.5 border rounded bg-white">⬇️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.editFaqPrompt('${f.id}')" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border font-bold">✏️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.deleteFaqItem('${f.id}')" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border font-bold">🗑️</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- مدیریت آزمون‌های خودارزیابی (شماره‌گذاری خودکار و جابجایی) -->
+        <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 text-xs">
+          <h3 class="text-sm font-black text-navy-900">🧭 مدیریت آزمون‌های خودارزیابی (${toFaNum((DB.quizzes || []).length)} آزمون با شماره‌گذاری خودکار)</h3>
+          <div class="space-y-1.5">
+            ${(DB.quizzes || []).map((qz, i) => `
+              <div class="p-2.5 rounded-xl bg-slate-50 border flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <span>${qz.icon || '🧭'}</span>
+                  <strong class="text-navy-900 mr-1">${qz.title}</strong>
+                  <span class="text-slate-500 mr-1">(${toFaNum((qz.questions || []).length)} سؤال)</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('quizzes', ${i}, -1)" class="px-1.5 py-0.5 border rounded bg-white">⬆️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('quizzes', ${i}, 1)" class="px-1.5 py-0.5 border rounded bg-white">⬇️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.editQuizPrompt('${qz.id}')" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border font-bold">✏️ ویرایش عنوان و توضیحات</button>
+                  <button type="button" onclick="UnifiedCMSStudio.removeItem('quizzes', ${i})" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border font-bold">🗑️ حذف آزمون</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    },
+
+    addFaq() {
+      const categoryId = document.getElementById('cms-faq-cat')?.value || 'cat-2';
+      const question = document.getElementById('cms-faq-q')?.value.trim();
+      const answer = document.getElementById('cms-faq-a')?.value.trim();
+      if (!question || !answer) return showToast('پرسش و پاسخ را وارد کنید.', 'warning');
+      DB.faqs = DB.faqs || [];
+      DB.faqs.unshift({
+        id: 'faq-' + Date.now(),
+        categoryId,
+        question,
+        answer,
+        relatedPostIds: [],
+        approved: true,
+        askedBy: 'واحد مشاوره مدرسه',
+        createdAt: '۱۴۰۵/۰۸/۲۲'
+      });
+      this.commit('افزودن سؤال پرتکرار جدید');
+    },
+
+    editFaqPrompt(faqId) {
+      const f = (DB.faqs || []).find(x => x.id === faqId);
+      if (!f) return;
+      const q = prompt('متن سؤال:', f.question);
+      if (q === null) return;
+      const a = prompt('متن پاسخ مشاور:', f.answer);
+      if (q.trim()) f.question = q.trim();
+      if (a !== null && a.trim()) f.answer = a.trim();
+      this.commit('ویرایش سؤال پرتکرار');
+    },
+
+    deleteFaqItem(faqId) {
+      if (!confirm('آیا این سؤال پرتکرار حذف شود؟')) return;
+      DB.faqs = (DB.faqs || []).filter(x => x.id !== faqId);
+      this.commit('حذف سؤال پرتکرار');
+    },
+
+    editQuizPrompt(quizId) {
+      const qz = (DB.quizzes || []).find(x => x.id === quizId);
+      if (!qz) return;
+      const t = prompt('عنوان آزمون (شماره به صورت خودکار تنظیم می‌شود):', qz.cleanTitle || stripNumberPrefix(qz.title));
+      if (t === null) return;
+      const d = prompt('توضیحات آزمون:', qz.description || '');
+      const dur = prompt('مدت زمان آزمون (مثلاً ۴ دقیقه):', qz.duration || '۴ دقیقه');
+      if (t.trim()) {
+        qz.cleanTitle = stripNumberPrefix(t.trim());
+        qz.title = qz.cleanTitle;
+      }
+      if (d !== null) qz.description = d.trim();
+      if (dur !== null) qz.duration = dur.trim();
+      this.commit(`ویرایش آزمون «${qz.cleanTitle}»`);
+    },
+
+    // ==================== TAB 6: MAJORS & LEARNING PATHS ====================
+    renderMajorsAndPathsTab() {
+      return `
+        <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 text-xs">
+          <h3 class="text-sm font-black text-navy-900">🎓 مدیریت بانک رشته‌ها، دانشگاه‌ها و مشاغل (${toFaNum((DB.majorsDirectory || []).length)} رشته)</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 bg-slate-50 p-3 rounded-xl border">
+            <input id="cms-maj-grp" type="text" placeholder="گروه (ریاضی/تجربی/انسانی)" class="sm:col-span-3 px-2.5 py-2 rounded-lg border bg-white" />
+            <input id="cms-maj-title" type="text" placeholder="عنوان رشته..." class="sm:col-span-4 px-2.5 py-2 rounded-lg border bg-white font-bold" />
+            <input id="cms-maj-uni" type="text" placeholder="دانشگاه‌های برتر..." class="sm:col-span-3 px-2.5 py-2 rounded-lg border bg-white" />
+            <button type="button" onclick="UnifiedCMSStudio.addMajor()" class="sm:col-span-2 py-2 rounded-lg bg-navy-900 text-white font-bold">+ افزودن رشته</button>
+          </div>
+          <div class="space-y-1.5">
+            ${(DB.majorsDirectory || []).map((m, i) => `
+              <div class="p-2.5 rounded-xl bg-slate-50 border flex flex-wrap items-center justify-between gap-2">
+                <div><span class="px-2 py-0.5 rounded bg-turquoise-100 text-turquoise-900 font-bold">${m.group}</span> <strong class="mr-1 text-navy-900">${m.title}</strong></div>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('majorsDirectory', ${i}, -1)" class="px-1.5 py-0.5 border rounded bg-white">⬆️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('majorsDirectory', ${i}, 1)" class="px-1.5 py-0.5 border rounded bg-white">⬇️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.editMajor(${i})" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border font-bold">✏️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.removeItem('majorsDirectory', ${i})" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border font-bold">🗑️</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 text-xs">
+          <h3 class="text-sm font-black text-navy-900">🛣️ مدیریت مسیرهای یادگیری گام‌به‌گام (${toFaNum((DB.learningPaths || []).length)} مسیر)</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 bg-slate-50 p-3 rounded-xl border">
+            <input id="cms-lp-title" type="text" placeholder="عنوان مسیر یادگیری جدید..." class="sm:col-span-5 px-2.5 py-2 rounded-lg border bg-white font-bold" />
+            <input id="cms-lp-desc" type="text" placeholder="توضیح مسیر..." class="sm:col-span-5 px-2.5 py-2 rounded-lg border bg-white" />
+            <button type="button" onclick="UnifiedCMSStudio.addPath()" class="sm:col-span-2 py-2 rounded-lg bg-navy-900 text-white font-bold">+ افزودن مسیر</button>
+          </div>
+          <div class="space-y-1.5">
+            ${(DB.learningPaths || []).map((lp, i) => `
+              <div class="p-2.5 rounded-xl bg-slate-50 border flex flex-wrap items-center justify-between gap-2">
+                <div><strong class="text-navy-900">${lp.title}</strong> <span class="text-slate-500 mr-1">(${toFaNum((lp.postIds || []).length)} گام فعال)</span></div>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="UnifiedCMSStudio.editPath(${i})" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border font-bold">✏️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.removeItem('learningPaths', ${i})" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border font-bold">🗑️</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    },
+
+    addMajor() {
+      const group = document.getElementById('cms-maj-grp')?.value.trim() || 'مشترک';
+      const title = document.getElementById('cms-maj-title')?.value.trim();
+      const universities = document.getElementById('cms-maj-uni')?.value.trim() || 'دانشگاه‌های برتر کشور';
+      if (!title) return showToast('عنوان رشته را وارد کنید.', 'warning');
+      DB.majorsDirectory = DB.majorsDirectory || [];
+      DB.majorsDirectory.push({
+        id: 'maj-' + Date.now(),
+        group, title, universities,
+        skills: 'تفکر تحلیلی، مطالعه مستمر و مهارت تخصصی',
+        careerOutlook: 'بازار کار رو به رشد در مراکز علمی و صنعتی',
+        approvalStatus: 'Approved'
+      });
+      this.commit(`افزودن رشته «${title}»`);
+    },
+
+    editMajor(i) {
+      const m = DB.majorsDirectory[i];
+      if (!m) return;
+      const t = prompt('عنوان رشته:', m.title);
+      if (t === null) return;
+      const g = prompt('گروه آزمایشی:', m.group);
+      const u = prompt('دانشگاه‌های برتر:', m.universities);
+      const s = prompt('مهارت‌ها و دروس کلیدی:', m.skills);
+      const c = prompt('بازار کار و آینده شغلی:', m.careerOutlook);
+      if (t.trim()) m.title = t.trim();
+      if (g !== null) m.group = g.trim();
+      if (u !== null) m.universities = u.trim();
+      if (s !== null) m.skills = s.trim();
+      if (c !== null) m.careerOutlook = c.trim();
+      this.commit(`ویرایش رشته «${m.title}»`);
+    },
+
+    addPath() {
+      const title = document.getElementById('cms-lp-title')?.value.trim();
+      const description = document.getElementById('cms-lp-desc')?.value.trim() || '';
+      if (!title) return showToast('عنوان مسیر را وارد کنید.', 'warning');
+      const pubPosts = (DB.posts || []).filter(p => p.status === 'published').slice(0, 3).map(p => p.id);
+      DB.learningPaths = DB.learningPaths || [];
+      DB.learningPaths.push({ id: 'path-' + Date.now(), title, description, grade: 'همه پایه‌ها', postIds: pubPosts, approvalStatus: 'Approved' });
+      this.commit(`افزودن مسیر یادگیری «${title}»`);
+    },
+
+    editPath(i) {
+      const lp = DB.learningPaths[i];
+      if (!lp) return;
+      const t = prompt('عنوان مسیر یادگیری:', lp.title);
+      if (t === null) return;
+      const d = prompt('توضیحات مسیر:', lp.description);
+      if (t.trim()) lp.title = t.trim();
+      if (d !== null) lp.description = d.trim();
+      this.commit(`ویرایش مسیر یادگیری «${lp.title}»`);
+    },
+
+    // ذخیره، یکپارچه‌سازی و رندر زنده کل سایت
+    commit(logMessage) {
+      GestaltEngine.syncDatabase(DB);
+      if (typeof saveDatabase === 'function') {
+        saveDatabase(DB, true);
+      }
+      if (logMessage && typeof logAdminAction === 'function') {
+        logAdminAction(logMessage);
+      }
+      if (typeof renderApp === 'function') {
+        renderApp();
+      }
+      GestaltEngine.syncDOM();
+      this.openStudio(this.activeTab);
+      showToast('✅ تغییرات به صورت یکپارچه در کل سایت اعمال شد.', 'success');
+    }
+  };
+
+  // ۶. قلاب زدن (Hook) موتور گشتالتی به توابع ذخیره و رندر اصلی سایت
+  const _origSave = window.saveDatabase;
+  window.saveDatabase = function(dbObj, isExplicitAdminEdit) {
+    GestaltEngine.syncDatabase(dbObj || DB);
+    if (typeof _origSave === 'function') {
+      _origSave(dbObj || DB, isExplicitAdminEdit);
+    }
+    GestaltEngine.syncDOM();
+  };
+
+  const _origRender = window.renderApp;
+  if (typeof _origRender === 'function') {
+    window.renderApp = function() {
+      GestaltEngine.syncDatabase(DB);
+      _origRender.apply(this, arguments);
+      GestaltEngine.syncDOM();
+    };
+  }
+
+  function initGestaltMaster() {
+    GestaltEngine.syncDatabase(DB);
+    if (typeof renderApp === 'function') {
+      renderApp();
+    }
+    GestaltEngine.syncDOM();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGestaltMaster);
+  } else {
+    setTimeout(initGestaltMaster, 50);
+  }
+})();
+</script>
 </body>
 </html>
