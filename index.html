@@ -15699,19 +15699,29 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
       });
     }
   </script>
-  <!-- =========================================================================
-     HAMRAH BAGHEROLOLUM - GESTALT UNIFIED CMS & RELATIONAL SYNC ENGINE
+<!-- =========================================================================
+     HAMRAH BAGHEROLOLUM - ULTIMATE GESTALT CMS & FULL RELATIONAL ENGINE v4.0
      ========================================================================= -->
 <script id="hamrah-gestalt-master-engine">
 (function() {
   'use strict';
 
-  // ۱. توابع پایه فارسی‌سازی اعداد و پاکسازی شماره‌های ثابت از ابتدای عناوین
+  // ۱. توابع کمکی پایه (فارسی‌سازی اعداد، ایمن‌سازی HTML و حذف شماره‌های ثابت)
   function toFaNum(val) {
     if (val === null || val === undefined) return '';
     return String(val).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
   }
   window.toPersianDigits = toFaNum;
+
+  function escHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
 
   function stripNumberPrefix(str) {
     if (!str) return '';
@@ -15720,12 +15730,12 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
       .trim();
   }
 
-  // ۲. هسته یکپارچه‌ساز گشتالتی (Single Source of Truth & Cascade Sync)
+  // ۲. موتور یکپارچه‌ساز رابطه‌ای کل پایگاه داده (Relational Graph & Cascade Sync)
   const GestaltEngine = {
     syncDatabase(db) {
-      if (!db || typeof db !== 'object') return;
+      if (!db || typeof db !== 'object') return db;
 
-      // الف) تنظیمات سراسری و کلیدهای نمایش/حذف هر بخش از سایت
+      // الف) تنظیمات سراسری سایت و کلیدهای نمایش/حذف ماژول‌ها
       db.siteSettings = db.siteSettings || {};
       const ss = db.siteSettings;
       ss.siteTitle = ss.siteTitle || 'همراه باقرالعلوم';
@@ -15749,9 +15759,11 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
 
       ss.modulesVisibility = Object.assign({
         showTopBar: true,
+        showHeroStats: true,
         showShortTips: true,
         showCategories: true,
         showFeaturedPosts: true,
+        showPopularPosts: true,
         showMediaSection: true,
         showAnnouncements: true,
         showCounselorBox: true,
@@ -15759,7 +15771,14 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
         showCalendar: true
       }, ss.modulesVisibility || {});
 
-      // ب) انتشار خودکار نام، سمت و ساعت حضور مشاور در کل ساختارهای وابسته
+      db.customPageTexts = Object.assign({
+        aboutText: ss.counselorMissionText,
+        contactExtra: 'جهت هماهنگی جلسات مشاوره فردی یا اولیا، در ساعات حضور مراجعه فرمایید.',
+        privacyText: 'تمامی اطلاعات شخصی، یادداشت‌ها و نتایج آزمون‌های دانش‌آموزان به صورت رمزنگاری‌شده و محرمانه نگهداری می‌شود.',
+        termsText: 'استفاده از تمامی محتواهای آموزشی، ویدئوها، پادکست‌ها و جزوات این سامانه برای دانش‌آموزان دبیرستان نمونه دولتی باقرالعلوم آزاد و رایگان است.'
+      }, db.customPageTexts || {});
+
+      // ب) انتشار خودکار اطلاعات مشاور در کل جداول وابسته (یکپارچگی هویت)
       const cName = ss.counselorLeadName.trim();
       const cDegree = ss.counselorLeadDegree.trim();
       const cFull = `${cName} (${cDegree})`;
@@ -15784,28 +15803,28 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
         }];
       } else {
         db.counselorsList[0].name = cName;
-        db.counselorsList[0].role = `${cDegree} — ${ss.schoolName}`;
-        db.counselorsList[0].bio = ss.counselorMissionText;
         db.counselorsList[0].schedule = ss.officeHours;
+        if (!db.counselorsList[0].role) db.counselorsList[0].role = `${cDegree} — ${ss.schoolName}`;
+        if (!db.counselorsList[0].bio) db.counselorsList[0].bio = ss.counselorMissionText;
       }
 
-      // ج) شماره‌گذاری ۱۰۰٪ خودکار دسته‌بندی‌های اصلی (۱ تا آخر) و زیرعنوان‌ها (۱-۱، ۱-۲...)
+      // ج) شماره‌گذاری خودکار عناوین اصلی (۱ تا N) و زیرعنوان‌ها (۱-۱، ۱-۲...)
       if (Array.isArray(db.categories)) {
         const flatSubList = [];
-        let activeNumberCounter = 0;
+        let activeCounter = 0;
 
         db.categories.forEach((cat, idx) => {
           cat.order = idx + 1;
-          const rawClean = stripNumberPrefix(cat.cleanTitle || cat.title);
-          cat.cleanTitle = rawClean;
+          const clean = stripNumberPrefix(cat.cleanTitle || cat.title);
+          cat.cleanTitle = clean;
 
           if (cat.active !== false) {
-            activeNumberCounter++;
-            cat.displayNumber = activeNumberCounter;
-            cat.title = `${toFaNum(activeNumberCounter)}. ${rawClean}`;
+            activeCounter++;
+            cat.displayNumber = activeCounter;
+            cat.title = `${toFaNum(activeCounter)}. ${clean}`;
           } else {
             cat.displayNumber = idx + 1;
-            cat.title = `${toFaNum(idx + 1)}. ${rawClean}`;
+            cat.title = `${toFaNum(idx + 1)}. ${clean}`;
           }
           cat.approvedBy = cFull;
 
@@ -15830,14 +15849,14 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
         db.subcategories = flatSubList;
       }
 
-      // د) یکپارچه‌سازی مطالب، فیلم‌ها و پادکست‌ها + حذف زنجیره‌ای موارد داخل زباله‌دان
+      // د) یکپارچه‌سازی مطالب، فیلم‌ها، پادکست‌ها، فایل‌های پیوست و تگ‌ها + حذف زنجیره‌ای
       const validCatIds = new Set((db.categories || []).map(c => c.id));
       const firstCat = (db.categories && db.categories[0]) ? db.categories[0] : null;
       const trashedMediaUrls = new Set();
 
       if (Array.isArray(db.posts)) {
         db.posts.forEach(p => {
-          p.author = cFull;
+          if (!p.keepCustomAuthor) p.author = cFull;
           p.approvedBy = cFull;
 
           if (!validCatIds.has(p.categoryId) && firstCat) {
@@ -15861,39 +15880,54 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
       const publishedPosts = (db.posts || []).filter(p => p.status === 'published');
       const publishedPostIds = new Set(publishedPosts.map(p => p.id));
 
-      // همگام‌سازی جدول پیوست‌ها (DB.attachments)
-      const allActiveAttachments = [];
+      // همگام‌سازی جدول پیوست‌ها (DB.attachments) و رسانه‌ها (DB.media) با مطالب فعال
+      const syncedAttachments = [];
+      const syncedMedia = [];
       publishedPosts.forEach(p => {
         (p.attachments || []).forEach(att => {
-          allActiveAttachments.push({
-            ...att,
-            postId: p.id,
-            approvalStatus: 'Approved'
-          });
+          syncedAttachments.push({ ...att, postId: p.id, approvalStatus: 'Approved' });
         });
+        if (p.videoUrl || p.aparatHash || p.uploadedVideoDataUrl) {
+          syncedMedia.push({ id: 'med_vid_' + p.id, postId: p.id, type: 'video', title: p.title, url: p.videoUrl || p.aparatHash });
+        }
+        if (p.audioUrl) {
+          syncedMedia.push({ id: 'med_aud_' + p.id, postId: p.id, type: 'audio', title: p.title, duration: p.audioDuration || '۰۸:۰۰' });
+        }
       });
-      db.attachments = allActiveAttachments;
+      db.attachments = syncedAttachments;
+      db.media = syncedMedia;
 
-      // همگام‌سازی جدول تگ‌ها (DB.tags)
-      const tagCounter = new Map();
+      if (Array.isArray(db.postRevisions)) {
+        db.postRevisions = db.postRevisions.filter(r => (db.posts || []).some(p => p.id === r.postId));
+        db.postRevisions.forEach(r => { r.author = cName; });
+      }
+      if (Array.isArray(db.postApprovals)) {
+        db.postApprovals = db.postApprovals.filter(a => (db.posts || []).some(p => p.id === a.postId));
+        db.postApprovals.forEach(a => { a.approverName = cFull; });
+      }
+
+      // محاسبه خودکار تگ‌ها بر اساس مطالب منتشرشده
+      const tagMap = new Map();
       publishedPosts.forEach(p => {
         (p.tags || []).forEach(t => {
-          const cleanTag = String(t).trim();
-          if (cleanTag) tagCounter.set(cleanTag, (tagCounter.get(cleanTag) || 0) + 1);
+          const cleanT = String(t).trim();
+          if (cleanT) tagMap.set(cleanT, (tagMap.get(cleanT) || 0) + 1);
         });
       });
-      db.tags = Array.from(tagCounter.entries()).map(([name, usageCount], i) => ({
+      db.tags = Array.from(tagMap.entries()).map(([name, usageCount], i) => ({
         id: 'tag-' + (i + 1),
         name,
         slug: name.replace(/\s+/g, '-'),
         usageCount
       }));
 
-      // پاکسازی خودکار ارجاعات شکسته در سؤالات پرتکرار (FAQs)
+      // هـ) یکپارچه‌سازی بانک سؤالات پرتکرار (FAQs) با دسته‌ها و مطالب فعال
       if (Array.isArray(db.faqs)) {
         db.faqs.forEach(f => {
           if (Array.isArray(f.relatedPostIds)) {
             f.relatedPostIds = f.relatedPostIds.filter(pid => publishedPostIds.has(pid));
+          } else {
+            f.relatedPostIds = [];
           }
           if (f.mediaUrl && trashedMediaUrls.has(f.mediaUrl.trim())) {
             f.mediaUrl = '';
@@ -15905,24 +15939,28 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
         });
       }
 
-      // شماره‌گذاری خودکار آزمون‌ها و پاکسازی پیشنهادهای حذف‌شده در تفاسیر آزمون
+      // و) شماره‌گذاری خودکار آزمون‌ها و سؤالات + همگام‌سازی جداول quizQuestions و quizOptions
       if (Array.isArray(db.quizzes)) {
         const flatQ = [];
         const flatOpt = [];
         db.quizzes.forEach((qz, qzIdx) => {
-          const cleanQzTitle = stripNumberPrefix(qz.cleanTitle || qz.title);
-          qz.cleanTitle = cleanQzTitle;
-          qz.title = `${toFaNum(qzIdx + 1)}. ${cleanQzTitle}`;
+          const cleanQz = stripNumberPrefix(qz.cleanTitle || qz.title);
+          qz.cleanTitle = cleanQz;
+          qz.title = `${toFaNum(qzIdx + 1)}. ${cleanQz}`;
 
           (qz.interpretations || []).forEach(interp => {
             if (Array.isArray(interp.recommendedPosts)) {
               interp.recommendedPosts = interp.recommendedPosts.filter(pid => publishedPostIds.has(pid));
+            } else {
+              interp.recommendedPosts = [];
             }
           });
 
-          (qz.questions || []).forEach((qItem, qIdx) => {
+          if (!Array.isArray(qz.questions)) qz.questions = [];
+          qz.questions.forEach((qItem, qIdx) => {
             const qId = `${qz.id}_q${qIdx + 1}`;
-            const cleanQ = stripNumberPrefix(qItem.q);
+            const cleanQ = stripNumberPrefix(qItem.cleanQ || qItem.q);
+            qItem.cleanQ = cleanQ;
             qItem.q = `${toFaNum(qIdx + 1)}. ${cleanQ}`;
             flatQ.push({ id: qId, quizId: qz.id, order: qIdx + 1, questionText: qItem.q });
             (qItem.options || []).forEach((opt, oIdx) => {
@@ -15931,7 +15969,7 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
                 questionId: qId,
                 quizId: qz.id,
                 text: opt.text,
-                score: opt.score,
+                score: Number(opt.score) || 0,
                 dimension: opt.dimension || null
               });
             });
@@ -15941,7 +15979,7 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
         db.quizOptions = flatOpt;
       }
 
-      // همگام‌سازی مسیرهای یادگیری (learningPaths & learningPathSteps)
+      // ز) یکپارچه‌سازی مسیرهای یادگیری (learningPaths & learningPathSteps)
       if (Array.isArray(db.learningPaths)) {
         const syncedSteps = [];
         db.learningPaths.forEach(lp => {
@@ -15955,19 +15993,30 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
                 stepOrder: idx + 1
               });
             });
+          } else {
+            lp.postIds = [];
           }
         });
         db.learningPathSteps = syncedSteps;
       }
 
-      // یکسان‌سازی کامل دو جدول رشته‌های دانشگاهی (majorsDirectory & majors)
+      // ح) یکپارچه‌سازی بانک رشته‌ها، دانشگاه‌ها و مشاغل
       if (Array.isArray(db.majorsDirectory)) {
         db.majors = JSON.parse(JSON.stringify(db.majorsDirectory));
       } else if (Array.isArray(db.majors)) {
         db.majorsDirectory = JSON.parse(JSON.stringify(db.majors));
       }
+      const validMajorIds = new Set((db.majorsDirectory || []).map(m => m.id));
+      const firstMajorId = (db.majorsDirectory && db.majorsDirectory[0]) ? db.majorsDirectory[0].id : 'maj-1';
+      if (Array.isArray(db.careers)) {
+        db.careers.forEach(car => {
+          if (car.relatedMajorId && !validMajorIds.has(car.relatedMajorId)) {
+            car.relatedMajorId = firstMajorId;
+          }
+        });
+      }
 
-      // پاکسازی پنل دانش‌آموز از مطالب حذف‌شده
+      // ط) پاکسازی پنل دانش‌آموز از ارجاعات به مطالب حذف‌شده
       if (db.studentData) {
         ['bookmarkedPostIds', 'completedPostIds', 'recentlyViewedPostIds'].forEach(k => {
           if (Array.isArray(db.studentData[k])) {
@@ -15983,15 +16032,16 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
         }
       }
 
-      // اصلاح غلط املایی احتمالی در نکات کوتاه
       if (Array.isArray(db.shortTips)) {
         db.shortTips.forEach(t => {
           if (t.title) t.title = t.title.replace('جادو  مرور', 'جادوی مرور');
         });
       }
+
+      return db;
     },
 
-    // ۳. همگام‌سازی گشتالتی تمام عناصر DOM (هدر، فوتر، نوار اعلان، صفحه اصلی و صفحات داخلی)
+    // ۳. همگام‌سازی گشتالتی DOM در تمام صفحات (هدر، فوتر، صفحه اصلی و تمام صفحات داخلی)
     syncDOM() {
       if (typeof DB === 'undefined' || !DB.siteSettings) return;
       const ss = DB.siteSettings;
@@ -15999,16 +16049,15 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
       const activeCats = (DB.categories || []).filter(c => c.active !== false);
       const publishedPosts = (DB.posts || []).filter(p => p.status === 'published');
 
-      // ۱) عنوان مرورگر
       document.title = `${ss.siteTitle} | سامانه جامع مشاوره‌ای ${ss.schoolName}`;
 
-      // ۲) شمارنده دسته‌بندی‌ها در تمام نقاط سایت (رفع باگ خط ۶۶۰)
+      // بروزرسانی شمارنده‌های دسته‌بندی در کل سایت
       const countFa = toFaNum(activeCats.length);
       document.querySelectorAll('.js-cat-count').forEach(el => {
         el.textContent = countFa;
       });
 
-      // ۳) نوار اطلاعیه بالای صفحه (#top-announcement-bar - خط ۴۲۰)
+      // نوار اطلاعیه بالای سایت
       const topBar = document.getElementById('top-announcement-bar');
       if (topBar) {
         if (vis.showTopBar === false) {
@@ -16029,7 +16078,7 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
         }
       }
 
-      // ۴) هدر اصلی (#main-header - خط ۴۳۸)
+      // هدر اصلی
       const header = document.getElementById('main-header');
       if (header) {
         const brandTitle = header.querySelector('.text-lg.font-black, .sm\\:text-xl.font-black');
@@ -16040,7 +16089,7 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
         if (brandSchool) brandSchool.textContent = ss.schoolName;
       }
 
-      // ۵) فوتر سایت (#main-footer - خطوط ۵۶۲ تا ۶۵۷)
+      // فوتر اصلی
       const footer = document.getElementById('main-footer');
       if (footer) {
         const cols = footer.querySelectorAll('.grid > div');
@@ -16052,25 +16101,23 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
           const fDesc = cols[0].querySelector('p.text-slate-400');
           if (fDesc) fDesc.textContent = ss.footerDescription;
         }
-        // اتصال پویا و زنده ستون سوم فوتر (محورهای کلیدی) به دسته‌بندی‌های واقعی
         if (cols[2]) {
           const ul = cols[2].querySelector('ul');
           if (ul) {
             ul.innerHTML = activeCats.slice(0, 6).map(c => `
               <li>
                 <button type="button" onclick="navigateTo('category', {id: '${c.id}'})" class="hover:text-softyellow-400 transition text-right">
-                  ${c.title}
+                  ${escHtml(c.title)}
                 </button>
               </li>
             `).join('');
           }
         }
-        // اتصال پویا و زنده ستون چهارم فوتر (آدرس، ساعت حضور و تلفن مشاور)
         if (cols[3]) {
           const pTags = cols[3].querySelectorAll('p');
-          if (pTags[0]) pTags[0].innerHTML = `<span class="text-turquoise-400 mt-0.5">📍</span><span>${ss.schoolAddress}</span>`;
-          if (pTags[1]) pTags[1].innerHTML = `<span class="text-turquoise-400">🕘</span><span>ساعات مراجعه حضوری: ${ss.officeHours}</span>`;
-          if (pTags[2]) pTags[2].innerHTML = `<span class="text-turquoise-400">☎️</span><span>تلفن مستقیم مشاور (${ss.counselorLeadName}): ${ss.counselorPhone}</span>`;
+          if (pTags[0]) pTags[0].innerHTML = `<span class="text-turquoise-400 mt-0.5">📍</span><span>${escHtml(ss.schoolAddress)}</span>`;
+          if (pTags[1]) pTags[1].innerHTML = `<span class="text-turquoise-400">🕘</span><span>ساعات مراجعه حضوری: ${escHtml(ss.officeHours)}</span>`;
+          if (pTags[2]) pTags[2].innerHTML = `<span class="text-turquoise-400">☎️</span><span>تلفن مستقیم مشاور (${escHtml(ss.counselorLeadName)}): ${escHtml(ss.counselorPhone)}</span>`;
         }
         const footerCalLink = footer.querySelector('button[onclick*="navigateTo(\'calendar\')"]');
         if (footerCalLink) footerCalLink.style.display = (vis.showCalendar === false) ? 'none' : '';
@@ -16078,13 +16125,11 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
         if (copyP) copyP.textContent = ss.copyrightText;
       }
 
-      // ۶) مدیریت گشتالتی صفحه اصلی (حذف خودکار کادرهای خالی و حفظ تقارن بصری)
+      // صفحه اصلی (Home View)
       if (typeof STATE !== 'undefined' && STATE.currentView === 'home') {
         const vp = document.getElementById('app-viewport');
         if (vp) {
           const sections = vp.querySelectorAll(':scope > section');
-
-          // بخش ۱: هیرو (خط ۱۵۷۱)
           if (sections[0]) {
             const hBadge = sections[0].querySelector('.inline-flex span:last-child');
             if (hBadge) hBadge.textContent = ss.heroBadge;
@@ -16092,27 +16137,23 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
             if (h1) h1.textContent = `«${ss.heroTitle}»`;
             const hSub = sections[0].querySelector('p.text-slate-200');
             if (hSub) hSub.textContent = ss.heroSubtitle;
+            const statCard = sections[0].querySelector('.lg\\:col-span-5');
+            if (statCard) statCard.style.display = (vis.showHeroStats === false) ? 'none' : '';
           }
-
-          // بخش ۲: نکات کوتاه مشاوره‌ای روز (خط ۱۶۰۷)
           if (sections[1]) {
             const hasTips = Array.isArray(DB.shortTips) && DB.shortTips.length > 0 && vis.showShortTips !== false;
             sections[1].style.display = hasTips ? '' : 'none';
           }
-
-          // بخش ۳: دسته‌بندی‌های اصلی (خط ۱۶۲۸)
           if (sections[2]) {
             sections[2].style.display = (vis.showCategories === false) ? 'none' : '';
             const catH2 = sections[2].querySelector('h2');
             if (catH2) catH2.textContent = `${toFaNum(activeCats.length)} دسته‌بندی اصلی ${ss.siteTitle}`;
           }
-
-          // بخش ۴: مطالب پیشنهادی و تازه‌ترین مطالب (خط ۱۶۷۸)
           if (sections[3]) {
             sections[3].style.display = (vis.showFeaturedPosts === false) ? 'none' : '';
+            const popStrip = sections[3].querySelector('.bg-white.rounded-3xl.p-6');
+            if (popStrip) popStrip.style.display = (vis.showPopularPosts === false) ? 'none' : '';
           }
-
-          // بخش ۵: ویدئوها و پادکست‌ها (خط ۱۶۸۲ - مدیریت هوشمند کادر خالی در صورت حذف تمام فیلم‌ها یا پادکست‌ها)
           if (sections[4]) {
             const videoPosts = publishedPosts.filter(p => p.contentType === 'video' || p.mediaFormat === 'video' || p.aparatHash || p.videoUrl);
             const audioPosts = publishedPosts.filter(p => p.contentType === 'audio' || p.mediaFormat === 'audio' || p.audioUrl);
@@ -16141,8 +16182,6 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
               }
             }
           }
-
-          // بخش ۶: اطلاعیه‌ها و معرفی مشاور (خط ۱۷۱۸)
           if (sections[5]) {
             const cols = sections[5].querySelectorAll('.grid > div');
             const annCard = cols[0];
@@ -16174,8 +16213,6 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
               }
             }
           }
-
-          // بخش ۷: سؤالات پرتکرار در صفحه اصلی (خط ۱۷۵۵)
           if (sections[6]) {
             const approvedFaqs = (DB.faqs || []).filter(f => f.approved);
             sections[6].style.display = (vis.showHomeFaq === false || approvedFaqs.length === 0) ? 'none' : '';
@@ -16183,24 +16220,59 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
         }
       }
 
-      // ۷) اصلاح عبارت ثابت «۱۹گانه» در سایدبار صفحه دسته‌بندی تکی (خط ۲۰۲۸)
-      if (typeof STATE !== 'undefined' && STATE.currentView === 'category') {
-        const vp = document.getElementById('app-viewport');
-        if (vp) {
-          vp.querySelectorAll('h3').forEach(h3 => {
-            if (h3.textContent.includes('سایر دسته‌بندی‌های')) {
-              h3.textContent = `سایر دسته‌بندی‌های ${toFaNum(activeCats.length)}‌گانه`;
+      // جایگزینی خودکار شماره‌های تلفن و ساعات قدیمی هاردکدشده در هر صفحه داخلی (مانند تماس با ما، درباره ما و معرفی مشاور)
+      const vp = document.getElementById('app-viewport');
+      if (vp && typeof STATE !== 'undefined' && STATE.currentView !== 'admin') {
+        vp.querySelectorAll('h3').forEach(h3 => {
+          if (h3.textContent.includes('سایر دسته‌بندی‌های')) {
+            h3.textContent = `سایر دسته‌بندی‌های ${toFaNum(activeCats.length)}‌گانه`;
+          }
+        });
+        vp.querySelectorAll('p, span, li, div').forEach(el => {
+          if (el.children.length === 0 && el.textContent) {
+            if (el.textContent.includes('۰۲۱-۳۳۴۴۵۵۶۶')) {
+              el.textContent = el.textContent.replace('۰۲۱-۳۳۴۴۵۵۶۶ (داخلی ۱۰۸)', ss.counselorPhone).replace('۰۲۱-۳۳۴۴۵۵۶۶', ss.counselorPhone);
             }
-          });
-        }
+            if (el.textContent.includes('شنبه تا چهارشنبه ۷:۳۰ الی ۱۴:۳۰')) {
+              el.textContent = el.textContent.replace('شنبه تا چهارشنبه ۷:۳۰ الی ۱۴:۳۰', ss.officeHours);
+            }
+          }
+        });
       }
 
-      // ۸) مخفی‌سازی تب تقویم در صفحه ابزارها در صورت غیرفعال شدن تقویم
       if (typeof STATE !== 'undefined' && STATE.currentView === 'tools') {
-        const vp = document.getElementById('app-viewport');
         if (vp && vis.showCalendar === false) {
           const calTabBtn = vp.querySelector('button[onclick*="tab: \'calendar\'"]');
           if (calTabBtn) calTabBtn.style.display = 'none';
+        }
+      }
+
+      // تزریق پنل جامع در بالای صفحه «پنل مدیریت» اصلی سایت
+      if (typeof STATE !== 'undefined' && STATE.currentView === 'admin') {
+        const isStaff = (typeof AuthService !== 'undefined' && AuthService.isAuthenticatedStaff && AuthService.isAuthenticatedStaff());
+        if (vp && isStaff && !document.getElementById('inline-gestalt-admin-banner')) {
+          const banner = document.createElement('div');
+          banner.id = 'inline-gestalt-admin-banner';
+          banner.className = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6';
+          banner.innerHTML = `
+            <div class="p-5 rounded-3xl bg-gradient-to-r from-navy-950 via-navy-900 to-turquoise-900 text-white shadow-2xl border-2 border-turquoise-400 flex flex-wrap items-center justify-between gap-4">
+              <div class="space-y-1">
+                <span class="px-2.5 py-0.5 rounded-full bg-turquoise-400 text-navy-950 font-black text-xs">موتور ویرایشگر جامع ۱۰۰٪ سایت (v4.0)</span>
+                <h2 class="text-base sm:text-xl font-black">🛠️ میز فرمان و یکپارچه‌سازی تمام بخش‌های سایت</h2>
+                <p class="text-xs text-slate-300">جابجایی مستقیم شماره‌ها (مثلاً ۳ و ۶)، تبدیل عنوان اصلی و فرعی، مدیریت تقویم، آزمون‌ها، سؤالات پرتکرار، رشته‌ها و اطلاعات مشاور:</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <button type="button" onclick="UnifiedCMSStudio.openStudio('categories')" class="px-3.5 py-2 rounded-xl bg-turquoise-400 hover:bg-turquoise-300 text-navy-950 font-black text-xs shadow">📂 ۱. عناوین اصلی و فرعی</button>
+                <button type="button" onclick="UnifiedCMSStudio.openStudio('posts')" class="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/20">🎬 ۲. مقالات، فیلم و پادکست</button>
+                <button type="button" onclick="UnifiedCMSStudio.openStudio('modules')" class="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/20">🗓️ ۳. تقویم، نکات و حذف بخش‌ها</button>
+                <button type="button" onclick="UnifiedCMSStudio.openStudio('faqs_quizzes')" class="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/20">❓ ۴. آزمون‌ها و سؤالات پرتکرار</button>
+                <button type="button" onclick="UnifiedCMSStudio.openStudio('majors_paths')" class="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/20">🎓 ۵. رشته‌ها، دانشگاه و مسیرها</button>
+                <button type="button" onclick="UnifiedCMSStudio.openStudio('identity')" class="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/20">👨‍🏫 ۶. مشاور، هدر، فوتر و ابزارها</button>
+                <button type="button" onclick="CloudSync.publishToCloud()" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-navy-950 font-black text-xs shadow-lg">☁️ انتشار دائمی در سرور</button>
+              </div>
+            </div>
+          `;
+          vp.prepend(banner);
         }
       }
 
@@ -16241,8 +16313,7 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
     }
   };
 
-  // ۴. بازنویسی (Override) توابع رندر معیوب در index_2.html
-  // الف) اصلاح تابع renderFaqAccordionItem (خط ۱۸۵۸) برای فیلتر کردن فیلم‌ها و مطالب حذف‌شده
+  // ۴. بازنویسی توابع رندر سؤالات پرتکرار و مودال مشاور برای اتصال زنده
   window.renderFaqAccordionItem = function(faq, openByDefault) {
     const cat = (DB.categories || []).find(c => c.id === faq.categoryId);
     const relatedPosts = (faq.relatedPostIds || [])
@@ -16256,27 +16327,27 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
           <div class="flex items-start gap-3">
             <span class="w-7 h-7 rounded-xl bg-turquoise-50 text-turquoise-700 border border-turquoise-200 font-black text-sm flex items-center justify-center shrink-0 mt-0.5">؟</span>
             <div>
-              <h3 class="text-sm sm:text-base font-extrabold text-navy-900 leading-snug">${faq.question}</h3>
-              <p class="text-[11px] text-slate-400 mt-1">${cat ? cat.title : 'عمومی'} • پرسش از: ${faq.askedByPublic || faq.askedBy || 'دانش‌آموز مدرسه'}</p>
+              <h3 class="text-sm sm:text-base font-extrabold text-navy-900 leading-snug">${escHtml(faq.question)}</h3>
+              <p class="text-[11px] text-slate-400 mt-1">${cat ? escHtml(cat.title) : 'عمومی'} • پرسش از: ${escHtml(faq.askedByPublic || faq.askedBy || 'دانش‌آموز مدرسه')}</p>
             </div>
           </div>
           <span id="faq-icon-${faq.id}" class="text-slate-400 font-bold text-lg transition-transform ${openByDefault ? 'rotate-180' : ''}">⌄</span>
         </button>
         <div id="faq-body-${faq.id}" class="${openByDefault ? '' : 'hidden'} px-5 pb-5 pt-2 border-t border-slate-100 bg-slate-50/50 space-y-3">
-          <p class="text-xs sm:text-sm text-slate-700 leading-loose">${faq.answer}</p>
+          <p class="text-xs sm:text-sm text-slate-700 leading-loose">${escHtml(faq.answer)}</p>
           ${relatedPosts.length ? `
             <div class="pt-2 flex flex-wrap items-center gap-2">
               <span class="text-xs font-bold text-navy-900">📌 مطالب مرتبط برای مطالعه بیشتر:</span>
               ${relatedPosts.map(rp => `
                 <button type="button" onclick="navigateTo('post', {id: '${rp.id}'})" class="px-3 py-1 rounded-xl bg-white border border-turquoise-200 text-turquoise-700 text-xs font-bold hover:bg-turquoise-50">
-                  ${rp.title} ←
+                  ${escHtml(rp.title)} ←
                 </button>
               `).join('')}
             </div>
           ` : ''}
           ${isStaff ? `
             <div class="pt-2 border-t border-slate-200/60 flex justify-end gap-2 text-xs">
-              <button type="button" onclick="UnifiedCMSStudio.editFaqPrompt('${faq.id}')" class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 font-bold">✏️ ویرایش سؤال و پاسخ</button>
+              <button type="button" onclick="UnifiedCMSStudio.openFaqEditor('${faq.id}')" class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 font-bold">✏️ ویرایش کامل سؤال و مطالب مرتبط</button>
               <button type="button" onclick="UnifiedCMSStudio.deleteFaqItem('${faq.id}')" class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 border border-rose-200 font-bold">🗑️ حذف سؤال</button>
             </div>
           ` : ''}
@@ -16285,7 +16356,6 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
     `;
   };
 
-  // ب) اصلاح تابع openCounselorModal (خط ۲۸۹۰) برای خواندن پویا از اطلاعات مشاور
   window.openCounselorModal = function() {
     GestaltEngine.syncDatabase(DB);
     const ss = DB.siteSettings || {};
@@ -16302,29 +16372,29 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
     openModal(`
       <div class="space-y-5 text-right">
         <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-          <h3 class="text-lg font-black text-navy-900">👨‍🏫 ${ss.counselorSectionHeading}</h3>
+          <h3 class="text-lg font-black text-navy-900">👨‍🏫 ${escHtml(ss.counselorSectionHeading)}</h3>
           <button type="button" onclick="closeModal()" class="text-slate-400 hover:text-rose-600 font-bold text-lg">✕</button>
         </div>
         <div class="grid grid-cols-1 ${list.length > 1 ? 'sm:grid-cols-2' : ''} gap-4 text-xs">
           ${list.map(c => `
             <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
               <div class="flex items-center gap-3">
-                <span class="text-3xl">${c.icon || '🎓'}</span>
+                <span class="text-3xl">${escHtml(c.icon || '🎓')}</span>
                 <div>
-                  <h4 class="font-black text-navy-900 text-base">${c.name}</h4>
-                  <p class="text-turquoise-700 font-bold text-xs mt-0.5">${c.role}</p>
+                  <h4 class="font-black text-navy-900 text-base">${escHtml(c.name)}</h4>
+                  <p class="text-turquoise-700 font-bold text-xs mt-0.5">${escHtml(c.role)}</p>
                 </div>
               </div>
-              <p class="text-slate-600 leading-relaxed pt-1">${c.bio || ss.counselorMissionText}</p>
+              <p class="text-slate-600 leading-relaxed pt-1">${escHtml(c.bio || ss.counselorMissionText)}</p>
               <div class="pt-2 border-t border-slate-200/80 flex flex-wrap gap-4 text-navy-900 font-bold">
-                <span>🕘 ساعات حضور: ${c.schedule || ss.officeHours}</span>
-                <span>☎️ تلفن تماس: ${ss.counselorPhone}</span>
+                <span>🕘 ساعات حضور: ${escHtml(c.schedule || ss.officeHours)}</span>
+                <span>☎️ تلفن تماس: ${escHtml(ss.counselorPhone)}</span>
               </div>
             </div>
           `).join('')}
         </div>
         <div class="p-4 rounded-2xl bg-turquoise-50 border border-turquoise-200 text-xs text-navy-900 leading-relaxed">
-          <strong>📍 آدرس:</strong> ${ss.schoolAddress}
+          <strong>📍 آدرس:</strong> ${escHtml(ss.schoolAddress)}
         </div>
         <div class="flex flex-wrap justify-between items-center gap-2">
           ${isStaff ? `
@@ -16340,35 +16410,39 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
     `);
   };
 
-  // ۵. استودیوی جامع مدیریت و ویرایش ۱۰۰٪ اجزای سایت (UnifiedCMSStudio)
+  // ۵. استودیوی جامع مدیریت و ویرایش ۱۰۰٪ اجزای سایت بدون نیاز به prompt()
   window.UnifiedCMSStudio = {
     activeTab: 'categories',
+    subViewHtml: null,
 
-    openStudio(tab) {
+    openStudio(tab, customSubHtml) {
       if (typeof AuthService !== 'undefined' && !AuthService.isAuthenticatedStaff()) {
         showToast('لطفاً ابتدا با حساب مدیریت وارد شوید.', 'warning');
         if (typeof openStaffLoginModal === 'function') openStaffLoginModal();
         return;
       }
-      this.activeTab = tab || this.activeTab || 'categories';
+      if (tab) this.activeTab = tab;
+      this.subViewHtml = customSubHtml || null;
       GestaltEngine.syncDatabase(DB);
 
       const tabs = [
-        { id: 'categories', label: '📂 عناوین اصلی و فرعی (جابجایی ۳ و ۶ / تبدیل)' },
-        { id: 'modules', label: '🗓️ تقویم، نکات روز، اطلاعیه‌ها و حذف بخش‌ها' },
-        { id: 'identity', label: '👨‍🏫 نام مشاور، هدر، فوتر و کل سایت' },
-        { id: 'posts', label: '🎬 مقالات، فیلم‌ها و پادکست‌ها (یکپارچه)' },
-        { id: 'faqs_quizzes', label: '❓ سؤالات پرتکرار و آزمون‌ها' },
-        { id: 'majors_paths', label: '🎓 رشته‌ها و مسیرهای یادگیری' }
+        { id: 'categories', label: '📂 ۱. عناوین اصلی و فرعی' },
+        { id: 'posts', label: '🎬 ۲. مقالات، فیلم و پادکست' },
+        { id: 'modules', label: '🗓️ ۳. تقویم، نکات و بخش‌ها' },
+        { id: 'faqs_quizzes', label: '❓ ۴. آزمون‌ها و سؤالات پرتکرار' },
+        { id: 'majors_paths', label: '🎓 ۵. رشته‌ها، دانشگاه و مسیرها' },
+        { id: 'identity', label: '👨‍🏫 ۶. مشاور، هدر، فوتر و ابزارها' }
       ];
 
       let bodyHtml = '';
-      if (this.activeTab === 'categories') bodyHtml = this.renderCategoriesTab();
-      else if (this.activeTab === 'modules') bodyHtml = this.renderModulesTab();
-      else if (this.activeTab === 'identity') bodyHtml = this.renderIdentityTab();
+      if (this.subViewHtml) {
+        bodyHtml = this.subViewHtml;
+      } else if (this.activeTab === 'categories') bodyHtml = this.renderCategoriesTab();
       else if (this.activeTab === 'posts') bodyHtml = this.renderPostsTab();
+      else if (this.activeTab === 'modules') bodyHtml = this.renderModulesTab();
       else if (this.activeTab === 'faqs_quizzes') bodyHtml = this.renderFaqsAndQuizzesTab();
       else if (this.activeTab === 'majors_paths') bodyHtml = this.renderMajorsAndPathsTab();
+      else if (this.activeTab === 'identity') bodyHtml = this.renderIdentityTab();
 
       openModal(`
         <div class="space-y-4 text-right">
@@ -16387,7 +16461,7 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
 
           <div class="flex flex-wrap gap-1.5 border-b border-slate-200 pb-3">
             ${tabs.map(t => `
-              <button type="button" onclick="UnifiedCMSStudio.openStudio('${t.id}')" class="px-3 py-2 rounded-xl text-xs font-extrabold transition ${this.activeTab === t.id ? 'bg-navy-900 text-turquoise-300 shadow' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
+              <button type="button" onclick="UnifiedCMSStudio.openStudio('${t.id}')" class="px-3 py-2 rounded-xl text-xs font-extrabold transition ${this.activeTab === t.id && !this.subViewHtml ? 'bg-navy-900 text-turquoise-300 shadow' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
                 ${t.label}
               </button>
             `).join('')}
@@ -16400,25 +16474,44 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
       `, 'unified-cms-studio-modal');
     },
 
+    // ابزار عمومی تعویض مستقیم شماره X با شماره Y برای هر لیست در سایت
+    renderUniversalSwapBox(listKey, titleText, totalCount) {
+      return `
+        <div class="p-3.5 rounded-2xl bg-turquoise-50 border border-turquoise-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span class="font-black text-navy-900">🔄 ${titleText} (از ۱ تا ${toFaNum(totalCount)}):</span>
+          <div class="flex flex-wrap items-center gap-2">
+            <span>جای شماره</span>
+            <input id="swap-a-${listKey}" type="number" min="1" max="${totalCount}" placeholder="مثلاً 3" class="w-20 px-2.5 py-1.5 rounded-xl border border-slate-300 font-black text-center bg-white" />
+            <span>با شماره</span>
+            <input id="swap-b-${listKey}" type="number" min="1" max="${totalCount}" placeholder="مثلاً 6" class="w-20 px-2.5 py-1.5 rounded-xl border border-slate-300 font-black text-center bg-white" />
+            <button type="button" onclick="UnifiedCMSStudio.swapListByNumbers('${listKey}')" class="px-3.5 py-1.5 rounded-xl bg-navy-900 hover:bg-turquoise-600 text-white font-black transition">
+              ⚡ جابجا کن و شماره‌ها را بروز کن
+            </button>
+          </div>
+        </div>
+      `;
+    },
+
+    swapListByNumbers(listKey) {
+      const arr = DB[listKey];
+      if (!Array.isArray(arr)) return;
+      const a = parseInt(document.getElementById(`swap-a-${listKey}`)?.value, 10) - 1;
+      const b = parseInt(document.getElementById(`swap-b-${listKey}`)?.value, 10) - 1;
+      if (isNaN(a) || isNaN(b) || a < 0 || b < 0 || a >= arr.length || b >= arr.length) {
+        return showToast(`لطفاً دو شماره معتبر بین ۱ تا ${toFaNum(arr.length)} وارد کنید.`, 'warning');
+      }
+      const temp = arr[a];
+      arr[a] = arr[b];
+      arr[b] = temp;
+      this.commit(`تعویض مستقیم جای شماره ${a + 1} و ${b + 1} در ${listKey}`);
+    },
+
     // ==================== TAB 1: CATEGORIES & SUBCATEGORIES ====================
     renderCategoriesTab() {
       const cats = DB.categories || [];
       return `
-        <!-- تعویض مستقیم دو شماره (مثلاً تعویض ۳ و ۶) -->
-        <div class="p-4 rounded-2xl bg-turquoise-50 border border-turquoise-200 space-y-3">
-          <h3 class="text-xs sm:text-sm font-black text-navy-900">🔄 جابجایی مستقیم جای دو عنوان اصلی با شماره (مثلاً تعویض شماره ۳ و ۶)</h3>
-          <div class="flex flex-wrap items-center gap-2 text-xs">
-            <span class="font-bold">تعویض جای شماره:</span>
-            <input id="cms-swap-a" type="number" min="1" max="${cats.length}" placeholder="مثلاً 3" class="w-24 px-3 py-2 rounded-xl border border-slate-300 font-black text-center bg-white" />
-            <span class="font-bold">با شماره:</span>
-            <input id="cms-swap-b" type="number" min="1" max="${cats.length}" placeholder="مثلاً 6" class="w-24 px-3 py-2 rounded-xl border border-slate-300 font-black text-center bg-white" />
-            <button type="button" onclick="UnifiedCMSStudio.swapCategoriesByNumber()" class="px-4 py-2 rounded-xl bg-navy-900 hover:bg-turquoise-600 text-white font-black transition">
-              ⚡ جابجا کن و شماره‌ها را خودکار بروز کن
-            </button>
-          </div>
-        </div>
+        ${this.renderUniversalSwapBox('categories', 'تعویض مستقیم جای دو عنوان اصلی (مثلاً ۳ و ۶)', cats.length)}
 
-        <!-- افزودن عنوان اصلی یا فرعی جدید -->
         <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
           <h3 class="text-xs sm:text-sm font-black text-navy-900">➕ افزودن عنوان اصلی یا فرعی جدید (شماره‌گذاری خودکار)</h3>
           <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 text-xs">
@@ -16430,7 +16523,7 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
             </div>
             <div id="cms-add-cat-parent-box" class="sm:col-span-4 hidden">
               <select id="cms-add-cat-parent" class="w-full px-3 py-2 rounded-xl border bg-white font-bold">
-                ${cats.map(c => `<option value="${c.id}">زیرمجموعه: ${c.title}</option>`).join('')}
+                ${cats.map(c => `<option value="${c.id}">زیرمجموعه: ${escHtml(c.title)}</option>`).join('')}
               </select>
             </div>
             <div class="sm:col-span-2">
@@ -16450,53 +16543,53 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
           </div>
         </div>
 
-        <!-- لیست عناوین اصلی و فرعی -->
         <div class="space-y-3">
           ${cats.map((cat, idx) => `
             <div class="p-4 rounded-2xl border-2 ${cat.active === false ? 'border-rose-200 bg-rose-50/30' : 'border-slate-200 bg-white'} space-y-3 shadow-sm">
               <div class="flex flex-wrap items-center justify-between gap-2">
                 <div class="flex items-center gap-2">
-                  <span class="px-2.5 py-1 rounded-lg bg-navy-900 text-turquoise-300 font-black text-xs">ردیف ${toFaNum(idx + 1)}</span>
-                  <span class="text-xl">${cat.icon || '📘'}</span>
-                  <strong class="text-sm font-black text-navy-900">${cat.title}</strong>
+                  <span class="px-2.5 py-1 rounded-lg bg-navy-900 text-turquoise-300 font-black text-xs">شماره ${toFaNum(idx + 1)}</span>
+                  <span class="text-xl">${escHtml(cat.icon || '📘')}</span>
+                  <strong class="text-sm font-black text-navy-900">${escHtml(cat.title)}</strong>
                   ${cat.active === false ? `<span class="px-2 py-0.5 rounded bg-rose-100 text-rose-700 text-[10px] font-bold">مخفی</span>` : ''}
                 </div>
                 <div class="flex flex-wrap items-center gap-1 text-xs">
-                  <button type="button" onclick="UnifiedCMSStudio.moveCategory(${idx}, -1)" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold" title="انتقال به بالا">⬆️</button>
-                  <button type="button" onclick="UnifiedCMSStudio.moveCategory(${idx}, 1)" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold" title="انتقال به پایین">⬇️</button>
-                  <button type="button" onclick="UnifiedCMSStudio.demoteMainCategory('${cat.id}')" class="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold">
-                    ↳ تبدیل به زیرعنوان فرعی
-                  </button>
-                  <button type="button" onclick="UnifiedCMSStudio.editCategoryPrompt('${cat.id}')" class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 font-bold">✏️ ویرایش</button>
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('categories', ${idx}, -1)" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold" title="انتقال به بالا">⬆️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('categories', ${idx}, 1)" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold" title="انتقال به پایین">⬇️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.openCategoryEditor('${cat.id}')" class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 font-bold">✏️ ویرایش کامل / تغییر سطح</button>
                   <button type="button" onclick="UnifiedCMSStudio.toggleCategoryActive('${cat.id}')" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold">${cat.active === false ? '👁️ نمایش' : '🙈 مخفی'}</button>
                   <button type="button" onclick="UnifiedCMSStudio.deleteCategory('${cat.id}')" class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 border border-rose-200 font-bold">🗑️ حذف</button>
                 </div>
               </div>
 
-              <p class="text-xs text-slate-500">${cat.description || ''}</p>
+              <p class="text-xs text-slate-500">${escHtml(cat.description || '')}</p>
 
-              <!-- زیرعنوان‌ها -->
               <div class="pr-4 border-r-2 border-turquoise-300 space-y-1.5">
-                <div class="flex items-center justify-between">
+                <div class="flex flex-wrap items-center justify-between gap-2">
                   <span class="text-[11px] font-extrabold text-slate-500">زیرعنوان‌های این دسته (${toFaNum((cat.subcategories || []).length)} مورد):</span>
+                  ${(cat.subcategories || []).length > 1 ? `
+                    <div class="flex items-center gap-1 text-[11px]">
+                      <span>تعویض زیرعنوان شماره</span>
+                      <input id="sub-swap-a-${cat.id}" type="number" min="1" max="${cat.subcategories.length}" class="w-12 px-1 py-0.5 border rounded text-center" />
+                      <span>با</span>
+                      <input id="sub-swap-b-${cat.id}" type="number" min="1" max="${cat.subcategories.length}" class="w-12 px-1 py-0.5 border rounded text-center" />
+                      <button type="button" onclick="UnifiedCMSStudio.swapSubcategoriesByNumber('${cat.id}')" class="px-2 py-0.5 rounded bg-navy-900 text-white font-bold">جابجا کن</button>
+                    </div>
+                  ` : ''}
                 </div>
                 ${(cat.subcategories || []).map((sub, sIdx) => `
                   <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
                     <div class="flex items-center gap-1.5">
                       <span class="px-2 py-0.5 rounded bg-slate-200 text-navy-900 font-bold text-[10px]">${toFaNum(idx + 1)}-${toFaNum(sIdx + 1)}</span>
-                      <span>${sub.icon || '🔹'}</span>
-                      <span class="font-bold text-navy-900">${sub.title}</span>
+                      <span>${escHtml(sub.icon || '🔹')}</span>
+                      <span class="font-bold text-navy-900">${escHtml(sub.title)}</span>
+                      ${sub.parentId ? `<span class="text-[10px] text-turquoise-700 font-bold">(زیرمجموعه سطح ۲)</span>` : ''}
                     </div>
                     <div class="flex flex-wrap items-center gap-1">
                       <button type="button" onclick="UnifiedCMSStudio.moveSubcategory('${cat.id}', ${sIdx}, -1)" class="px-1.5 py-0.5 rounded bg-white border text-[11px]">⬆️</button>
                       <button type="button" onclick="UnifiedCMSStudio.moveSubcategory('${cat.id}', ${sIdx}, 1)" class="px-1.5 py-0.5 rounded bg-white border text-[11px]">⬇️</button>
-                      <button type="button" onclick="UnifiedCMSStudio.promoteSubToMain('${cat.id}', '${sub.id}')" class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">
-                        ↰ تبدیل به عنوان اصلی
-                      </button>
-                      <button type="button" onclick="UnifiedCMSStudio.moveSubToAnotherCat('${cat.id}', '${sub.id}')" class="px-2 py-0.5 rounded bg-softblue-50 text-softblue-700 border border-softblue-200 text-[11px] font-bold">
-                        ⇄ انتقال به دسته دیگر
-                      </button>
-                      <button type="button" onclick="UnifiedCMSStudio.editSubPrompt('${cat.id}', '${sub.id}')" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-bold">✏️</button>
+                      <button type="button" onclick="UnifiedCMSStudio.promoteSubToMain('${cat.id}', '${sub.id}')" class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">↰ تبدیل به عنوان اصلی</button>
+                      <button type="button" onclick="UnifiedCMSStudio.openSubcategoryEditor('${cat.id}', '${sub.id}')" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-bold">✏️ ویرایش کامل / انتقال</button>
                       <button type="button" onclick="UnifiedCMSStudio.deleteSub('${cat.id}', '${sub.id}')" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200 text-[11px] font-bold">🗑️</button>
                     </div>
                   </div>
@@ -16508,25 +16601,189 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
       `;
     },
 
-    swapCategoriesByNumber() {
-      const a = parseInt(document.getElementById('cms-swap-a')?.value, 10) - 1;
-      const b = parseInt(document.getElementById('cms-swap-b')?.value, 10) - 1;
-      if (isNaN(a) || isNaN(b) || a < 0 || b < 0 || a >= DB.categories.length || b >= DB.categories.length) {
-        return showToast(`لطفاً دو شماره معتبر بین ۱ تا ${toFaNum(DB.categories.length)} وارد کنید.`, 'warning');
-      }
-      const temp = DB.categories[a];
-      DB.categories[a] = DB.categories[b];
-      DB.categories[b] = temp;
-      this.commit(`تعویض مستقیم جای عنوان شماره ${a + 1} و ${b + 1}`);
+    openCategoryEditor(catId) {
+      const cat = DB.categories.find(c => c.id === catId);
+      if (!cat) return;
+      const otherCats = DB.categories.filter(c => c.id !== catId);
+      const colors = [
+        'from-softblue-500 to-navy-900',
+        'from-emerald-500 to-teal-800',
+        'from-amber-500 to-orange-700',
+        'from-indigo-500 to-navy-900',
+        'from-cyan-500 to-blue-800',
+        'from-rose-500 to-red-900',
+        'from-violet-600 to-purple-900',
+        'from-teal-500 to-emerald-800'
+      ];
+
+      this.openStudio('categories', `
+        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4 text-xs">
+          <div class="flex items-center justify-between border-b pb-3">
+            <h3 class="text-sm font-black text-navy-900">✏️ ویرایش کامل دسته‌بندی اصلی: ${escHtml(cat.title)}</h3>
+            <button type="button" onclick="UnifiedCMSStudio.openStudio('categories')" class="px-3 py-1 rounded-lg bg-slate-200 font-bold">→ بازگشت به لیست</button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+            <div class="sm:col-span-6">
+              <label class="block font-bold mb-1">نام عنوان اصلی (شماره خودکار تنظیم می‌شود):</label>
+              <input id="edit-cat-title" type="text" value="${escHtml(cat.cleanTitle || stripNumberPrefix(cat.title))}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block font-bold mb-1">آیکون:</label>
+              <input id="edit-cat-icon" type="text" value="${escHtml(cat.icon || '🎯')}" class="w-full px-3 py-2 rounded-xl border bg-white text-center" />
+            </div>
+            <div class="sm:col-span-4">
+              <label class="block font-bold mb-1">تم رنگی کارت:</label>
+              <select id="edit-cat-color" class="w-full px-3 py-2 rounded-xl border bg-white font-bold">
+                ${colors.map(col => `<option value="${col}" ${cat.color === col ? 'selected' : ''}>${col}</option>`).join('')}
+              </select>
+            </div>
+            <div class="sm:col-span-12">
+              <label class="block font-bold mb-1">توضیحات علمی و مشاوره‌ای:</label>
+              <textarea id="edit-cat-desc" rows="3" class="w-full px-3 py-2 rounded-xl border bg-white">${escHtml(cat.description || '')}</textarea>
+            </div>
+          </div>
+          <div class="flex flex-wrap justify-between items-center gap-3 pt-3 border-t">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-indigo-800">تبدیل این عنوان اصلی به زیرعنوان در:</span>
+              <select id="demote-target-cat" class="px-2.5 py-1.5 rounded-xl border bg-white font-bold">
+                ${otherCats.map(o => `<option value="${o.id}">${escHtml(o.title)}</option>`).join('')}
+              </select>
+              <button type="button" onclick="UnifiedCMSStudio.demoteMainCategoryTo('${cat.id}', document.getElementById('demote-target-cat').value)" class="px-3 py-1.5 rounded-xl bg-indigo-600 text-white font-bold">↳ اعمال تبدیل به فرعی</button>
+            </div>
+            <button type="button" onclick="UnifiedCMSStudio.saveCategoryEditor('${cat.id}')" class="px-6 py-2.5 rounded-xl bg-navy-900 hover:bg-turquoise-600 text-white font-black">💾 ذخیره تغییرات دسته</button>
+          </div>
+        </div>
+      `);
     },
 
-    moveCategory(idx, dir) {
-      const target = idx + dir;
-      if (target < 0 || target >= DB.categories.length) return;
-      const temp = DB.categories[idx];
-      DB.categories[idx] = DB.categories[target];
-      DB.categories[target] = temp;
-      this.commit('جابجایی ترتیب دسته‌بندی‌ها');
+    saveCategoryEditor(catId) {
+      const cat = DB.categories.find(c => c.id === catId);
+      if (!cat) return;
+      const t = document.getElementById('edit-cat-title')?.value.trim();
+      if (t) {
+        cat.cleanTitle = stripNumberPrefix(t);
+        cat.title = cat.cleanTitle;
+      }
+      cat.icon = document.getElementById('edit-cat-icon')?.value.trim() || cat.icon;
+      cat.color = document.getElementById('edit-cat-color')?.value || cat.color;
+      cat.description = document.getElementById('edit-cat-desc')?.value.trim() || '';
+      this.commit(`ویرایش کامل دسته‌بندی «${cat.cleanTitle}»`);
+    },
+
+    openSubcategoryEditor(catId, subId) {
+      const cat = DB.categories.find(c => c.id === catId);
+      if (!cat) return;
+      const sub = (cat.subcategories || []).find(s => s.id === subId);
+      if (!sub) return;
+      const siblingSubs = (cat.subcategories || []).filter(s => s.id !== subId);
+
+      this.openStudio('categories', `
+        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4 text-xs">
+          <div class="flex items-center justify-between border-b pb-3">
+            <h3 class="text-sm font-black text-navy-900">✏️ ویرایش کامل زیرعنوان: ${escHtml(sub.title)}</h3>
+            <button type="button" onclick="UnifiedCMSStudio.openStudio('categories')" class="px-3 py-1 rounded-lg bg-slate-200 font-bold">→ بازگشت</button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+            <div class="sm:col-span-6">
+              <label class="block font-bold mb-1">عنوان زیرمجموعه:</label>
+              <input id="edit-sub-title" type="text" value="${escHtml(sub.title)}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block font-bold mb-1">آیکون:</label>
+              <input id="edit-sub-icon" type="text" value="${escHtml(sub.icon || '🔹')}" class="w-full px-3 py-2 rounded-xl border bg-white text-center" />
+            </div>
+            <div class="sm:col-span-4">
+              <label class="block font-bold mb-1">انتقال به دسته‌بندی اصلی:</label>
+              <select id="edit-sub-target-cat" class="w-full px-3 py-2 rounded-xl border bg-white font-bold">
+                ${DB.categories.map(c => `<option value="${c.id}" ${c.id === catId ? 'selected' : ''}>${escHtml(c.title)}</option>`).join('')}
+              </select>
+            </div>
+            <div class="sm:col-span-6">
+              <label class="block font-bold mb-1">والد درونی (برای زیرمجموعه چندسطحی):</label>
+              <select id="edit-sub-parent" class="w-full px-3 py-2 rounded-xl border bg-white font-bold">
+                <option value="">بدون والد (سطح ۱ مستقیم)</option>
+                ${siblingSubs.map(s => `<option value="${s.id}" ${sub.parentId === s.id ? 'selected' : ''}>زیرمجموعه: ${escHtml(s.title)}</option>`).join('')}
+              </select>
+            </div>
+            <div class="sm:col-span-12">
+              <label class="block font-bold mb-1">توضیحات زیرعنوان:</label>
+              <textarea id="edit-sub-desc" rows="2" class="w-full px-3 py-2 rounded-xl border bg-white">${escHtml(sub.description || '')}</textarea>
+            </div>
+          </div>
+          <div class="flex justify-end pt-3 border-t">
+            <button type="button" onclick="UnifiedCMSStudio.saveSubcategoryEditor('${catId}', '${subId}')" class="px-6 py-2.5 rounded-xl bg-navy-900 hover:bg-turquoise-600 text-white font-black">💾 ذخیره تغییرات زیرعنوان</button>
+          </div>
+        </div>
+      `);
+    },
+
+    saveSubcategoryEditor(oldCatId, subId) {
+      const oldCat = DB.categories.find(c => c.id === oldCatId);
+      if (!oldCat) return;
+      const sub = (oldCat.subcategories || []).find(s => s.id === subId);
+      if (!sub) return;
+
+      const newTitle = document.getElementById('edit-sub-title')?.value.trim();
+      if (newTitle) sub.title = stripNumberPrefix(newTitle);
+      sub.icon = document.getElementById('edit-sub-icon')?.value.trim() || '🔹';
+      sub.description = document.getElementById('edit-sub-desc')?.value.trim() || '';
+      sub.parentId = document.getElementById('edit-sub-parent')?.value || null;
+
+      const newCatId = document.getElementById('edit-sub-target-cat')?.value || oldCatId;
+      if (newCatId !== oldCatId) {
+        const targetCat = DB.categories.find(c => c.id === newCatId);
+        if (targetCat) {
+          oldCat.subcategories = oldCat.subcategories.filter(s => s.id !== subId);
+          sub.parentId = null;
+          targetCat.subcategories = targetCat.subcategories || [];
+          targetCat.subcategories.push(sub);
+          (DB.posts || []).forEach(p => {
+            if (p.subcategoryId === subId) p.categoryId = newCatId;
+          });
+        }
+      }
+      this.commit(`ویرایش زیرعنوان «${sub.title}»`);
+    },
+
+    swapSubcategoriesByNumber(catId) {
+      const cat = DB.categories.find(c => c.id === catId);
+      if (!cat || !Array.isArray(cat.subcategories)) return;
+      const a = parseInt(document.getElementById(`sub-swap-a-${catId}`)?.value, 10) - 1;
+      const b = parseInt(document.getElementById(`sub-swap-b-${catId}`)?.value, 10) - 1;
+      if (isNaN(a) || isNaN(b) || a < 0 || b < 0 || a >= cat.subcategories.length || b >= cat.subcategories.length) {
+        return showToast('شماره زیرعنوان نامعتبر است.', 'warning');
+      }
+      const temp = cat.subcategories[a];
+      cat.subcategories[a] = cat.subcategories[b];
+      cat.subcategories[b] = temp;
+      this.commit('تعویض جای دو زیرعنوان');
+    },
+
+    demoteMainCategoryTo(sourceCatId, targetCatId) {
+      const sourceCat = DB.categories.find(c => c.id === sourceCatId);
+      const targetCat = DB.categories.find(c => c.id === targetCatId);
+      if (!sourceCat || !targetCat || sourceCatId === targetCatId) return;
+
+      const newSubId = 'sub-demoted-' + Date.now();
+      targetCat.subcategories = targetCat.subcategories || [];
+      targetCat.subcategories.push({
+        id: newSubId,
+        parentId: null,
+        title: sourceCat.cleanTitle || stripNumberPrefix(sourceCat.title),
+        icon: sourceCat.icon || '🔹',
+        description: sourceCat.description || ''
+      });
+      (sourceCat.subcategories || []).forEach(s => {
+        targetCat.subcategories.push({ ...s, parentId: newSubId });
+      });
+      (DB.posts || []).forEach(p => {
+        if (p.categoryId === sourceCatId) {
+          p.categoryId = targetCat.id;
+          p.subcategoryId = newSubId;
+        }
+      });
+      DB.categories = DB.categories.filter(c => c.id !== sourceCatId);
+      this.commit(`تبدیل عنوان اصلی «${sourceCat.cleanTitle}» به زیرعنوان در «${targetCat.cleanTitle}»`);
     },
 
     addCategoryOrSub() {
@@ -16561,22 +16818,6 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
       }
     },
 
-    editCategoryPrompt(catId) {
-      const cat = DB.categories.find(c => c.id === catId);
-      if (!cat) return;
-      const t = prompt('نام عنوان اصلی (شماره به صورت خودکار گذاشته می‌شود):', cat.cleanTitle || stripNumberPrefix(cat.title));
-      if (t === null) return;
-      const ic = prompt('آیکون:', cat.icon || '📘');
-      const ds = prompt('توضیحات:', cat.description || '');
-      if (t.trim()) {
-        cat.cleanTitle = stripNumberPrefix(t.trim());
-        cat.title = cat.cleanTitle;
-      }
-      if (ic !== null && ic.trim()) cat.icon = ic.trim();
-      if (ds !== null) cat.description = ds.trim();
-      this.commit(`ویرایش دسته‌بندی «${cat.cleanTitle}»`);
-    },
-
     toggleCategoryActive(catId) {
       const cat = DB.categories.find(c => c.id === catId);
       if (!cat) return;
@@ -16598,38 +16839,6 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
       });
       DB.categories = DB.categories.filter(c => c.id !== catId);
       this.commit(`حذف دسته‌بندی «${cat.cleanTitle}»`);
-    },
-
-    demoteMainCategory(sourceCatId) {
-      const sourceCat = DB.categories.find(c => c.id === sourceCatId);
-      if (!sourceCat || DB.categories.length <= 1) return;
-      const others = DB.categories.filter(c => c.id !== sourceCatId);
-      const menu = others.map((c, i) => `${i + 1}: ${c.title}`).join('\n');
-      const pick = prompt(`عنوان «${sourceCat.cleanTitle}» زیرمجموعه کدام دسته شود؟ شماره را وارد کنید:\n${menu}`, '1');
-      if (!pick) return;
-      const targetCat = others[parseInt(pick, 10) - 1];
-      if (!targetCat) return showToast('شماره نامعتبر است.', 'warning');
-
-      const newSubId = 'sub-demoted-' + Date.now();
-      targetCat.subcategories = targetCat.subcategories || [];
-      targetCat.subcategories.push({
-        id: newSubId,
-        parentId: null,
-        title: sourceCat.cleanTitle,
-        icon: sourceCat.icon || '🔹',
-        description: sourceCat.description || ''
-      });
-      (sourceCat.subcategories || []).forEach(s => {
-        targetCat.subcategories.push({ ...s, parentId: newSubId });
-      });
-      (DB.posts || []).forEach(p => {
-        if (p.categoryId === sourceCatId) {
-          p.categoryId = targetCat.id;
-          p.subcategoryId = newSubId;
-        }
-      });
-      DB.categories = DB.categories.filter(c => c.id !== sourceCatId);
-      this.commit(`تبدیل عنوان اصلی «${sourceCat.cleanTitle}» به زیرعنوان در «${targetCat.cleanTitle}»`);
     },
 
     promoteSubToMain(catId, subId) {
@@ -16681,43 +16890,6 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
       this.commit('جابجایی زیرعنوان');
     },
 
-    moveSubToAnotherCat(sourceCatId, subId) {
-      const sourceCat = DB.categories.find(c => c.id === sourceCatId);
-      if (!sourceCat) return;
-      const sub = (sourceCat.subcategories || []).find(s => s.id === subId);
-      if (!sub) return;
-      const others = DB.categories.filter(c => c.id !== sourceCatId);
-      const menu = others.map((c, i) => `${i + 1}: ${c.title}`).join('\n');
-      const pick = prompt(`زیرعنوان «${sub.title}» به کدام دسته منتقل شود؟\n${menu}`, '1');
-      if (!pick) return;
-      const targetCat = others[parseInt(pick, 10) - 1];
-      if (!targetCat) return;
-
-      sourceCat.subcategories = sourceCat.subcategories.filter(s => s.id !== subId);
-      sub.parentId = null;
-      targetCat.subcategories = targetCat.subcategories || [];
-      targetCat.subcategories.push(sub);
-      (DB.posts || []).forEach(p => {
-        if (p.subcategoryId === subId) p.categoryId = targetCat.id;
-      });
-      this.commit(`انتقال زیرعنوان «${sub.title}» به «${targetCat.cleanTitle}»`);
-    },
-
-    editSubPrompt(catId, subId) {
-      const cat = DB.categories.find(c => c.id === catId);
-      if (!cat) return;
-      const sub = (cat.subcategories || []).find(s => s.id === subId);
-      if (!sub) return;
-      const t = prompt('نام زیرعنوان:', sub.title);
-      if (t === null) return;
-      const ic = prompt('آیکون:', sub.icon || '🔹');
-      const ds = prompt('توضیحات:', sub.description || '');
-      if (t.trim()) sub.title = stripNumberPrefix(t.trim());
-      if (ic !== null && ic.trim()) sub.icon = ic.trim();
-      if (ds !== null) sub.description = ds.trim();
-      this.commit(`ویرایش زیرعنوان «${sub.title}»`);
-    },
-
     deleteSub(catId, subId) {
       const cat = DB.categories.find(c => c.id === catId);
       if (!cat) return;
@@ -16726,14 +16898,208 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
       this.commit('حذف زیرعنوان');
     },
 
-    // ==================== TAB 2: CALENDAR, TIPS, ANNOUNCEMENTS & MODULE VISIBILITY ====================
+    // ==================== TAB 2: POSTS, VIDEOS, PODCASTS & ATTACHMENTS ====================
+    renderPostsTab() {
+      const posts = DB.posts || [];
+      return `
+        ${this.renderUniversalSwapBox('posts', 'تعویض مستقیم جای دو مطلب/فیلم با شماره ردیف', posts.length)}
+
+        <div class="flex flex-wrap items-center justify-between gap-2 p-3.5 rounded-2xl bg-slate-50 border text-xs">
+          <span class="font-black text-navy-900">🎬 مدیریت یکپارچه مقالات، ویدئوها، پادکست‌ها و فایل‌های پیوست (${toFaNum(posts.length)} مورد)</span>
+          <div class="flex gap-2">
+            <button type="button" onclick="UnifiedCMSStudio.openPostEditor(null)" class="px-3.5 py-2 rounded-xl bg-emerald-600 text-white font-black">
+              + افزودن سریع مطلب / فیلم / پادکست
+            </button>
+            <button type="button" onclick="closeModal();navigateTo('admin', {tab: 'editor'})" class="px-3.5 py-2 rounded-xl bg-turquoise-500 text-navy-950 font-black">
+              ویرایشگر متن غنی پیشرفته
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-2 text-xs">
+          ${posts.map((p, idx) => {
+            const cat = (DB.categories || []).find(c => c.id === p.categoryId);
+            const pub = p.status === 'published';
+            return `
+              <div class="p-3 rounded-2xl border ${pub ? 'bg-white border-slate-200' : 'bg-rose-50/40 border-rose-200'} flex flex-wrap items-center justify-between gap-2">
+                <div class="max-w-xl space-y-0.5">
+                  <div class="flex flex-wrap items-center gap-1.5">
+                    <span class="px-2 py-0.5 rounded bg-navy-900 text-turquoise-300 font-bold text-[10px]">ردیف ${toFaNum(idx + 1)}</span>
+                    <span class="px-2 py-0.5 rounded font-bold text-[10px] ${pub ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                      ${pub ? 'منتشرشده' : 'در زباله‌دان (حذف از سایت)'}
+                    </span>
+                    <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold text-[10px]">${escHtml(p.contentType || 'article')}</span>
+                    <span class="text-slate-500 font-bold">${cat ? escHtml(cat.title) : ''}</span>
+                  </div>
+                  <p class="font-extrabold text-navy-900 text-sm">${escHtml(p.title)}</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-1">
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('posts', ${idx}, -1)" class="px-1.5 py-1 border rounded bg-slate-50">⬆️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('posts', ${idx}, 1)" class="px-1.5 py-1 border rounded bg-slate-50">⬇️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.openPostEditor('${p.id}')" class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border font-bold">✏️ ویرایش کامل</button>
+                  <button type="button" onclick="UnifiedCMSStudio.togglePostPublish('${p.id}')" class="px-2.5 py-1 rounded-lg font-bold ${pub ? 'bg-amber-100 text-amber-900' : 'bg-emerald-600 text-white'}">
+                    ${pub ? '🗑️ انتقال به زباله‌دان' : '♻️ بازیابی به سایت'}
+                  </button>
+                  <button type="button" onclick="UnifiedCMSStudio.deletePostForever('${p.id}')" class="px-2.5 py-1 rounded-lg bg-rose-600 text-white font-bold">✕ حذف دائمی</button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    },
+
+    openPostEditor(postId) {
+      const isNew = !postId;
+      const p = isNew ? {
+        id: 'post-' + Date.now(),
+        title: '',
+        categoryId: DB.categories[0]?.id || 'cat-2',
+        subcategoryId: DB.categories[0]?.subcategories?.[0]?.id || '',
+        contentType: 'article',
+        mediaFormat: 'text',
+        grade: 'همه پایه‌ها',
+        importance: 'بسیار مهم',
+        status: 'published',
+        featured: false,
+        readingTime: '۷ دقیقه',
+        summary: '',
+        videoUrl: '',
+        aparatHash: '',
+        videoSubtitles: '',
+        audioDuration: '',
+        audioTranscript: '',
+        tags: ['مشاوره تحصیلی'],
+        content: '<p>متن کامل مطلب را اینجا بنویسید...</p>',
+        attachments: []
+      } : DB.posts.find(x => x.id === postId);
+      if (!p) return;
+
+      this.openStudio('posts', `
+        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4 text-xs">
+          <div class="flex items-center justify-between border-b pb-3">
+            <h3 class="text-sm font-black text-navy-900">${isNew ? '➕ افزودن مطلب، ویدئو یا پادکست جدید' : '✏️ ویرایش کامل مطلب: ' + escHtml(p.title)}</h3>
+            <button type="button" onclick="UnifiedCMSStudio.openStudio('posts')" class="px-3 py-1 rounded-lg bg-slate-200 font-bold">→ بازگشت به لیست</button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+            <div class="sm:col-span-8">
+              <label class="block font-bold mb-1">عنوان مطلب / فیلم / پادکست:</label>
+              <input id="ep-title" type="text" value="${escHtml(p.title)}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" />
+            </div>
+            <div class="sm:col-span-4">
+              <label class="block font-bold mb-1">نوع محتوا:</label>
+              <select id="ep-type" class="w-full px-3 py-2 rounded-xl border bg-white font-bold">
+                ${['article','guide','tutorial','video','audio','checklist','note','qa','download'].map(t => `<option value="${t}" ${p.contentType === t ? 'selected' : ''}>${t}</option>`).join('')}
+              </select>
+            </div>
+            <div class="sm:col-span-4">
+              <label class="block font-bold mb-1">دسته‌بندی اصلی:</label>
+              <select id="ep-cat" class="w-full px-3 py-2 rounded-xl border bg-white font-bold">
+                ${DB.categories.map(c => `<option value="${c.id}" ${p.categoryId === c.id ? 'selected' : ''}>${escHtml(c.title)}</option>`).join('')}
+              </select>
+            </div>
+            <div class="sm:col-span-4">
+              <label class="block font-bold mb-1">پایه تحصیلی:</label>
+              <input id="ep-grade" type="text" value="${escHtml(p.grade || 'همه پایه‌ها')}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" />
+            </div>
+            <div class="sm:col-span-4">
+              <label class="block font-bold mb-1">زمان مطالعه / مدت ویدئو:</label>
+              <input id="ep-time" type="text" value="${escHtml(p.readingTime || '۷ دقیقه')}" class="w-full px-3 py-2 rounded-xl border bg-white" />
+            </div>
+            <div class="sm:col-span-6">
+              <label class="block font-bold mb-1">لینک یا کد ویدئوی آپارات (اختیاری):</label>
+              <input id="ep-video" type="text" value="${escHtml(p.videoUrl || p.aparatHash || '')}" placeholder="https://www.aparat.com/v/..." class="w-full px-3 py-2 rounded-xl border bg-white" dir="ltr" />
+            </div>
+            <div class="sm:col-span-6">
+              <label class="block font-bold mb-1">برچسب‌ها (با کاما ، جدا کنید):</label>
+              <input id="ep-tags" type="text" value="${escHtml((p.tags || []).join('، '))}" class="w-full px-3 py-2 rounded-xl border bg-white" />
+            </div>
+            <div class="sm:col-span-12">
+              <label class="flex items-center gap-2 font-bold cursor-pointer">
+                <input id="ep-featured" type="checkbox" ${p.featured ? 'checked' : ''} class="w-4 h-4 accent-turquoise-600" />
+                <span>⭐ نمایش در بخش «مطالب پیشنهادی مشاور» در صفحه اصلی</span>
+              </label>
+            </div>
+            <div class="sm:col-span-12">
+              <label class="block font-bold mb-1">خلاصه / چکیده مطلب:</label>
+              <textarea id="ep-summary" rows="2" class="w-full px-3 py-2 rounded-xl border bg-white">${escHtml(p.summary || '')}</textarea>
+            </div>
+            <div class="sm:col-span-12">
+              <label class="block font-bold mb-1">متن کامل مطلب (پشتیبانی از تگ‌های HTML):</label>
+              <textarea id="ep-content" rows="6" class="w-full px-3 py-2 rounded-xl border bg-white leading-relaxed">${escHtml(p.content || '')}</textarea>
+            </div>
+            <div class="sm:col-span-12">
+              <label class="block font-bold mb-1">متن پیاده‌سازی‌شده پادکست / زیرنویس ویدئو (اختیاری):</label>
+              <textarea id="ep-transcript" rows="2" class="w-full px-3 py-2 rounded-xl border bg-white">${escHtml(p.audioTranscript || p.videoSubtitles || '')}</textarea>
+            </div>
+          </div>
+          <div class="flex justify-end pt-3 border-t">
+            <button type="button" onclick="UnifiedCMSStudio.savePostEditor('${p.id}', ${isNew})" class="px-6 py-2.5 rounded-xl bg-navy-900 hover:bg-turquoise-600 text-white font-black">💾 ذخیره و همگام‌سازی در کل سایت</button>
+          </div>
+        </div>
+      `);
+    },
+
+    savePostEditor(postId, isNew) {
+      const title = document.getElementById('ep-title')?.value.trim();
+      if (!title) return showToast('لطفاً عنوان مطلب را وارد کنید.', 'warning');
+      let p = isNew ? { id: postId, views: 100, likes: 25, createdAt: '۱۴۰۵/۰۸/۲۲', status: 'published', attachments: [], gallery: [] } : DB.posts.find(x => x.id === postId);
+      if (!p) return;
+
+      p.title = title;
+      p.contentType = document.getElementById('ep-type')?.value || 'article';
+      p.mediaFormat = (p.contentType === 'video' || p.contentType === 'audio') ? p.contentType : 'text';
+      p.categoryId = document.getElementById('ep-cat')?.value || DB.categories[0]?.id;
+      const catObj = DB.categories.find(c => c.id === p.categoryId);
+      if (catObj && catObj.subcategories?.length && !catObj.subcategories.some(s => s.id === p.subcategoryId)) {
+        p.subcategoryId = catObj.subcategories[0].id;
+      }
+      p.grade = document.getElementById('ep-grade')?.value.trim() || 'همه پایه‌ها';
+      p.readingTime = document.getElementById('ep-time')?.value.trim() || '۷ دقیقه';
+      const vidVal = document.getElementById('ep-video')?.value.trim() || '';
+      p.videoUrl = vidVal;
+      p.aparatHash = (typeof extractAparatHash === 'function') ? extractAparatHash(vidVal) : '';
+      if (vidVal && p.contentType !== 'video') p.mediaFormat = 'video';
+      const rawTags = document.getElementById('ep-tags')?.value || '';
+      p.tags = rawTags.split(/[,،]/).map(t => t.trim()).filter(Boolean);
+      p.featured = Boolean(document.getElementById('ep-featured')?.checked);
+      p.summary = document.getElementById('ep-summary')?.value.trim() || '';
+      p.content = document.getElementById('ep-content')?.value || '';
+      const tr = document.getElementById('ep-transcript')?.value.trim() || '';
+      if (p.contentType === 'audio') p.audioTranscript = tr;
+      else p.videoSubtitles = tr;
+      p.updatedAt = '۱۴۰۵/۰۸/۲۲';
+
+      if (isNew) DB.posts.unshift(p);
+      this.commit(`ذخیره و همگام‌سازی مطلب «${p.title}»`);
+    },
+
+    togglePostPublish(postId) {
+      const p = (DB.posts || []).find(x => x.id === postId);
+      if (!p) return;
+      p.status = (p.status === 'published') ? 'trash' : 'published';
+      p.workflowState = (p.status === 'published') ? 'Published' : 'Archived';
+      this.commit(`تغییر وضعیت نمایش «${p.title}» در کل سایت`);
+    },
+
+    deletePostForever(postId) {
+      const p = (DB.posts || []).find(x => x.id === postId);
+      if (!p) return;
+      if (!confirm(`آیا «${p.title}» به صورت دائمی و زنجیره‌ای از کل سایت حذف شود؟`)) return;
+      DB.posts = (DB.posts || []).filter(x => x.id !== postId);
+      this.commit(`حذف دائمی و زنجیره‌ای «${p.title}»`);
+    },
+
+    // ==================== TAB 3: CALENDAR, TIPS, ANNOUNCEMENTS & MODULE VISIBILITY ====================
     renderModulesTab() {
       const vis = DB.siteSettings.modulesVisibility || {};
       const switches = [
         { key: 'showTopBar', label: 'نوار اطلاعیه بالای سایت' },
+        { key: 'showHeroStats', label: 'کادر آمار پیشخوان در بالای صفحه اول' },
         { key: 'showShortTips', label: 'کادر نکات کوتاه مشاوره‌ای روز' },
         { key: 'showCategories', label: 'کادر دسته‌بندی‌ها در صفحه اصلی' },
         { key: 'showFeaturedPosts', label: 'کادر مطالب پیشنهادی در صفحه اصلی' },
+        { key: 'showPopularPosts', label: 'نوار پربازدیدترین مطالب در صفحه اصلی' },
         { key: 'showMediaSection', label: 'کادر ویدئو و پادکست در صفحه اصلی' },
         { key: 'showAnnouncements', label: 'کادر اطلاعیه‌های مدرسه' },
         { key: 'showCounselorBox', label: 'کادر معرفی مشاور در صفحه اصلی' },
@@ -16742,7 +17108,6 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
       ];
 
       return `
-        <!-- کلیدهای حذف/نمایش کل بخش‌ها -->
         <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
           <h3 class="text-xs sm:text-sm font-black text-navy-900">👁️ حذف یا نمایش کامل هر یک از بخش‌های سایت</h3>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
@@ -16755,12 +17120,12 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
           </div>
         </div>
 
-        <!-- مدیریت تقویم آموزشی -->
         <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3">
           <div class="flex items-center justify-between">
             <h3 class="text-xs sm:text-sm font-black text-navy-900">🗓️ مدیریت کامل تقویم آموزشی (${toFaNum((DB.calendarEvents || []).length)} رویداد)</h3>
             <button type="button" onclick="UnifiedCMSStudio.clearAllCalendar()" class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 text-[11px] font-bold">🗑️ حذف تمام رویدادها</button>
           </div>
+          ${this.renderUniversalSwapBox('calendarEvents', 'تعویض جای دو رویداد تقویم', (DB.calendarEvents || []).length)}
           <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 text-xs bg-slate-50 p-3 rounded-xl border">
             <input id="cms-cal-date" type="text" placeholder="تاریخ (۱۴۰۵/۰۹/۱۰)" class="sm:col-span-2 px-2.5 py-2 rounded-lg border bg-white" />
             <input id="cms-cal-day" type="text" placeholder="روز (شنبه)" class="sm:col-span-2 px-2.5 py-2 rounded-lg border bg-white" />
@@ -16772,14 +17137,15 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
             ${(DB.calendarEvents || []).map((ev, i) => `
               <div class="p-2.5 rounded-xl bg-slate-50 border flex flex-wrap items-center justify-between gap-2 text-xs">
                 <div>
-                  <span class="px-2 py-0.5 rounded bg-navy-900 text-turquoise-300 font-bold">${ev.day} ${ev.date}</span>
-                  <strong class="mr-2 text-navy-900">${ev.title}</strong>
-                  <span class="text-slate-500">(${ev.type || 'عمومی'} - ${ev.grade || 'همه پایه‌ها'})</span>
+                  <span class="px-2 py-0.5 rounded bg-slate-200 text-navy-900 font-bold text-[10px]">#${toFaNum(i + 1)}</span>
+                  <span class="px-2 py-0.5 rounded bg-navy-900 text-turquoise-300 font-bold mr-1">${escHtml(ev.day)} ${escHtml(ev.date)}</span>
+                  <strong class="mr-2 text-navy-900">${escHtml(ev.title)}</strong>
+                  <span class="text-slate-500">(${escHtml(ev.type || 'عمومی')} - ${escHtml(ev.grade || 'همه پایه‌ها')})</span>
                 </div>
                 <div class="flex items-center gap-1">
                   <button type="button" onclick="UnifiedCMSStudio.moveItem('calendarEvents', ${i}, -1)" class="px-1.5 py-0.5 border rounded bg-white">⬆️</button>
                   <button type="button" onclick="UnifiedCMSStudio.moveItem('calendarEvents', ${i}, 1)" class="px-1.5 py-0.5 border rounded bg-white">⬇️</button>
-                  <button type="button" onclick="UnifiedCMSStudio.editCalEvent(${i})" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border font-bold">✏️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.openCalEventEditor(${i})" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border font-bold">✏️ ویرایش</button>
                   <button type="button" onclick="UnifiedCMSStudio.removeItem('calendarEvents', ${i})" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border font-bold">🗑️</button>
                 </div>
               </div>
@@ -16787,9 +17153,9 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
           </div>
         </div>
 
-        <!-- مدیریت نکات کوتاه روز -->
         <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3">
           <h3 class="text-xs sm:text-sm font-black text-navy-900">💡 مدیریت نکات کوتاه مشاوره‌ای روز (${toFaNum((DB.shortTips || []).length)} نکته)</h3>
+          ${this.renderUniversalSwapBox('shortTips', 'تعویض جای دو نکته روز', (DB.shortTips || []).length)}
           <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 text-xs bg-slate-50 p-3 rounded-xl border">
             <input id="cms-tip-title" type="text" placeholder="عنوان نکته..." class="sm:col-span-3 px-2.5 py-2 rounded-lg border bg-white font-bold" />
             <input id="cms-tip-cat" type="text" placeholder="دسته‌بندی (تمرکز)" class="sm:col-span-2 px-2.5 py-2 rounded-lg border bg-white" />
@@ -16799,11 +17165,11 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
           <div class="space-y-1.5">
             ${(DB.shortTips || []).map((t, i) => `
               <div class="p-2.5 rounded-xl bg-softyellow-50/60 border border-softyellow-200 flex flex-wrap items-center justify-between gap-2 text-xs">
-                <div class="max-w-xl"><strong class="text-navy-900">${t.title} (${t.category}):</strong> <span class="text-slate-600">${t.text}</span></div>
+                <div class="max-w-xl"><span class="font-bold text-amber-800">#${toFaNum(i + 1)}</span> <strong class="text-navy-900">${escHtml(t.title)} (${escHtml(t.category)}):</strong> <span class="text-slate-600">${escHtml(t.text)}</span></div>
                 <div class="flex items-center gap-1">
                   <button type="button" onclick="UnifiedCMSStudio.moveItem('shortTips', ${i}, -1)" class="px-1.5 py-0.5 border rounded bg-white">⬆️</button>
                   <button type="button" onclick="UnifiedCMSStudio.moveItem('shortTips', ${i}, 1)" class="px-1.5 py-0.5 border rounded bg-white">⬇️</button>
-                  <button type="button" onclick="UnifiedCMSStudio.editTip(${i})" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border font-bold">✏️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.openTipEditor(${i})" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border font-bold">✏️ ویرایش</button>
                   <button type="button" onclick="UnifiedCMSStudio.removeItem('shortTips', ${i})" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border font-bold">🗑️</button>
                 </div>
               </div>
@@ -16811,7 +17177,6 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
           </div>
         </div>
 
-        <!-- مدیریت اطلاعیه‌ها -->
         <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3">
           <h3 class="text-xs sm:text-sm font-black text-navy-900">📢 مدیریت اطلاعیه‌ها و اخبار مدرسه (${toFaNum((DB.announcements || []).length)} اطلاعیه)</h3>
           <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 text-xs bg-slate-50 p-3 rounded-xl border">
@@ -16823,9 +17188,9 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
           <div class="space-y-1.5">
             ${(DB.announcements || []).map((a, i) => `
               <div class="p-2.5 rounded-xl bg-slate-50 border flex flex-wrap items-center justify-between gap-2 text-xs">
-                <div><span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">${a.badge}</span> <strong class="mr-1 text-navy-900">${a.title}</strong></div>
+                <div><span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">${escHtml(a.badge)}</span> <strong class="mr-1 text-navy-900">${escHtml(a.title)}</strong></div>
                 <div class="flex items-center gap-1">
-                  <button type="button" onclick="UnifiedCMSStudio.editAnn(${i})" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border font-bold">✏️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.openAnnEditor(${i})" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border font-bold">✏️ ویرایش</button>
                   <button type="button" onclick="UnifiedCMSStudio.removeItem('announcements', ${i})" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border font-bold">🗑️</button>
                 </div>
               </div>
@@ -16833,6 +17198,102 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
           </div>
         </div>
       `;
+    },
+
+    openCalEventEditor(i) {
+      const ev = DB.calendarEvents[i];
+      if (!ev) return;
+      this.openStudio('modules', `
+        <div class="p-5 rounded-2xl bg-slate-50 border space-y-4 text-xs">
+          <div class="flex items-center justify-between border-b pb-3">
+            <h3 class="text-sm font-black text-navy-900">✏️ ویرایش رویداد تقویم</h3>
+            <button type="button" onclick="UnifiedCMSStudio.openStudio('modules')" class="px-3 py-1 rounded-lg bg-slate-200 font-bold">→ بازگشت</button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div><label class="block font-bold mb-1">عنوان رویداد:</label><input id="ec-title" type="text" value="${escHtml(ev.title)}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" /></div>
+            <div><label class="block font-bold mb-1">تاریخ:</label><input id="ec-date" type="text" value="${escHtml(ev.date)}" class="w-full px-3 py-2 rounded-xl border bg-white" /></div>
+            <div><label class="block font-bold mb-1">روز هفته:</label><input id="ec-day" type="text" value="${escHtml(ev.day)}" class="w-full px-3 py-2 rounded-xl border bg-white" /></div>
+            <div><label class="block font-bold mb-1">نوع رویداد:</label><input id="ec-type" type="text" value="${escHtml(ev.type)}" class="w-full px-3 py-2 rounded-xl border bg-white" /></div>
+            <div><label class="block font-bold mb-1">پایه تحصیلی:</label><input id="ec-grade" type="text" value="${escHtml(ev.grade || 'همه پایه‌ها')}" class="w-full px-3 py-2 rounded-xl border bg-white" /></div>
+          </div>
+          <div class="flex justify-end pt-3 border-t">
+            <button type="button" onclick="UnifiedCMSStudio.saveCalEventEditor(${i})" class="px-6 py-2 rounded-xl bg-navy-900 text-white font-black">💾 ذخیره تغییرات</button>
+          </div>
+        </div>
+      `);
+    },
+
+    saveCalEventEditor(i) {
+      const ev = DB.calendarEvents[i];
+      if (!ev) return;
+      ev.title = document.getElementById('ec-title')?.value.trim() || ev.title;
+      ev.date = document.getElementById('ec-date')?.value.trim() || ev.date;
+      ev.day = document.getElementById('ec-day')?.value.trim() || ev.day;
+      ev.type = document.getElementById('ec-type')?.value.trim() || ev.type;
+      ev.grade = document.getElementById('ec-grade')?.value.trim() || 'همه پایه‌ها';
+      this.commit('ویرایش رویداد تقویم');
+    },
+
+    openTipEditor(i) {
+      const t = DB.shortTips[i];
+      if (!t) return;
+      this.openStudio('modules', `
+        <div class="p-5 rounded-2xl bg-slate-50 border space-y-4 text-xs">
+          <div class="flex items-center justify-between border-b pb-3">
+            <h3 class="text-sm font-black text-navy-900">✏️ ویرایش نکته مشاوره‌ای روز</h3>
+            <button type="button" onclick="UnifiedCMSStudio.openStudio('modules')" class="px-3 py-1 rounded-lg bg-slate-200 font-bold">→ بازگشت</button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div><label class="block font-bold mb-1">عنوان نکته:</label><input id="et-title" type="text" value="${escHtml(t.title)}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" /></div>
+            <div><label class="block font-bold mb-1">موضوع / دسته‌بندی:</label><input id="et-cat" type="text" value="${escHtml(t.category)}" class="w-full px-3 py-2 rounded-xl border bg-white" /></div>
+            <div class="sm:col-span-2"><label class="block font-bold mb-1">متن کامل نکته:</label><textarea id="et-text" rows="3" class="w-full px-3 py-2 rounded-xl border bg-white">${escHtml(t.text)}</textarea></div>
+          </div>
+          <div class="flex justify-end pt-3 border-t">
+            <button type="button" onclick="UnifiedCMSStudio.saveTipEditor(${i})" class="px-6 py-2 rounded-xl bg-navy-900 text-white font-black">💾 ذخیره نکته</button>
+          </div>
+        </div>
+      `);
+    },
+
+    saveTipEditor(i) {
+      const t = DB.shortTips[i];
+      if (!t) return;
+      t.title = document.getElementById('et-title')?.value.trim() || t.title;
+      t.category = document.getElementById('et-cat')?.value.trim() || t.category;
+      t.text = document.getElementById('et-text')?.value.trim() || t.text;
+      this.commit('ویرایش نکته کوتاه مشاوره‌ای');
+    },
+
+    openAnnEditor(i) {
+      const a = DB.announcements[i];
+      if (!a) return;
+      this.openStudio('modules', `
+        <div class="p-5 rounded-2xl bg-slate-50 border space-y-4 text-xs">
+          <div class="flex items-center justify-between border-b pb-3">
+            <h3 class="text-sm font-black text-navy-900">✏️ ویرایش اطلاعیه مدرسه</h3>
+            <button type="button" onclick="UnifiedCMSStudio.openStudio('modules')" class="px-3 py-1 rounded-lg bg-slate-200 font-bold">→ بازگشت</button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div><label class="block font-bold mb-1">عنوان اطلاعیه:</label><input id="ea-title" type="text" value="${escHtml(a.title)}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" /></div>
+            <div><label class="block font-bold mb-1">برچسب:</label><input id="ea-badge" type="text" value="${escHtml(a.badge)}" class="w-full px-3 py-2 rounded-xl border bg-white" /></div>
+            <div><label class="block font-bold mb-1">تاریخ:</label><input id="ea-date" type="text" value="${escHtml(a.date || '۱۴۰۵/۰۸/۲۲')}" class="w-full px-3 py-2 rounded-xl border bg-white" /></div>
+            <div class="sm:col-span-3"><label class="block font-bold mb-1">متن اطلاعیه:</label><textarea id="ea-content" rows="3" class="w-full px-3 py-2 rounded-xl border bg-white">${escHtml(a.content)}</textarea></div>
+          </div>
+          <div class="flex justify-end pt-3 border-t">
+            <button type="button" onclick="UnifiedCMSStudio.saveAnnEditor(${i})" class="px-6 py-2 rounded-xl bg-navy-900 text-white font-black">💾 ذخیره اطلاعیه</button>
+          </div>
+        </div>
+      `);
+    },
+
+    saveAnnEditor(i) {
+      const a = DB.announcements[i];
+      if (!a) return;
+      a.title = document.getElementById('ea-title')?.value.trim() || a.title;
+      a.badge = document.getElementById('ea-badge')?.value.trim() || a.badge;
+      a.date = document.getElementById('ea-date')?.value.trim() || a.date;
+      a.content = document.getElementById('ea-content')?.value.trim() || a.content;
+      this.commit('ویرایش اطلاعیه مدرسه');
     },
 
     setModuleVis(key, val) {
@@ -16851,23 +17312,6 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
       this.commit(`افزودن رویداد تقویم «${title}»`);
     },
 
-    editCalEvent(i) {
-      const ev = DB.calendarEvents[i];
-      if (!ev) return;
-      const t = prompt('عنوان رویداد:', ev.title);
-      if (t === null) return;
-      const d = prompt('تاریخ:', ev.date);
-      const dy = prompt('روز هفته:', ev.day);
-      const tp = prompt('نوع:', ev.type);
-      const gr = prompt('پایه:', ev.grade || 'همه پایه‌ها');
-      if (t.trim()) ev.title = t.trim();
-      if (d !== null) ev.date = d.trim();
-      if (dy !== null) ev.day = dy.trim();
-      if (tp !== null) ev.type = tp.trim();
-      if (gr !== null) ev.grade = gr.trim();
-      this.commit('ویرایش رویداد تقویم');
-    },
-
     clearAllCalendar() {
       if (!confirm('آیا تمام رویدادهای تقویم پاک شوند؟')) return;
       DB.calendarEvents = [];
@@ -16884,19 +17328,6 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
       this.commit(`افزودن نکته روز «${title}»`);
     },
 
-    editTip(i) {
-      const t = DB.shortTips[i];
-      if (!t) return;
-      const ti = prompt('عنوان نکته:', t.title);
-      if (ti === null) return;
-      const ca = prompt('دسته‌بندی نکته:', t.category);
-      const tx = prompt('متن نکته:', t.text);
-      if (ti.trim()) t.title = ti.trim();
-      if (ca !== null) t.category = ca.trim();
-      if (tx !== null) t.text = tx.trim();
-      this.commit('ویرایش نکته کوتاه مشاوره‌ای');
-    },
-
     addAnn() {
       const title = document.getElementById('cms-ann-title')?.value.trim();
       const badge = document.getElementById('cms-ann-badge')?.value.trim() || 'اطلاعیه';
@@ -16905,19 +17336,6 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
       DB.announcements = DB.announcements || [];
       DB.announcements.unshift({ id: 'ann-' + Date.now(), title, badge, date: '۱۴۰۵/۰۸/۲۲', grade: 'همه پایه‌ها', content: content || title });
       this.commit(`افزودن اطلاعیه «${title}»`);
-    },
-
-    editAnn(i) {
-      const a = DB.announcements[i];
-      if (!a) return;
-      const ti = prompt('عنوان اطلاعیه:', a.title);
-      if (ti === null) return;
-      const bd = prompt('برچسب:', a.badge);
-      const co = prompt('متن اطلاعیه:', a.content);
-      if (ti.trim()) a.title = ti.trim();
-      if (bd !== null) a.badge = bd.trim();
-      if (co !== null) a.content = co.trim();
-      this.commit('ویرایش اطلاعیه');
     },
 
     moveItem(key, idx, dir) {
@@ -16938,65 +17356,616 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
       this.commit(`حذف آیتم از ${key}`);
     },
 
-    // ==================== TAB 3: IDENTITY & GLOBAL SYNC ====================
-    renderIdentityTab() {
-      const ss = DB.siteSettings || {};
+    // ==================== TAB 4: FAQS & FULL QUIZ BUILDER ====================
+    renderFaqsAndQuizzesTab() {
       return `
-        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-4 text-xs">
-          <h3 class="text-sm font-black text-navy-900">👨‍🏫 یکپارچه‌سازی مشخصات مشاور، هدر، فوتر و کل صفحات سایت</h3>
+        <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 text-xs">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-black text-navy-900">❓ مدیریت بانک سؤالات پرتکرار (${toFaNum((DB.faqs || []).length)} سؤال)</h3>
+          </div>
+          ${this.renderUniversalSwapBox('faqs', 'تعویض جای دو سؤال پرتکرار', (DB.faqs || []).length)}
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 bg-slate-50 p-3 rounded-xl border">
+            <select id="cms-faq-cat" class="sm:col-span-3 px-2.5 py-2 rounded-lg border bg-white font-bold">
+              ${(DB.categories || []).map(c => `<option value="${c.id}">${escHtml(c.title)}</option>`).join('')}
+            </select>
+            <input id="cms-faq-q" type="text" placeholder="متن پرسش دانش‌آموز..." class="sm:col-span-4 px-2.5 py-2 rounded-lg border bg-white font-bold" />
+            <input id="cms-faq-a" type="text" placeholder="پاسخ علمی مشاور..." class="sm:col-span-3 px-2.5 py-2 rounded-lg border bg-white" />
+            <button type="button" onclick="UnifiedCMSStudio.addFaq()" class="sm:col-span-2 py-2 rounded-lg bg-navy-900 text-white font-bold">+ ثبت سؤال</button>
+          </div>
+          <div class="space-y-1.5">
+            ${(DB.faqs || []).map((f, i) => `
+              <div class="p-2.5 rounded-xl bg-slate-50 border flex flex-wrap items-center justify-between gap-2">
+                <div class="max-w-xl">
+                  <span class="px-2 py-0.5 rounded bg-slate-200 text-navy-900 font-bold text-[10px]">#${toFaNum(i + 1)}</span>
+                  <strong class="text-navy-900 mr-1">؟ ${escHtml(f.question)}</strong>
+                  <span class="text-[10px] text-turquoise-700 font-bold mr-1">(${toFaNum((f.relatedPostIds || []).length)} مطلب مرتبط)</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('faqs', ${i}, -1)" class="px-1.5 py-0.5 border rounded bg-white">⬆️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('faqs', ${i}, 1)" class="px-1.5 py-0.5 border rounded bg-white">⬇️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.openFaqEditor('${f.id}')" class="px-2.5 py-0.5 rounded bg-amber-50 text-amber-800 border font-bold">✏️ ویرایش کامل و اتصال مطلب</button>
+                  <button type="button" onclick="UnifiedCMSStudio.deleteFaqItem('${f.id}')" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border font-bold">🗑️</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 text-xs">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-black text-navy-900">🧭 مدیریت جامع آزمون‌های خودارزیابی و سؤالات آن‌ها (${toFaNum((DB.quizzes || []).length)} آزمون)</h3>
+            <button type="button" onclick="UnifiedCMSStudio.addNewQuiz()" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-black">+ افزودن آزمون جدید</button>
+          </div>
+          ${this.renderUniversalSwapBox('quizzes', 'تعویض جای دو آزمون (شماره‌گذاری خودکار)', (DB.quizzes || []).length)}
+          <div class="space-y-1.5">
+            ${(DB.quizzes || []).map((qz, i) => `
+              <div class="p-2.5 rounded-xl bg-slate-50 border flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <span>${escHtml(qz.icon || '🧭')}</span>
+                  <strong class="text-navy-900 mr-1">${escHtml(qz.title)}</strong>
+                  <span class="text-slate-500 mr-1">(${toFaNum((qz.questions || []).length)} سؤال)</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('quizzes', ${i}, -1)" class="px-1.5 py-0.5 border rounded bg-white">⬆️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('quizzes', ${i}, 1)" class="px-1.5 py-0.5 border rounded bg-white">⬇️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.openQuizFullEditor('${qz.id}')" class="px-2.5 py-0.5 rounded bg-amber-50 text-amber-800 border font-bold">✏️ ویرایش سؤالات، گزینه‌ها و کارنامه</button>
+                  <button type="button" onclick="UnifiedCMSStudio.removeItem('quizzes', ${i})" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border font-bold">🗑️ حذف آزمون</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    },
+
+    openFaqEditor(faqId) {
+      const f = (DB.faqs || []).find(x => x.id === faqId);
+      if (!f) return;
+      const pubPosts = (DB.posts || []).filter(p => p.status === 'published');
+      const relSet = new Set(f.relatedPostIds || []);
+
+      this.openStudio('faqs_quizzes', `
+        <div class="p-5 rounded-2xl bg-slate-50 border space-y-4 text-xs">
+          <div class="flex items-center justify-between border-b pb-3">
+            <h3 class="text-sm font-black text-navy-900">✏️ ویرایش کامل سؤال پرتکرار و اتصال به مقالات</h3>
+            <button type="button" onclick="UnifiedCMSStudio.openStudio('faqs_quizzes')" class="px-3 py-1 rounded-lg bg-slate-200 font-bold">→ بازگشت</button>
+          </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="block font-bold mb-1">نام مشاور و مدیر کل (تغییر هم‌زمان در کل سایت و مقالات):</label>
-              <input id="cms-id-name" type="text" value="${ss.counselorLeadName || ''}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" />
+              <label class="block font-bold mb-1">دسته‌بندی موضوعی:</label>
+              <select id="ef-cat" class="w-full px-3 py-2 rounded-xl border bg-white font-bold">
+                ${DB.categories.map(c => `<option value="${c.id}" ${f.categoryId === c.id ? 'selected' : ''}>${escHtml(c.title)}</option>`).join('')}
+              </select>
             </div>
             <div>
-              <label class="block font-bold mb-1">عنوان / سمت مشاور:</label>
-              <input id="cms-id-role" type="text" value="${ss.counselorLeadDegree || ''}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" />
-            </div>
-            <div>
-              <label class="block font-bold mb-1">نام برند سایت (هدر و فوتر):</label>
-              <input id="cms-id-brand" type="text" value="${ss.siteTitle || ''}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" />
-            </div>
-            <div>
-              <label class="block font-bold mb-1">نام دبیرستان:</label>
-              <input id="cms-id-school" type="text" value="${ss.schoolName || ''}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" />
-            </div>
-            <div>
-              <label class="block font-bold mb-1">تلفن تماس مشاور (در فوتر و مودال مشاور):</label>
-              <input id="cms-id-phone" type="text" value="${ss.counselorPhone || ''}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" />
-            </div>
-            <div>
-              <label class="block font-bold mb-1">ساعات حضور و مراجعه (در فوتر، صفحه اصلی و مودال):</label>
-              <input id="cms-id-hours" type="text" value="${ss.officeHours || ''}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" />
+              <label class="block font-bold mb-1">نام پرسش‌کننده (نمایش عمومی):</label>
+              <input id="ef-asker" type="text" value="${escHtml(f.askedByPublic || f.askedBy || 'دانش‌آموز مدرسه')}" class="w-full px-3 py-2 rounded-xl border bg-white" />
             </div>
             <div class="sm:col-span-2">
-              <label class="block font-bold mb-1">آدرس واحد مشاوره (در فوتر و مودال):</label>
-              <input id="cms-id-addr" type="text" value="${ss.schoolAddress || ''}" class="w-full px-3 py-2 rounded-xl border bg-white" />
+              <label class="block font-bold mb-1">متن پرسش:</label>
+              <input id="ef-q" type="text" value="${escHtml(f.question)}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" />
             </div>
             <div class="sm:col-span-2">
-              <label class="block font-bold mb-1">تیتر اصلی صفحه اول (Hero Title):</label>
-              <input id="cms-id-hero" type="text" value="${ss.heroTitle || ''}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" />
+              <label class="block font-bold mb-1">پاسخ علمی و کامل مشاور:</label>
+              <textarea id="ef-a" rows="4" class="w-full px-3 py-2 rounded-xl border bg-white leading-relaxed">${escHtml(f.answer)}</textarea>
             </div>
             <div class="sm:col-span-2">
-              <label class="block font-bold mb-1">زیرعنوان صفحه اول (Hero Subtitle):</label>
-              <input id="cms-id-herosub" type="text" value="${ss.heroSubtitle || ''}" class="w-full px-3 py-2 rounded-xl border bg-white" />
-            </div>
-            <div class="sm:col-span-2">
-              <label class="block font-bold mb-1">متن نوار اطلاعیه بالای سایت:</label>
-              <input id="cms-id-top" type="text" value="${ss.topBarAnnouncement || ''}" class="w-full px-3 py-2 rounded-xl border bg-white" />
-            </div>
-            <div class="sm:col-span-2">
-              <label class="block font-bold mb-1">متن معرفی واحد مشاوره در صفحه اصلی:</label>
-              <textarea id="cms-id-mission" rows="2" class="w-full px-3 py-2 rounded-xl border bg-white">${ss.counselorMissionText || ''}</textarea>
-            </div>
-            <div class="sm:col-span-2">
-              <label class="block font-bold mb-1">متن کپی‌رایت فوتر:</label>
-              <input id="cms-id-copy" type="text" value="${ss.copyrightText || ''}" class="w-full px-3 py-2 rounded-xl border bg-white" />
+              <label class="block font-bold mb-1">📌 انتخاب مطالب و فیلم‌های مرتبط جهت نمایش در زیر این سؤال:</label>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-40 overflow-y-auto p-2.5 rounded-xl bg-white border">
+                ${pubPosts.map(p => `
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" class="ef-rel-post accent-turquoise-600" value="${p.id}" ${relSet.has(p.id) ? 'checked' : ''} />
+                    <span class="truncate">${escHtml(p.title)}</span>
+                  </label>
+                `).join('')}
+              </div>
             </div>
           </div>
+          <div class="flex justify-end pt-3 border-t">
+            <button type="button" onclick="UnifiedCMSStudio.saveFaqEditor('${f.id}')" class="px-6 py-2.5 rounded-xl bg-navy-900 text-white font-black">💾 ذخیره و همگام‌سازی سؤال</button>
+          </div>
+        </div>
+      `);
+    },
+
+    saveFaqEditor(faqId) {
+      const f = (DB.faqs || []).find(x => x.id === faqId);
+      if (!f) return;
+      f.categoryId = document.getElementById('ef-cat')?.value || f.categoryId;
+      f.askedBy = document.getElementById('ef-asker')?.value.trim() || 'دانش‌آموز مدرسه';
+      f.askedByPublic = f.askedBy;
+      f.question = document.getElementById('ef-q')?.value.trim() || f.question;
+      f.answer = document.getElementById('ef-a')?.value.trim() || f.answer;
+      const checked = Array.from(document.querySelectorAll('.ef-rel-post:checked')).map(el => el.value);
+      f.relatedPostIds = checked;
+      f.approved = true;
+      this.commit('ویرایش کامل سؤال پرتکرار و مطالب مرتبط');
+    },
+
+    addNewQuiz() {
+      const newId = 'quiz-' + Date.now();
+      DB.quizzes = DB.quizzes || [];
+      DB.quizzes.push({
+        id: newId,
+        cleanTitle: 'آزمون خودارزیابی جدید',
+        title: 'آزمون خودارزیابی جدید',
+        category: 'مشاوره و هدایت تحصیلی',
+        duration: '۳ دقیقه',
+        icon: '🧭',
+        description: 'توضیحات آزمون خودارزیابی جدید...',
+        questions: [
+          {
+            q: '۱. سؤال اول آزمون را بنویسید؟',
+            options: [
+              { text: 'گزینه اول (امتیاز کامل)', score: 25 },
+              { text: 'گزینه دوم (امتیاز متوسط)', score: 18 },
+              { text: 'گزینه سوم (نیازمند تقویت)', score: 10 },
+              { text: 'گزینه چهارم (نیازمند پیگیری فوری)', score: 5 }
+            ]
+          }
+        ],
+        interpretations: [
+          { min: 0, max: 55, level: 'نیازمند تقویت و برنامه‌ریزی', advice: 'پیشنهاد می‌کنیم مطالب زیر را مطالعه نمایید.', recommendedPosts: [] },
+          { min: 56, max: 100, level: 'وضعیت مطلوب و استاندارد', advice: 'عملکرد شما در این شاخص مطلوب است.', recommendedPosts: [] }
+        ],
+        approvalStatus: 'Approved'
+      });
+      this.commit('افزودن آزمون خودارزیابی جدید');
+    },
+
+    openQuizFullEditor(quizId) {
+      const qz = (DB.quizzes || []).find(x => x.id === quizId);
+      if (!qz) return;
+      const pubPosts = (DB.posts || []).filter(p => p.status === 'published');
+
+      this.openStudio('faqs_quizzes', `
+        <div class="p-5 rounded-2xl bg-slate-50 border space-y-5 text-xs">
+          <div class="flex items-center justify-between border-b pb-3">
+            <h3 class="text-sm font-black text-navy-900">✏️ ویرایشگر کامل آزمون: ${escHtml(qz.title)}</h3>
+            <button type="button" onclick="UnifiedCMSStudio.openStudio('faqs_quizzes')" class="px-3 py-1 rounded-lg bg-slate-200 font-bold">→ بازگشت</button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+            <div class="sm:col-span-5">
+              <label class="block font-bold mb-1">عنوان آزمون (شماره خودکار):</label>
+              <input id="eqz-title" type="text" value="${escHtml(qz.cleanTitle || stripNumberPrefix(qz.title))}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" />
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block font-bold mb-1">دسته‌بندی آزمون:</label>
+              <input id="eqz-cat" type="text" value="${escHtml(qz.category || '')}" class="w-full px-3 py-2 rounded-xl border bg-white" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block font-bold mb-1">مدت زمان:</label>
+              <input id="eqz-dur" type="text" value="${escHtml(qz.duration || '۳ دقیقه')}" class="w-full px-3 py-2 rounded-xl border bg-white" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block font-bold mb-1">آیکون:</label>
+              <input id="eqz-icon" type="text" value="${escHtml(qz.icon || '🧭')}" class="w-full px-3 py-2 rounded-xl border bg-white text-center" />
+            </div>
+            <div class="sm:col-span-12">
+              <label class="block font-bold mb-1">توضیح کوتاه آزمون:</label>
+              <input id="eqz-desc" type="text" value="${escHtml(qz.description || '')}" class="w-full px-3 py-2 rounded-xl border bg-white" />
+            </div>
+          </div>
+
+          <!-- سؤالات و گزینه‌های آزمون -->
+          <div class="space-y-3 pt-2 border-t">
+            <div class="flex items-center justify-between">
+              <h4 class="font-black text-navy-900">📋 سؤالات و گزینه‌های این آزمون (${toFaNum((qz.questions || []).length)} سؤال):</h4>
+              <button type="button" onclick="UnifiedCMSStudio.addQuizQuestion('${qz.id}')" class="px-3 py-1 rounded-lg bg-emerald-600 text-white font-bold">+ افزودن سؤال جدید به این آزمون</button>
+            </div>
+            ${(qz.questions || []).map((qObj, qIdx) => `
+              <div class="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-2.5">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="px-2 py-0.5 rounded bg-navy-900 text-turquoise-300 font-bold">سؤال ${toFaNum(qIdx + 1)}</span>
+                  <input type="text" class="eqz-q-text flex-1 px-3 py-1.5 rounded-lg border font-bold" data-qidx="${qIdx}" value="${escHtml(stripNumberPrefix(qObj.q))}" />
+                  <button type="button" onclick="UnifiedCMSStudio.deleteQuizQuestion('${qz.id}', ${qIdx})" class="px-2 py-1 rounded bg-rose-50 text-rose-600 font-bold">🗑️ حذف سؤال</button>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pr-3 border-r-2 border-slate-200">
+                  ${(qObj.options || []).map((opt, oIdx) => `
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-slate-400 font-bold">${toFaNum(oIdx + 1)})</span>
+                      <input type="text" class="eqz-opt-text flex-1 px-2.5 py-1 rounded border" data-qidx="${qIdx}" data-oidx="${oIdx}" value="${escHtml(opt.text)}" />
+                      <input type="number" class="eqz-opt-score w-16 px-2 py-1 rounded border text-center font-bold" data-qidx="${qIdx}" data-oidx="${oIdx}" value="${Number(opt.score) || 0}" title="امتیاز گزینه" />
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- تفاسیر کارنامه و مطالب پیشنهادی -->
+          <div class="space-y-3 pt-2 border-t">
+            <h4 class="font-black text-navy-900">📊 تفاسیر کارنامه آزمون و مقالات پیشنهادی:</h4>
+            ${(qz.interpretations || []).map((interp, iIdx) => {
+              const recSet = new Set(interp.recommendedPosts || []);
+              return `
+                <div class="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-2">
+                  <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                    <div class="sm:col-span-2"><label class="block text-[10px] font-bold">حداقل امتیاز:</label><input type="number" class="eqz-int-min w-full px-2 py-1 border rounded" data-iidx="${iIdx}" value="${interp.min}" /></div>
+                    <div class="sm:col-span-2"><label class="block text-[10px] font-bold">حداکثر امتیاز:</label><input type="number" class="eqz-int-max w-full px-2 py-1 border rounded" data-iidx="${iIdx}" value="${interp.max}" /></div>
+                    <div class="sm:col-span-8"><label class="block text-[10px] font-bold">عنوان سطح کارنامه:</label><input type="text" class="eqz-int-level w-full px-2.5 py-1 border rounded font-bold" data-iidx="${iIdx}" value="${escHtml(interp.level)}" /></div>
+                    <div class="sm:col-span-12"><label class="block text-[10px] font-bold">توصیه مشاور در کارنامه:</label><textarea rows="2" class="eqz-int-advice w-full px-2.5 py-1 border rounded" data-iidx="${iIdx}">${escHtml(interp.advice)}</textarea></div>
+                    <div class="sm:col-span-12">
+                      <label class="block text-[10px] font-bold mb-1">مطالب پیشنهادی متصل به این کارنامه:</label>
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 max-h-28 overflow-y-auto p-2 border rounded bg-slate-50">
+                        ${pubPosts.map(p => `
+                          <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="checkbox" class="eqz-int-post accent-turquoise-600" data-iidx="${iIdx}" value="${p.id}" ${recSet.has(p.id) ? 'checked' : ''} />
+                            <span class="truncate">${escHtml(p.title)}</span>
+                          </label>
+                        `).join('')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <div class="flex justify-end pt-3 border-t">
+            <button type="button" onclick="UnifiedCMSStudio.saveQuizFullEditor('${qz.id}')" class="px-6 py-2.5 rounded-xl bg-navy-900 hover:bg-turquoise-600 text-white font-black">💾 ذخیره کامل آزمون و کارنامه‌ها</button>
+          </div>
+        </div>
+      `);
+    },
+
+    saveQuizFullEditor(quizId) {
+      const qz = (DB.quizzes || []).find(x => x.id === quizId);
+      if (!qz) return;
+      const t = document.getElementById('eqz-title')?.value.trim();
+      if (t) {
+        qz.cleanTitle = stripNumberPrefix(t);
+        qz.title = qz.cleanTitle;
+      }
+      qz.category = document.getElementById('eqz-cat')?.value.trim() || qz.category;
+      qz.duration = document.getElementById('eqz-dur')?.value.trim() || qz.duration;
+      qz.icon = document.getElementById('eqz-icon')?.value.trim() || '🧭';
+      qz.description = document.getElementById('eqz-desc')?.value.trim() || '';
+
+      document.querySelectorAll('.eqz-q-text').forEach(qInp => {
+        const qIdx = Number(qInp.dataset.qidx);
+        if (qz.questions[qIdx]) {
+          qz.questions[qIdx].cleanQ = stripNumberPrefix(qInp.value.trim());
+          qz.questions[qIdx].q = qz.questions[qIdx].cleanQ;
+        }
+      });
+
+      document.querySelectorAll('.eqz-opt-text').forEach(oInp => {
+        const qIdx = Number(oInp.dataset.qidx);
+        const oIdx = Number(oInp.dataset.oidx);
+        if (qz.questions[qIdx]?.options?.[oIdx]) {
+          qz.questions[qIdx].options[oIdx].text = oInp.value.trim();
+        }
+      });
+
+      document.querySelectorAll('.eqz-opt-score').forEach(sInp => {
+        const qIdx = Number(sInp.dataset.qidx);
+        const oIdx = Number(sInp.dataset.oidx);
+        if (qz.questions[qIdx]?.options?.[oIdx]) {
+          qz.questions[qIdx].options[oIdx].score = Number(sInp.value) || 0;
+        }
+      });
+
+      (qz.interpretations || []).forEach((interp, iIdx) => {
+        const minEl = document.querySelector(`.eqz-int-min[data-iidx="${iIdx}"]`);
+        const maxEl = document.querySelector(`.eqz-int-max[data-iidx="${iIdx}"]`);
+        const lvlEl = document.querySelector(`.eqz-int-level[data-iidx="${iIdx}"]`);
+        const advEl = document.querySelector(`.eqz-int-advice[data-iidx="${iIdx}"]`);
+        if (minEl) interp.min = Number(minEl.value) || 0;
+        if (maxEl) interp.max = Number(maxEl.value) || 100;
+        if (lvlEl) interp.level = lvlEl.value.trim();
+        if (advEl) interp.advice = advEl.value.trim();
+        interp.recommendedPosts = Array.from(document.querySelectorAll(`.eqz-int-post[data-iidx="${iIdx}"]:checked`)).map(el => el.value);
+      });
+
+      this.commit(`ذخیره کامل آزمون «${qz.cleanTitle}»`);
+    },
+
+    addQuizQuestion(quizId) {
+      const qz = (DB.quizzes || []).find(x => x.id === quizId);
+      if (!qz) return;
+      qz.questions = qz.questions || [];
+      qz.questions.push({
+        q: 'سؤال جدید آزمون را بنویسید؟',
+        options: [
+          { text: 'گزینه اول', score: 25 },
+          { text: 'گزینه دوم', score: 18 },
+          { text: 'گزینه سوم', score: 10 },
+          { text: 'گزینه چهارم', score: 5 }
+        ]
+      });
+      GestaltEngine.syncDatabase(DB);
+      this.openQuizFullEditor(quizId);
+    },
+
+    deleteQuizQuestion(quizId, qIdx) {
+      const qz = (DB.quizzes || []).find(x => x.id === quizId);
+      if (!qz || (qz.questions || []).length <= 1) return showToast('هر آزمون باید حداقل ۱ سؤال داشته باشد.', 'warning');
+      qz.questions.splice(qIdx, 1);
+      GestaltEngine.syncDatabase(DB);
+      this.openQuizFullEditor(quizId);
+    },
+
+    addFaq() {
+      const categoryId = document.getElementById('cms-faq-cat')?.value || 'cat-2';
+      const question = document.getElementById('cms-faq-q')?.value.trim();
+      const answer = document.getElementById('cms-faq-a')?.value.trim();
+      if (!question || !answer) return showToast('پرسش و پاسخ را وارد کنید.', 'warning');
+      DB.faqs = DB.faqs || [];
+      DB.faqs.unshift({
+        id: 'faq-' + Date.now(),
+        categoryId, question, answer,
+        relatedPostIds: [],
+        approved: true,
+        askedBy: 'واحد مشاوره مدرسه',
+        askedByPublic: 'واحد مشاوره مدرسه',
+        createdAt: '۱۴۰۵/۰۸/۲۲'
+      });
+      this.commit('افزودن سؤال پرتکرار جدید');
+    },
+
+    deleteFaqItem(faqId) {
+      if (!confirm('آیا این سؤال پرتکرار حذف شود؟')) return;
+      DB.faqs = (DB.faqs || []).filter(x => x.id !== faqId);
+      this.commit('حذف سؤال پرتکرار');
+    },
+
+    // ==================== TAB 5: MAJORS (11 FIELDS), UNIVERSITIES, CAREERS & LEARNING PATHS ====================
+    renderMajorsAndPathsTab() {
+      return `
+        <!-- ۱. مسیرهای یادگیری گام‌به‌گام -->
+        <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 text-xs">
+          <h3 class="text-sm font-black text-navy-900">🛣️ مدیریت مسیرهای یادگیری گام‌به‌گام و انتخاب گام‌ها (${toFaNum((DB.learningPaths || []).length)} مسیر)</h3>
+          ${this.renderUniversalSwapBox('learningPaths', 'تعویض جای دو مسیر یادگیری', (DB.learningPaths || []).length)}
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 bg-slate-50 p-3 rounded-xl border">
+            <input id="cms-lp-title" type="text" placeholder="عنوان مسیر یادگیری جدید..." class="sm:col-span-5 px-2.5 py-2 rounded-lg border bg-white font-bold" />
+            <input id="cms-lp-desc" type="text" placeholder="توضیح مسیر..." class="sm:col-span-5 px-2.5 py-2 rounded-lg border bg-white" />
+            <button type="button" onclick="UnifiedCMSStudio.addPath()" class="sm:col-span-2 py-2 rounded-lg bg-navy-900 text-white font-bold">+ افزودن مسیر</button>
+          </div>
+          <div class="space-y-1.5">
+            ${(DB.learningPaths || []).map((lp, i) => `
+              <div class="p-2.5 rounded-xl bg-slate-50 border flex flex-wrap items-center justify-between gap-2">
+                <div><span class="font-bold text-slate-500">#${toFaNum(i + 1)}</span> <strong class="text-navy-900 mr-1">${escHtml(lp.title)}</strong> <span class="text-turquoise-700 font-bold mr-1">(${toFaNum((lp.postIds || []).length)} گام فعال)</span></div>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('learningPaths', ${i}, -1)" class="px-1.5 py-0.5 border rounded bg-white">⬆️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('learningPaths', ${i}, 1)" class="px-1.5 py-0.5 border rounded bg-white">⬇️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.openPathEditor(${i})" class="px-2.5 py-0.5 rounded bg-amber-50 text-amber-800 border font-bold">✏️ ویرایش و انتخاب گام‌ها</button>
+                  <button type="button" onclick="UnifiedCMSStudio.removeItem('learningPaths', ${i})" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border font-bold">🗑️</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- ۲. بانک رشته‌های دانشگاهی (۱۱ فیلد کامل) -->
+        <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 text-xs">
+          <h3 class="text-sm font-black text-navy-900">🎓 مدیریت بانک رشته‌های دانشگاهی (${toFaNum((DB.majorsDirectory || []).length)} رشته)</h3>
+          ${this.renderUniversalSwapBox('majorsDirectory', 'تعویض جای دو رشته دانشگاهی', (DB.majorsDirectory || []).length)}
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 bg-slate-50 p-3 rounded-xl border">
+            <input id="cms-maj-grp" type="text" placeholder="گروه (ریاضی/تجربی/انسانی)" class="sm:col-span-3 px-2.5 py-2 rounded-lg border bg-white" />
+            <input id="cms-maj-title" type="text" placeholder="عنوان رشته..." class="sm:col-span-4 px-2.5 py-2 rounded-lg border bg-white font-bold" />
+            <input id="cms-maj-uni" type="text" placeholder="دانشگاه‌های برتر..." class="sm:col-span-3 px-2.5 py-2 rounded-lg border bg-white" />
+            <button type="button" onclick="UnifiedCMSStudio.addMajor()" class="sm:col-span-2 py-2 rounded-lg bg-navy-900 text-white font-bold">+ افزودن رشته</button>
+          </div>
+          <div class="space-y-1.5">
+            ${(DB.majorsDirectory || []).map((m, i) => `
+              <div class="p-2.5 rounded-xl bg-slate-50 border flex flex-wrap items-center justify-between gap-2">
+                <div><span class="font-bold text-slate-400">#${toFaNum(i + 1)}</span> <span class="px-2 py-0.5 rounded bg-turquoise-100 text-turquoise-900 font-bold mr-1">${escHtml(m.group)}</span> <strong class="mr-1 text-navy-900">${escHtml(m.title)}</strong></div>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('majorsDirectory', ${i}, -1)" class="px-1.5 py-0.5 border rounded bg-white">⬆️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.moveItem('majorsDirectory', ${i}, 1)" class="px-1.5 py-0.5 border rounded bg-white">⬇️</button>
+                  <button type="button" onclick="UnifiedCMSStudio.openMajorFullEditor(${i})" class="px-2.5 py-0.5 rounded bg-amber-50 text-amber-800 border font-bold">✏️ ویرایش کامل ۱۱ فیلد رشته</button>
+                  <button type="button" onclick="UnifiedCMSStudio.removeItem('majorsDirectory', ${i})" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border font-bold">🗑️</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- ۳. بانک دانشگاه‌های برتر (DB.universities) -->
+        <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 text-xs">
+          <h3 class="text-sm font-black text-navy-900">🏛️ مدیریت بانک دانشگاه‌های برتر (${toFaNum((DB.universities || []).length)} دانشگاه)</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 bg-slate-50 p-3 rounded-xl border">
+            <input id="cms-uni-name" type="text" placeholder="نام دانشگاه..." class="sm:col-span-3 px-2.5 py-2 rounded-lg border bg-white font-bold" />
+            <input id="cms-uni-city" type="text" placeholder="شهر (تهران/کرمان...)" class="sm:col-span-2 px-2.5 py-2 rounded-lg border bg-white" />
+            <input id="cms-uni-fields" type="text" placeholder="قطب علمی / رشته‌ها..." class="sm:col-span-5 px-2.5 py-2 rounded-lg border bg-white" />
+            <button type="button" onclick="UnifiedCMSStudio.addUniversity()" class="sm:col-span-2 py-2 rounded-lg bg-navy-900 text-white font-bold">+ ثبت دانشگاه</button>
+          </div>
+          <div class="space-y-1.5">
+            ${(DB.universities || []).map((u, i) => `
+              <div class="p-2 rounded-xl bg-slate-50 border flex items-center justify-between gap-2">
+                <div><strong class="text-navy-900">${escHtml(u.name)} (${escHtml(u.city)})</strong> — <span class="text-slate-600">${escHtml(u.fields)}</span></div>
+                <button type="button" onclick="UnifiedCMSStudio.removeItem('universities', ${i})" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border font-bold">🗑️</button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    },
+
+    openPathEditor(i) {
+      const lp = DB.learningPaths[i];
+      if (!lp) return;
+      const pubPosts = (DB.posts || []).filter(p => p.status === 'published');
+      const stepSet = new Set(lp.postIds || []);
+
+      this.openStudio('majors_paths', `
+        <div class="p-5 rounded-2xl bg-slate-50 border space-y-4 text-xs">
+          <div class="flex items-center justify-between border-b pb-3">
+            <h3 class="text-sm font-black text-navy-900">✏️ ویرایش مسیر یادگیری و انتخاب گام‌ها</h3>
+            <button type="button" onclick="UnifiedCMSStudio.openStudio('majors_paths')" class="px-3 py-1 rounded-lg bg-slate-200 font-bold">→ بازگشت</button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+            <div class="sm:col-span-8"><label class="block font-bold mb-1">عنوان مسیر یادگیری:</label><input id="elp-title" type="text" value="${escHtml(lp.title)}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" /></div>
+            <div class="sm:col-span-4"><label class="block font-bold mb-1">پایه هدف:</label><input id="elp-grade" type="text" value="${escHtml(lp.grade || 'همه پایه‌ها')}" class="w-full px-3 py-2 rounded-xl border bg-white" /></div>
+            <div class="sm:col-span-12"><label class="block font-bold mb-1">توضیحات مسیر:</label><input id="elp-desc" type="text" value="${escHtml(lp.description || '')}" class="w-full px-3 py-2 rounded-xl border bg-white" /></div>
+            <div class="sm:col-span-12">
+              <label class="block font-bold mb-1">🛣️ انتخاب مقالات و ویدئوهای تشکیل‌دهنده گام‌های این مسیر:</label>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto p-3 rounded-xl bg-white border">
+                ${pubPosts.map(p => `
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" class="elp-step-post accent-turquoise-600" value="${p.id}" ${stepSet.has(p.id) ? 'checked' : ''} />
+                    <span class="truncate">${escHtml(p.title)}</span>
+                  </label>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-end pt-3 border-t">
+            <button type="button" onclick="UnifiedCMSStudio.savePathEditor(${i})" class="px-6 py-2.5 rounded-xl bg-navy-900 text-white font-black">💾 ذخیره مسیر یادگیری</button>
+          </div>
+        </div>
+      `);
+    },
+
+    savePathEditor(i) {
+      const lp = DB.learningPaths[i];
+      if (!lp) return;
+      lp.title = document.getElementById('elp-title')?.value.trim() || lp.title;
+      lp.grade = document.getElementById('elp-grade')?.value.trim() || 'همه پایه‌ها';
+      lp.description = document.getElementById('elp-desc')?.value.trim() || '';
+      lp.postIds = Array.from(document.querySelectorAll('.elp-step-post:checked')).map(el => el.value);
+      this.commit(`ویرایش مسیر یادگیری «${lp.title}»`);
+    },
+
+    openMajorFullEditor(i) {
+      const m = DB.majorsDirectory[i];
+      if (!m) return;
+      this.openStudio('majors_paths', `
+        <div class="p-5 rounded-2xl bg-slate-50 border space-y-4 text-xs">
+          <div class="flex items-center justify-between border-b pb-3">
+            <h3 class="text-sm font-black text-navy-900">✏️ ویرایش کامل اطلاعات رشته: ${escHtml(m.title)}</h3>
+            <button type="button" onclick="UnifiedCMSStudio.openStudio('majors_paths')" class="px-3 py-1 rounded-lg bg-slate-200 font-bold">→ بازگشت</button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div><label class="block font-bold mb-1">عنوان رشته دانشگاهی:</label><input id="em-title" type="text" value="${escHtml(m.title)}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" /></div>
+            <div><label class="block font-bold mb-1">گروه آزمایشی:</label><input id="em-group" type="text" value="${escHtml(m.group)}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" /></div>
+            <div class="sm:col-span-2"><label class="block font-bold mb-1">معرفی کلی رشته:</label><textarea id="em-intro" rows="2" class="w-full px-3 py-2 rounded-xl border bg-white">${escHtml(m.intro || '')}</textarea></div>
+            <div><label class="block font-bold mb-1">گرایش‌ها و شاخه‌ها:</label><input id="em-tracks" type="text" value="${escHtml(m.tracks || '')}" class="w-full px-3 py-2 rounded-xl border bg-white" /></div>
+            <div><label class="block font-bold mb-1">دروس تخصصی اصلی:</label><input id="em-courses" type="text" value="${escHtml(m.courses || '')}" class="w-full px-3 py-2 rounded-xl border bg-white" /></div>
+            <div class="sm:col-span-2"><label class="block font-bold mb-1">توانمندی‌ها و مهارت‌های لازم:</label><input id="em-skills" type="text" value="${escHtml(m.skills || '')}" class="w-full px-3 py-2 rounded-xl border bg-white" /></div>
+            <div class="sm:col-span-2"><label class="block font-bold mb-1">دانشگاه‌های برتر ارائه‌دهنده:</label><input id="em-uni" type="text" value="${escHtml(m.universities || '')}" class="w-full px-3 py-2 rounded-xl border bg-white" /></div>
+            <div class="sm:col-span-2"><label class="block font-bold mb-1">بازار کار و چشم‌انداز شغلی:</label><textarea id="em-outlook" rows="2" class="w-full px-3 py-2 rounded-xl border bg-white">${escHtml(m.careerOutlook || '')}</textarea></div>
+            <div><label class="block font-bold mb-1">عناوین شغلی مرتبط:</label><input id="em-paths" type="text" value="${escHtml(m.careerPaths || '')}" class="w-full px-3 py-2 rounded-xl border bg-white" /></div>
+            <div><label class="block font-bold mb-1">شرایط پذیرش و ادامه تحصیل:</label><input id="em-admission" type="text" value="${escHtml(m.admissionRules || '')}" class="w-full px-3 py-2 rounded-xl border bg-white" /></div>
+          </div>
+          <div class="flex justify-end pt-3 border-t">
+            <button type="button" onclick="UnifiedCMSStudio.saveMajorFullEditor(${i})" class="px-6 py-2.5 rounded-xl bg-navy-900 text-white font-black">💾 ذخیره کامل رشته</button>
+          </div>
+        </div>
+      `);
+    },
+
+    saveMajorFullEditor(i) {
+      const m = DB.majorsDirectory[i];
+      if (!m) return;
+      m.title = document.getElementById('em-title')?.value.trim() || m.title;
+      m.group = document.getElementById('em-group')?.value.trim() || m.group;
+      m.intro = document.getElementById('em-intro')?.value.trim() || '';
+      m.tracks = document.getElementById('em-tracks')?.value.trim() || '';
+      m.courses = document.getElementById('em-courses')?.value.trim() || '';
+      m.skills = document.getElementById('em-skills')?.value.trim() || '';
+      m.universities = document.getElementById('em-uni')?.value.trim() || '';
+      m.careerOutlook = document.getElementById('em-outlook')?.value.trim() || '';
+      m.careerPaths = document.getElementById('em-paths')?.value.trim() || '';
+      m.admissionRules = document.getElementById('em-admission')?.value.trim() || '';
+      m.updatedAt = '۱۴۰۵/۰۸/۲۲';
+      this.commit(`ویرایش کامل رشته «${m.title}»`);
+    },
+
+    addMajor() {
+      const group = document.getElementById('cms-maj-grp')?.value.trim() || 'مشترک';
+      const title = document.getElementById('cms-maj-title')?.value.trim();
+      const universities = document.getElementById('cms-maj-uni')?.value.trim() || 'دانشگاه‌های برتر کشور';
+      if (!title) return showToast('عنوان رشته را وارد کنید.', 'warning');
+      DB.majorsDirectory = DB.majorsDirectory || [];
+      DB.majorsDirectory.push({
+        id: 'maj-' + Date.now(),
+        group, title, universities,
+        intro: `معرفی جامع رشته ${title}`,
+        skills: 'تفکر تحلیلی، مطالعه مستمر و مهارت تخصصی',
+        careerOutlook: 'بازار کار رو به رشد در مراکز علمی و صنعتی',
+        approvalStatus: 'Approved'
+      });
+      this.commit(`افزودن رشته «${title}»`);
+    },
+
+    addUniversity() {
+      const name = document.getElementById('cms-uni-name')?.value.trim();
+      const city = document.getElementById('cms-uni-city')?.value.trim() || 'تهران';
+      const fields = document.getElementById('cms-uni-fields')?.value.trim() || 'قطب علمی و دانشگاهی';
+      if (!name) return showToast('نام دانشگاه را وارد کنید.', 'warning');
+      DB.universities = DB.universities || [];
+      DB.universities.push({ id: 'uni-' + Date.now(), name, city, type: 'دولتی', fields, website: '' });
+      this.commit(`افزودن دانشگاه «${name}»`);
+    },
+
+    addPath() {
+      const title = document.getElementById('cms-lp-title')?.value.trim();
+      const description = document.getElementById('cms-lp-desc')?.value.trim() || '';
+      if (!title) return showToast('عنوان مسیر را وارد کنید.', 'warning');
+      const pubPosts = (DB.posts || []).filter(p => p.status === 'published').slice(0, 3).map(p => p.id);
+      DB.learningPaths = DB.learningPaths || [];
+      DB.learningPaths.push({ id: 'path-' + Date.now(), title, description, grade: 'همه پایه‌ها', postIds: pubPosts, approvalStatus: 'Approved' });
+      this.commit(`افزودن مسیر یادگیری «${title}»`);
+    },
+
+    // ==================== TAB 6: GLOBAL IDENTITY, HEADER, FOOTER, SUBPAGES & STUDENT TOOLS ====================
+    renderIdentityTab() {
+      const ss = DB.siteSettings || {};
+      const cp = DB.customPageTexts || {};
+      const chkList = DB.studentData?.dailyChecklist || [];
+
+      return `
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-4 text-xs">
+          <h3 class="text-sm font-black text-navy-900">👨‍🏫 ۱. یکپارچه‌سازی مشخصات مشاور، مدرسه، هدر، فوتر و صفحه اول</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div><label class="block font-bold mb-1">نام مشاور و مدیر کل (اعمال خودکار در کل سایت و مقالات):</label><input id="cms-id-name" type="text" value="${escHtml(ss.counselorLeadName || '')}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" /></div>
+            <div><label class="block font-bold mb-1">عنوان / سمت تخصصی مشاور:</label><input id="cms-id-role" type="text" value="${escHtml(ss.counselorLeadDegree || '')}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" /></div>
+            <div><label class="block font-bold mb-1">عنوان برند سایت (در هدر و فوتر):</label><input id="cms-id-brand" type="text" value="${escHtml(ss.siteTitle || '')}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" /></div>
+            <div><label class="block font-bold mb-1">نام کامل دبیرستان:</label><input id="cms-id-school" type="text" value="${escHtml(ss.schoolName || '')}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" /></div>
+            <div><label class="block font-bold mb-1">تلفن تماس اتاق مشاوره (در فوتر و صفحات سایت):</label><input id="cms-id-phone" type="text" value="${escHtml(ss.counselorPhone || '')}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" /></div>
+            <div><label class="block font-bold mb-1">ساعات حضور و مراجعه حضوری:</label><input id="cms-id-hours" type="text" value="${escHtml(ss.officeHours || '')}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" /></div>
+            <div class="sm:col-span-2"><label class="block font-bold mb-1">آدرس واحد مشاوره:</label><input id="cms-id-addr" type="text" value="${escHtml(ss.schoolAddress || '')}" class="w-full px-3 py-2 rounded-xl border bg-white" /></div>
+            <div><label class="block font-bold mb-1">برچسب بالای تیتر صفحه اول (Hero Badge):</label><input id="cms-id-herobadge" type="text" value="${escHtml(ss.heroBadge || '')}" class="w-full px-3 py-2 rounded-xl border bg-white" /></div>
+            <div><label class="block font-bold mb-1">برچسب نوار اعلان بالای سایت:</label><input id="cms-id-topbadge" type="text" value="${escHtml(ss.topBarBadge || '')}" class="w-full px-3 py-2 rounded-xl border bg-white" /></div>
+            <div class="sm:col-span-2"><label class="block font-bold mb-1">شعار اصلی صفحه اول (Hero Title):</label><input id="cms-id-hero" type="text" value="${escHtml(ss.heroTitle || '')}" class="w-full px-3 py-2 rounded-xl border bg-white font-bold" /></div>
+            <div class="sm:col-span-2"><label class="block font-bold mb-1">زیرعنوان صفحه اول (Hero Subtitle):</label><input id="cms-id-herosub" type="text" value="${escHtml(ss.heroSubtitle || '')}" class="w-full px-3 py-2 rounded-xl border bg-white" /></div>
+            <div class="sm:col-span-2"><label class="block font-bold mb-1">متن نوار اطلاعیه بالای سایت:</label><input id="cms-id-top" type="text" value="${escHtml(ss.topBarAnnouncement || '')}" class="w-full px-3 py-2 rounded-xl border bg-white" /></div>
+            <div class="sm:col-span-2"><label class="block font-bold mb-1">متن معرفی واحد مشاوره:</label><textarea id="cms-id-mission" rows="2" class="w-full px-3 py-2 rounded-xl border bg-white">${escHtml(ss.counselorMissionText || '')}</textarea></div>
+            <div class="sm:col-span-2"><label class="block font-bold mb-1">توضیحات فوتر سایت:</label><textarea id="cms-id-footerdesc" rows="2" class="w-full px-3 py-2 rounded-xl border bg-white">${escHtml(ss.footerDescription || '')}</textarea></div>
+            <div class="sm:col-span-2"><label class="block font-bold mb-1">متن کپی‌رایت فوتر:</label><input id="cms-id-copy" type="text" value="${escHtml(ss.copyrightText || '')}" class="w-full px-3 py-2 rounded-xl border bg-white" /></div>
+          </div>
+
+          <h3 class="text-sm font-black text-navy-900 pt-3 border-t">📜 ۲. متون صفحات داخلی (درباره ما، تماس با ما، حریم خصوصی و قوانین)</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div><label class="block font-bold mb-1">متن صفحه درباره ما:</label><textarea id="cms-cp-about" rows="2" class="w-full px-3 py-2 rounded-xl border bg-white">${escHtml(cp.aboutText || '')}</textarea></div>
+            <div><label class="block font-bold mb-1">توضیح تکمیلی صفحه تماس با ما:</label><textarea id="cms-cp-contact" rows="2" class="w-full px-3 py-2 rounded-xl border bg-white">${escHtml(cp.contactExtra || '')}</textarea></div>
+            <div><label class="block font-bold mb-1">متن صفحه حریم خصوصی:</label><textarea id="cms-cp-privacy" rows="2" class="w-full px-3 py-2 rounded-xl border bg-white">${escHtml(cp.privacyText || '')}</textarea></div>
+            <div><label class="block font-bold mb-1">متن صفحه شرایط استفاده:</label><textarea id="cms-cp-terms" rows="2" class="w-full px-3 py-2 rounded-xl border bg-white">${escHtml(cp.termsText || '')}</textarea></div>
+          </div>
+
           <button type="button" onclick="UnifiedCMSStudio.saveIdentity()" class="w-full py-3 rounded-xl bg-navy-900 hover:bg-turquoise-600 text-white font-black text-sm transition">
-            💾 ذخیره و انتشار آنی در کل نقاط سایت
+            💾 ذخیره و اعمال سراسری در تمام صفحات سایت
           </button>
+        </div>
+
+        <!-- ۳. مدیریت چک‌لیست روزانه پیش‌فرض دانش‌آموزان -->
+        <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 text-xs">
+          <h3 class="text-sm font-black text-navy-900">✅ ۳. مدیریت عادت‌ها و چک‌لیست روزانه پیش‌فرض جعبه ابزار دانش‌آموز</h3>
+          <div class="flex gap-2">
+            <input id="cms-chk-new" type="text" placeholder="عنوان عادت روزانه جدید برای دانش‌آموزان..." class="flex-1 px-3 py-2 rounded-xl border bg-slate-50 font-bold" />
+            <button type="button" onclick="UnifiedCMSStudio.addDefaultChecklist()" class="px-4 py-2 rounded-xl bg-navy-900 text-white font-bold">+ افزودن عادت</button>
+          </div>
+          <div class="space-y-1.5">
+            ${chkList.map((c, i) => `
+              <div class="p-2 rounded-xl bg-slate-50 border flex items-center justify-between gap-2">
+                <span class="font-bold text-navy-900">${escHtml(c.text)}</span>
+                <button type="button" onclick="UnifiedCMSStudio.deleteDefaultChecklist(${i})" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border font-bold">🗑️</button>
+              </div>
+            `).join('')}
+          </div>
         </div>
       `;
     },
@@ -17010,297 +17979,39 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
       ss.counselorPhone = document.getElementById('cms-id-phone')?.value.trim() || ss.counselorPhone;
       ss.officeHours = document.getElementById('cms-id-hours')?.value.trim() || ss.officeHours;
       ss.schoolAddress = document.getElementById('cms-id-addr')?.value.trim() || ss.schoolAddress;
+      ss.heroBadge = document.getElementById('cms-id-herobadge')?.value.trim() || ss.heroBadge;
+      ss.topBarBadge = document.getElementById('cms-id-topbadge')?.value.trim() || ss.topBarBadge;
       ss.heroTitle = document.getElementById('cms-id-hero')?.value.trim() || ss.heroTitle;
       ss.heroSubtitle = document.getElementById('cms-id-herosub')?.value.trim() || ss.heroSubtitle;
       ss.topBarAnnouncement = document.getElementById('cms-id-top')?.value.trim() || ss.topBarAnnouncement;
       ss.counselorMissionText = document.getElementById('cms-id-mission')?.value.trim() || ss.counselorMissionText;
+      ss.footerDescription = document.getElementById('cms-id-footerdesc')?.value.trim() || ss.footerDescription;
       ss.copyrightText = document.getElementById('cms-id-copy')?.value.trim() || ss.copyrightText;
-      this.commit(`بروزرسانی سراسری اطلاعات مشاور (${ss.counselorLeadName}) و سایت`);
+
+      DB.customPageTexts = DB.customPageTexts || {};
+      DB.customPageTexts.aboutText = document.getElementById('cms-cp-about')?.value.trim() || '';
+      DB.customPageTexts.contactExtra = document.getElementById('cms-cp-contact')?.value.trim() || '';
+      DB.customPageTexts.privacyText = document.getElementById('cms-cp-privacy')?.value.trim() || '';
+      DB.customPageTexts.termsText = document.getElementById('cms-cp-terms')?.value.trim() || '';
+
+      this.commit(`بروزرسانی سراسری اطلاعات مشاور (${ss.counselorLeadName}) و کل صفحات سایت`);
     },
 
-    // ==================== TAB 4: POSTS, VIDEOS & PODCASTS ====================
-    renderPostsTab() {
-      const posts = DB.posts || [];
-      return `
-        <div class="space-y-3 text-xs">
-          <div class="flex flex-wrap items-center justify-between gap-2 p-3 rounded-2xl bg-slate-50 border">
-            <span class="font-black text-navy-900">🎬 مدیریت یکپارچه مطالب، ویدئوها و پادکست‌ها (${toFaNum(posts.length)} مورد)</span>
-            <button type="button" onclick="closeModal();navigateTo('admin', {tab: 'editor'})" class="px-3.5 py-2 rounded-xl bg-turquoise-500 text-navy-950 font-black">
-              + ثبت مطلب / ویدئو / پادکست جدید
-            </button>
-          </div>
-          <div class="space-y-2">
-            ${posts.map((p, idx) => {
-              const cat = (DB.categories || []).find(c => c.id === p.categoryId);
-              const pub = p.status === 'published';
-              return `
-                <div class="p-3 rounded-2xl border ${pub ? 'bg-white border-slate-200' : 'bg-rose-50/40 border-rose-200'} flex flex-wrap items-center justify-between gap-2">
-                  <div class="max-w-xl space-y-0.5">
-                    <div class="flex items-center gap-2">
-                      <span class="px-2 py-0.5 rounded font-bold text-[10px] ${pub ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
-                        ${pub ? 'منتشرشده در سایت' : 'حذف‌شده (در زباله‌دان)'}
-                      </span>
-                      <span class="text-slate-500 font-bold">${cat ? cat.title : ''}</span>
-                    </div>
-                    <p class="font-extrabold text-navy-900 text-sm">${p.title}</p>
-                  </div>
-                  <div class="flex flex-wrap items-center gap-1">
-                    <button type="button" onclick="UnifiedCMSStudio.moveItem('posts', ${idx}, -1)" class="px-1.5 py-1 border rounded bg-slate-50">⬆️</button>
-                    <button type="button" onclick="UnifiedCMSStudio.moveItem('posts', ${idx}, 1)" class="px-1.5 py-1 border rounded bg-slate-50">⬇️</button>
-                    <button type="button" onclick="UnifiedCMSStudio.editPostQuickPrompt('${p.id}')" class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border font-bold">✏️ ویرایش سریع</button>
-                    <button type="button" onclick="UnifiedCMSStudio.togglePostPublish('${p.id}')" class="px-2.5 py-1 rounded-lg font-bold ${pub ? 'bg-amber-100 text-amber-900' : 'bg-emerald-600 text-white'}">
-                      ${pub ? '🗑️ حذف از صفحات سایت' : '♻️ بازیابی به سایت'}
-                    </button>
-                    <button type="button" onclick="UnifiedCMSStudio.deletePostForever('${p.id}')" class="px-2.5 py-1 rounded-lg bg-rose-600 text-white font-bold">✕ حذف دائمی</button>
-                  </div>
-                </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      `;
+    addDefaultChecklist() {
+      const txt = document.getElementById('cms-chk-new')?.value.trim();
+      if (!txt) return;
+      DB.studentData = DB.studentData || {};
+      DB.studentData.dailyChecklist = DB.studentData.dailyChecklist || [];
+      DB.studentData.dailyChecklist.push({ id: 'chk-' + Date.now(), text: txt, done: false });
+      this.commit('افزودن آیتم به چک‌لیست روزانه دانش‌آموز');
     },
 
-    editPostQuickPrompt(postId) {
-      const p = (DB.posts || []).find(x => x.id === postId);
-      if (!p) return;
-      const t = prompt('عنوان مطلب / فیلم / پادکست:', p.title);
-      if (t === null) return;
-      const s = prompt('چکیده / خلاصه:', p.summary || '');
-      const v = prompt('لینک یا کد ویدئوی آپارات (در صورت وجود):', p.videoUrl || p.aparatHash || '');
-      if (t.trim()) p.title = t.trim();
-      if (s !== null) p.summary = s.trim();
-      if (v !== null) {
-        p.videoUrl = v.trim();
-        p.aparatHash = (typeof extractAparatHash === 'function') ? extractAparatHash(v.trim()) : '';
-      }
-      this.commit(`ویرایش مطلب «${p.title}»`);
+    deleteDefaultChecklist(idx) {
+      if (!DB.studentData?.dailyChecklist) return;
+      DB.studentData.dailyChecklist.splice(idx, 1);
+      this.commit('حذف آیتم از چک‌لیست روزانه');
     },
 
-    togglePostPublish(postId) {
-      const p = (DB.posts || []).find(x => x.id === postId);
-      if (!p) return;
-      p.status = (p.status === 'published') ? 'trash' : 'published';
-      p.workflowState = (p.status === 'published') ? 'Published' : 'Archived';
-      this.commit(`تغییر وضعیت نمایش «${p.title}» در کل سایت`);
-    },
-
-    deletePostForever(postId) {
-      const p = (DB.posts || []).find(x => x.id === postId);
-      if (!p) return;
-      if (!confirm(`آیا «${p.title}» به صورت دائمی و زنجیره‌ای از کل سایت حذف شود؟`)) return;
-      DB.posts = (DB.posts || []).filter(x => x.id !== postId);
-      this.commit(`حذف دائمی و زنجیره‌ای «${p.title}»`);
-    },
-
-    // ==================== TAB 5: FAQS & QUIZZES ====================
-    renderFaqsAndQuizzesTab() {
-      return `
-        <!-- مدیریت بانک سؤالات پرتکرار -->
-        <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 text-xs">
-          <h3 class="text-sm font-black text-navy-900">❓ مدیریت بانک سؤالات پرتکرار (${toFaNum((DB.faqs || []).length)} سؤال)</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 bg-slate-50 p-3 rounded-xl border">
-            <select id="cms-faq-cat" class="sm:col-span-3 px-2.5 py-2 rounded-lg border bg-white font-bold">
-              ${(DB.categories || []).map(c => `<option value="${c.id}">${c.title}</option>`).join('')}
-            </select>
-            <input id="cms-faq-q" type="text" placeholder="متن پرسش دانش‌آموز..." class="sm:col-span-4 px-2.5 py-2 rounded-lg border bg-white font-bold" />
-            <input id="cms-faq-a" type="text" placeholder="پاسخ علمی مشاور..." class="sm:col-span-3 px-2.5 py-2 rounded-lg border bg-white" />
-            <button type="button" onclick="UnifiedCMSStudio.addFaq()" class="sm:col-span-2 py-2 rounded-lg bg-navy-900 text-white font-bold">+ ثبت سؤال</button>
-          </div>
-          <div class="space-y-1.5">
-            ${(DB.faqs || []).map((f, i) => `
-              <div class="p-2.5 rounded-xl bg-slate-50 border flex flex-wrap items-center justify-between gap-2">
-                <div class="max-w-xl"><strong class="text-navy-900">؟ ${f.question}</strong></div>
-                <div class="flex items-center gap-1">
-                  <button type="button" onclick="UnifiedCMSStudio.moveItem('faqs', ${i}, -1)" class="px-1.5 py-0.5 border rounded bg-white">⬆️</button>
-                  <button type="button" onclick="UnifiedCMSStudio.moveItem('faqs', ${i}, 1)" class="px-1.5 py-0.5 border rounded bg-white">⬇️</button>
-                  <button type="button" onclick="UnifiedCMSStudio.editFaqPrompt('${f.id}')" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border font-bold">✏️</button>
-                  <button type="button" onclick="UnifiedCMSStudio.deleteFaqItem('${f.id}')" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border font-bold">🗑️</button>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-
-        <!-- مدیریت آزمون‌های خودارزیابی (شماره‌گذاری خودکار و جابجایی) -->
-        <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 text-xs">
-          <h3 class="text-sm font-black text-navy-900">🧭 مدیریت آزمون‌های خودارزیابی (${toFaNum((DB.quizzes || []).length)} آزمون با شماره‌گذاری خودکار)</h3>
-          <div class="space-y-1.5">
-            ${(DB.quizzes || []).map((qz, i) => `
-              <div class="p-2.5 rounded-xl bg-slate-50 border flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <span>${qz.icon || '🧭'}</span>
-                  <strong class="text-navy-900 mr-1">${qz.title}</strong>
-                  <span class="text-slate-500 mr-1">(${toFaNum((qz.questions || []).length)} سؤال)</span>
-                </div>
-                <div class="flex items-center gap-1">
-                  <button type="button" onclick="UnifiedCMSStudio.moveItem('quizzes', ${i}, -1)" class="px-1.5 py-0.5 border rounded bg-white">⬆️</button>
-                  <button type="button" onclick="UnifiedCMSStudio.moveItem('quizzes', ${i}, 1)" class="px-1.5 py-0.5 border rounded bg-white">⬇️</button>
-                  <button type="button" onclick="UnifiedCMSStudio.editQuizPrompt('${qz.id}')" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border font-bold">✏️ ویرایش عنوان و توضیحات</button>
-                  <button type="button" onclick="UnifiedCMSStudio.removeItem('quizzes', ${i})" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border font-bold">🗑️ حذف آزمون</button>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    },
-
-    addFaq() {
-      const categoryId = document.getElementById('cms-faq-cat')?.value || 'cat-2';
-      const question = document.getElementById('cms-faq-q')?.value.trim();
-      const answer = document.getElementById('cms-faq-a')?.value.trim();
-      if (!question || !answer) return showToast('پرسش و پاسخ را وارد کنید.', 'warning');
-      DB.faqs = DB.faqs || [];
-      DB.faqs.unshift({
-        id: 'faq-' + Date.now(),
-        categoryId,
-        question,
-        answer,
-        relatedPostIds: [],
-        approved: true,
-        askedBy: 'واحد مشاوره مدرسه',
-        createdAt: '۱۴۰۵/۰۸/۲۲'
-      });
-      this.commit('افزودن سؤال پرتکرار جدید');
-    },
-
-    editFaqPrompt(faqId) {
-      const f = (DB.faqs || []).find(x => x.id === faqId);
-      if (!f) return;
-      const q = prompt('متن سؤال:', f.question);
-      if (q === null) return;
-      const a = prompt('متن پاسخ مشاور:', f.answer);
-      if (q.trim()) f.question = q.trim();
-      if (a !== null && a.trim()) f.answer = a.trim();
-      this.commit('ویرایش سؤال پرتکرار');
-    },
-
-    deleteFaqItem(faqId) {
-      if (!confirm('آیا این سؤال پرتکرار حذف شود؟')) return;
-      DB.faqs = (DB.faqs || []).filter(x => x.id !== faqId);
-      this.commit('حذف سؤال پرتکرار');
-    },
-
-    editQuizPrompt(quizId) {
-      const qz = (DB.quizzes || []).find(x => x.id === quizId);
-      if (!qz) return;
-      const t = prompt('عنوان آزمون (شماره به صورت خودکار تنظیم می‌شود):', qz.cleanTitle || stripNumberPrefix(qz.title));
-      if (t === null) return;
-      const d = prompt('توضیحات آزمون:', qz.description || '');
-      const dur = prompt('مدت زمان آزمون (مثلاً ۴ دقیقه):', qz.duration || '۴ دقیقه');
-      if (t.trim()) {
-        qz.cleanTitle = stripNumberPrefix(t.trim());
-        qz.title = qz.cleanTitle;
-      }
-      if (d !== null) qz.description = d.trim();
-      if (dur !== null) qz.duration = dur.trim();
-      this.commit(`ویرایش آزمون «${qz.cleanTitle}»`);
-    },
-
-    // ==================== TAB 6: MAJORS & LEARNING PATHS ====================
-    renderMajorsAndPathsTab() {
-      return `
-        <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 text-xs">
-          <h3 class="text-sm font-black text-navy-900">🎓 مدیریت بانک رشته‌ها، دانشگاه‌ها و مشاغل (${toFaNum((DB.majorsDirectory || []).length)} رشته)</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 bg-slate-50 p-3 rounded-xl border">
-            <input id="cms-maj-grp" type="text" placeholder="گروه (ریاضی/تجربی/انسانی)" class="sm:col-span-3 px-2.5 py-2 rounded-lg border bg-white" />
-            <input id="cms-maj-title" type="text" placeholder="عنوان رشته..." class="sm:col-span-4 px-2.5 py-2 rounded-lg border bg-white font-bold" />
-            <input id="cms-maj-uni" type="text" placeholder="دانشگاه‌های برتر..." class="sm:col-span-3 px-2.5 py-2 rounded-lg border bg-white" />
-            <button type="button" onclick="UnifiedCMSStudio.addMajor()" class="sm:col-span-2 py-2 rounded-lg bg-navy-900 text-white font-bold">+ افزودن رشته</button>
-          </div>
-          <div class="space-y-1.5">
-            ${(DB.majorsDirectory || []).map((m, i) => `
-              <div class="p-2.5 rounded-xl bg-slate-50 border flex flex-wrap items-center justify-between gap-2">
-                <div><span class="px-2 py-0.5 rounded bg-turquoise-100 text-turquoise-900 font-bold">${m.group}</span> <strong class="mr-1 text-navy-900">${m.title}</strong></div>
-                <div class="flex items-center gap-1">
-                  <button type="button" onclick="UnifiedCMSStudio.moveItem('majorsDirectory', ${i}, -1)" class="px-1.5 py-0.5 border rounded bg-white">⬆️</button>
-                  <button type="button" onclick="UnifiedCMSStudio.moveItem('majorsDirectory', ${i}, 1)" class="px-1.5 py-0.5 border rounded bg-white">⬇️</button>
-                  <button type="button" onclick="UnifiedCMSStudio.editMajor(${i})" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border font-bold">✏️</button>
-                  <button type="button" onclick="UnifiedCMSStudio.removeItem('majorsDirectory', ${i})" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border font-bold">🗑️</button>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-
-        <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 text-xs">
-          <h3 class="text-sm font-black text-navy-900">🛣️ مدیریت مسیرهای یادگیری گام‌به‌گام (${toFaNum((DB.learningPaths || []).length)} مسیر)</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 bg-slate-50 p-3 rounded-xl border">
-            <input id="cms-lp-title" type="text" placeholder="عنوان مسیر یادگیری جدید..." class="sm:col-span-5 px-2.5 py-2 rounded-lg border bg-white font-bold" />
-            <input id="cms-lp-desc" type="text" placeholder="توضیح مسیر..." class="sm:col-span-5 px-2.5 py-2 rounded-lg border bg-white" />
-            <button type="button" onclick="UnifiedCMSStudio.addPath()" class="sm:col-span-2 py-2 rounded-lg bg-navy-900 text-white font-bold">+ افزودن مسیر</button>
-          </div>
-          <div class="space-y-1.5">
-            ${(DB.learningPaths || []).map((lp, i) => `
-              <div class="p-2.5 rounded-xl bg-slate-50 border flex flex-wrap items-center justify-between gap-2">
-                <div><strong class="text-navy-900">${lp.title}</strong> <span class="text-slate-500 mr-1">(${toFaNum((lp.postIds || []).length)} گام فعال)</span></div>
-                <div class="flex items-center gap-1">
-                  <button type="button" onclick="UnifiedCMSStudio.editPath(${i})" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border font-bold">✏️</button>
-                  <button type="button" onclick="UnifiedCMSStudio.removeItem('learningPaths', ${i})" class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 border font-bold">🗑️</button>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    },
-
-    addMajor() {
-      const group = document.getElementById('cms-maj-grp')?.value.trim() || 'مشترک';
-      const title = document.getElementById('cms-maj-title')?.value.trim();
-      const universities = document.getElementById('cms-maj-uni')?.value.trim() || 'دانشگاه‌های برتر کشور';
-      if (!title) return showToast('عنوان رشته را وارد کنید.', 'warning');
-      DB.majorsDirectory = DB.majorsDirectory || [];
-      DB.majorsDirectory.push({
-        id: 'maj-' + Date.now(),
-        group, title, universities,
-        skills: 'تفکر تحلیلی، مطالعه مستمر و مهارت تخصصی',
-        careerOutlook: 'بازار کار رو به رشد در مراکز علمی و صنعتی',
-        approvalStatus: 'Approved'
-      });
-      this.commit(`افزودن رشته «${title}»`);
-    },
-
-    editMajor(i) {
-      const m = DB.majorsDirectory[i];
-      if (!m) return;
-      const t = prompt('عنوان رشته:', m.title);
-      if (t === null) return;
-      const g = prompt('گروه آزمایشی:', m.group);
-      const u = prompt('دانشگاه‌های برتر:', m.universities);
-      const s = prompt('مهارت‌ها و دروس کلیدی:', m.skills);
-      const c = prompt('بازار کار و آینده شغلی:', m.careerOutlook);
-      if (t.trim()) m.title = t.trim();
-      if (g !== null) m.group = g.trim();
-      if (u !== null) m.universities = u.trim();
-      if (s !== null) m.skills = s.trim();
-      if (c !== null) m.careerOutlook = c.trim();
-      this.commit(`ویرایش رشته «${m.title}»`);
-    },
-
-    addPath() {
-      const title = document.getElementById('cms-lp-title')?.value.trim();
-      const description = document.getElementById('cms-lp-desc')?.value.trim() || '';
-      if (!title) return showToast('عنوان مسیر را وارد کنید.', 'warning');
-      const pubPosts = (DB.posts || []).filter(p => p.status === 'published').slice(0, 3).map(p => p.id);
-      DB.learningPaths = DB.learningPaths || [];
-      DB.learningPaths.push({ id: 'path-' + Date.now(), title, description, grade: 'همه پایه‌ها', postIds: pubPosts, approvalStatus: 'Approved' });
-      this.commit(`افزودن مسیر یادگیری «${title}»`);
-    },
-
-    editPath(i) {
-      const lp = DB.learningPaths[i];
-      if (!lp) return;
-      const t = prompt('عنوان مسیر یادگیری:', lp.title);
-      if (t === null) return;
-      const d = prompt('توضیحات مسیر:', lp.description);
-      if (t.trim()) lp.title = t.trim();
-      if (d !== null) lp.description = d.trim();
-      this.commit(`ویرایش مسیر یادگیری «${lp.title}»`);
-    },
-
-    // ذخیره، یکپارچه‌سازی و رندر زنده کل سایت
     commit(logMessage) {
       GestaltEngine.syncDatabase(DB);
       if (typeof saveDatabase === 'function') {
@@ -17318,7 +18029,7 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
     }
   };
 
-  // ۶. قلاب زدن (Hook) موتور گشتالتی به توابع ذخیره و رندر اصلی سایت
+  // ۶. قلاب زدن (Hook) به چرخه ذخیره، تمیزسازی و همگام‌سازی ابری (CloudSync)
   const _origSave = window.saveDatabase;
   window.saveDatabase = function(dbObj, isExplicitAdminEdit) {
     GestaltEngine.syncDatabase(dbObj || DB);
@@ -17327,6 +18038,24 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
     }
     GestaltEngine.syncDOM();
   };
+
+  const _origCleanDb = window.getCleanDatabaseForStorage;
+  window.getCleanDatabaseForStorage = function(sourceDb) {
+    const target = sourceDb || DB;
+    GestaltEngine.syncDatabase(target);
+    return typeof _origCleanDb === 'function' ? _origCleanDb(target) : target;
+  };
+
+  if (typeof CloudSync !== 'undefined' && typeof CloudSync.fetchFromCloud === 'function') {
+    const _origFetch = CloudSync.fetchFromCloud.bind(CloudSync);
+    CloudSync.fetchFromCloud = async function(forceToast) {
+      await _origFetch(forceToast);
+      GestaltEngine.syncDatabase(DB);
+      localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(DB));
+      if (typeof renderApp === 'function') renderApp();
+      GestaltEngine.syncDOM();
+    };
+  }
 
   const _origRender = window.renderApp;
   if (typeof _origRender === 'function') {
@@ -17339,6 +18068,7 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
 
   function initGestaltMaster() {
     GestaltEngine.syncDatabase(DB);
+    localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(DB));
     if (typeof renderApp === 'function') {
       renderApp();
     }
@@ -17352,5 +18082,5 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
   }
 })();
 </script>
-</body>
+  </body>
 </html>
