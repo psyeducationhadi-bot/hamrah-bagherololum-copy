@@ -62,7 +62,10 @@
   <meta property="og:url" content="https://hamrah-bagherololum-copy.psyeducation-hadi.workers.dev/" />
   <meta property="og:site_name" content="همراه باقرالعلوم" />
   <meta property="og:locale" content="fa_IR" />
-  <meta name="twitter:card" content="summary" />
+  <meta property="og:image" content="https://psyeducationhadi-bot.github.io/hamrah-bagherololum-copy/icons/icon-512.png" />
+  <meta property="og:image:alt" content="لوگوی همراه باقرالعلوم" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://psyeducationhadi-bot.github.io/hamrah-bagherololum-copy/icons/icon-512.png" />
   <meta name="twitter:title" content="همراه باقرالعلوم | سامانه جامع مشاوره‌ای دبیرستان نمونه دولتی باقرالعلوم" />
   <meta name="twitter:description" content="سامانه هوشمند مشاوره تحصیلی و هدایت رشته دبیرستان باقرالعلوم" />
   <meta name="theme-color" content="#0a1128" />
@@ -103,20 +106,25 @@
               500: '#3b82f6',
               600: '#2563eb',
               700: '#1d4ed8',
+              900: '#1e3a8a',
             },
             turquoise: {
               50: '#ecfeff',
               100: '#cffafe',
               200: '#a5f3fc',
+              300: '#67e8f9',
               400: '#22d3ee',
               500: '#06b6d4',
-              600: '#0891b2',
+              600: '#0f766e',
               700: '#0e7490',
+              800: '#115e59',
+              900: '#134e4a',
             },
             softyellow: {
               50: '#fffbeb',
               100: '#fef3c7',
               200: '#fde68a',
+              300: '#fcd34d',
               400: '#fbbf24',
               500: '#f59e0b',
               600: '#d97706',
@@ -325,16 +333,14 @@
     .rounded-2xl { border-radius: 1rem; }
     .rounded-3xl { border-radius: 1.5rem; }
     .bg-white { background-color: #ffffff; }
-    .bg-navy-900 { background-color: #0f2442; }
-    .bg-navy-950 { background-color: #09162a; }
-    .bg-turquoise-500 { background-color: #06b6d4; }
-    .bg-turquoise-600 { background-color: #0891b2; }
+    .bg-navy-900 { background-color: #091936; } /* matches master engine */
+    .bg-navy-950 { background-color: #06152d; } /* matches master engine */
+    .bg-turquoise-500 { background-color: #14b8a6; } /* matches master engine */
+    .bg-turquoise-600 { background-color: #0f766e; } /* AA: white on it = 5.5:1 */
     .text-white { color: #ffffff; }
-    .text-navy-900 { color: #0f2442; }
+    .text-navy-900 { color: #091936; } /* matches master engine */
     .font-bold { font-weight: 700; }
     .font-black { font-weight: 900; }
-    .shadow-sm { box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-    .shadow-xl { box-shadow: 0 20px 25px -5px rgba(0,0,0,0.12); }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
     button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
       outline: 2px solid #06b6d4;
@@ -475,11 +481,54 @@
     .overflow-x-auto { overflow-x: auto; }
     .overflow-y-auto { overflow-y: auto; }
 
+    /* Missing utility fallbacks (audit 2-3): used in markup but never defined,
+       so they silently did nothing when the Tailwind CDN was slow or blocked. */
+    .min-w-0 { min-width: 0; }
+    .self-start { align-self: flex-start; }
+    .self-end { align-self: flex-end; }
+    .rounded-md { border-radius: 0.375rem; }
+    .leading-none { line-height: 1; }
+    .leading-snug { line-height: 1.375; }
+    .leading-relaxed { line-height: 1.7; }
+    .leading-loose { line-height: 2; }
+    .px-1\.5 { padding-left: 0.375rem; padding-right: 0.375rem; }
+    .px-3\.5 { padding-left: 0.875rem; padding-right: 0.875rem; }
+    .py-0\.5 { padding-top: 0.125rem; padding-bottom: 0.125rem; }
+    .py-1\.5 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
+    .py-2\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
+    .py-3\.5 { padding-top: 0.875rem; padding-bottom: 0.875rem; }
+    .p-2\.5 { padding: 0.625rem; }
+    .pt-1 { padding-top: 0.25rem; }
+    .pr-2\.5 { padding-right: 0.625rem; }
+    .mr-1 { margin-right: 0.25rem; }
+    .ml-2 { margin-left: 0.5rem; }
+    .gap-1\.5 { gap: 0.375rem; }
+    .gap-2\.5 { gap: 0.625rem; }
+    .space-y-1\.5 > * + * { margin-top: 0.375rem; }
+    .space-y-2\.5 > * + * { margin-top: 0.625rem; }
+    .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .accent-turquoise-600 { accent-color: #0f766e; }
+    .backdrop-blur-md { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    .shadow { box-shadow: 0 1px 3px rgba(15,36,66,0.08), 0 1px 2px rgba(15,36,66,0.06); }
+    .transition { transition-property: color, background-color, border-color, opacity, box-shadow, transform; transition-duration: 150ms; transition-timing-function: cubic-bezier(0.4,0,0.2,1); }
+
+    /* Line length: readable measure for long Persian paragraphs (desktop).
+       Only applies to plain paragraphs — cards, labels and prose blocks keep their own width. */
+    @media (min-width: 1024px) {
+      /* only long-form article bodies — hero/CTA/intro paragraphs keep their layout */
+      .article-prose p,
+      .article-prose li { max-width: 75ch; }
+    }
+
+    /* One rounding scale (audit 3-9): card = 2xl, button/chip = xl, pill = full.
+       rounded-lg is only kept for dense admin table chips. */
+    .rounded-lg { border-radius: 0.5rem; }
+
     /* Typography & Line Clamping */
-    .text-\[10px\] { font-size: 0.65rem; }
-    .text-\[11px\] { font-size: 0.7rem; }
+    .text-\[10px\] { font-size: 0.6875rem; } /* 11px — keeps 10px labels readable on mobile */
+    .text-\[11px\] { font-size: 0.75rem; } /* 12px — meets minimum legible size */
     .text-xs { font-size: 0.75rem; line-height: 1.35rem; }
-    .text-sm { font-size: 0.875rem; line-height: 1.5rem; }
+    .text-sm { font-size: 0.9375rem; line-height: 1.55rem; } /* 15px — one notch up for student-age readers */
     .text-base { font-size: 1rem; line-height: 1.65rem; }
     .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
     .text-xl { font-size: 1.25rem; line-height: 1.85rem; }
@@ -495,6 +544,7 @@
     .text-right { text-align: right; }
     .text-center { text-align: center; }
     .text-left { text-align: left; }
+    .dir-ltr { direction: ltr; unicode-bidi: isolate; }
     .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .whitespace-pre-line { white-space: pre-line; }
@@ -509,15 +559,15 @@
     .bg-slate-200 { background-color: #e2e8f0; }
     .bg-slate-800 { background-color: #1e293b; }
     .bg-slate-900 { background-color: #0f172a; }
-    .bg-navy-800 { background-color: #1e3a5f; }
-    .bg-navy-900 { background-color: #0f2442; }
-    .bg-navy-950 { background-color: #09162a; }
+    .bg-navy-800 { background-color: #0d254c; } /* matches master engine */
+    .bg-navy-900 { background-color: #091936; } /* matches master engine */
+    .bg-navy-950 { background-color: #06152d; } /* matches master engine */
     .bg-navy-950\/70 { background-color: rgba(9,22,42,0.72); }
-    .bg-turquoise-50 { background-color: #ecfeff; }
-    .bg-turquoise-100 { background-color: #cffafe; }
+    .bg-turquoise-50 { background-color: #f0fdfa; } /* matches master engine */
+    .bg-turquoise-100 { background-color: #ccfbf1; } /* matches master engine */
     .bg-turquoise-400 { background-color: #22d3ee; }
-    .bg-turquoise-500 { background-color: #06b6d4; }
-    .bg-turquoise-600 { background-color: #0891b2; }
+    .bg-turquoise-500 { background-color: #14b8a6; } /* matches master engine */
+    .bg-turquoise-600 { background-color: #0f766e; } /* AA: white on it = 5.5:1 */
     .bg-softblue-50 { background-color: #eff6ff; }
     .bg-softblue-600 { background-color: #2563eb; }
     .bg-softyellow-50 { background-color: #fffbeb; }
@@ -527,7 +577,8 @@
     .bg-emerald-50 { background-color: #ecfdf5; }
     .bg-emerald-100 { background-color: #d1fae5; }
     .bg-emerald-500 { background-color: #10b981; }
-    .bg-emerald-600 { background-color: #059669; }
+    /* AA fix: white on #059669 was 3.77:1 — #047857 gives 5.3:1 */
+    .bg-emerald-600 { background-color: #047857; }
     .bg-rose-50 { background-color: #fff1f2; }
     .bg-rose-100 { background-color: #ffe4e6; }
     .bg-rose-600 { background-color: #e11d48; }
@@ -539,18 +590,20 @@
     .from-softyellow-50 { background-image: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%) !important; }
 
     .text-white { color: #ffffff; }
-    .text-navy-900 { color: #0f2442; }
-    .text-navy-950 { color: #09162a; }
+    .text-navy-900 { color: #091936; } /* matches master engine */
+    .text-navy-950 { color: #06152d; } /* matches master engine */
     .text-slate-200 { color: #e2e8f0; }
     .text-slate-300 { color: #cbd5e1; }
     .text-slate-400 { color: #94a3b8; }
     .text-slate-500 { color: #64748b; }
     .text-slate-600 { color: #475569; }
     .text-slate-700 { color: #334155; }
+    .text-slate-800 { color: #1e293b; }
+    .text-slate-900 { color: #0f172a; }
     .text-turquoise-300 { color: #67e8f9; }
     .text-turquoise-400 { color: #22d3ee; }
-    .text-turquoise-600 { color: #0891b2; }
-    .text-turquoise-700 { color: #0e7490; }
+    .text-turquoise-600 { color: #0f766e; } /* AA on turquoise-50: 5.2:1 */
+    .text-turquoise-700 { color: #0f766e; } /* matches master engine */
     .text-turquoise-800 { color: #155e75; }
     .text-softblue-600 { color: #2563eb; }
     .text-softblue-700 { color: #1d4ed8; }
@@ -563,7 +616,8 @@
     .text-emerald-700 { color: #047857; }
     .text-emerald-800 { color: #065f46; }
     .text-rose-300 { color: #fda4af; }
-    .text-rose-600 { color: #e11d48; }
+    /* AA fix: #e11d48 on rose-50 was 4.28:1 — #be123c gives 5.7:1 */
+    .text-rose-600 { color: #be123c; }
     .text-rose-700 { color: #be123c; }
     .text-amber-700 { color: #b45309; }
     .text-amber-800 { color: #92400e; }
@@ -582,10 +636,6 @@
     .border-turquoise-200 { border-color: #a5f3fc; }
     .border-turquoise-500 { border-color: #06b6d4; }
     .rounded { border-radius: 0.375rem; }
-    .rounded-lg { border-radius: 0.5rem; }
-    .rounded-xl { border-radius: 0.75rem; }
-    .rounded-2xl { border-radius: 1rem; }
-    .rounded-3xl { border-radius: 1.5rem; }
     .rounded-full { border-radius: 9999px; }
     .shadow-sm { box-shadow: 0 1px 3px rgba(15,36,66,0.06); }
     .shadow-md { box-shadow: 0 4px 8px rgba(15,36,66,0.08); }
@@ -713,7 +763,7 @@
         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-softyellow-400 text-navy-950">اطلاعیه مهم</span>
         <span id="top-announcement-text" class="text-slate-200 font-medium">کارگاه جامع «تکنیک‌های مدیریت زمان و برنامه‌ریزی امتحانات نهایی» روز چهارشنبه ساعت ۱۰ در سالن اجتماعات برگزار می‌شود.</span>
       </div>
-      <div class="flex items-center gap-4 text-xs text-turquoise-400">
+      <div class="hidden sm:flex items-center gap-4 text-xs text-turquoise-400">
         <button type="button" onclick="navigateTo('tools', {tab: 'calendar'})" class="hover:underline flex items-center gap-1">
           <span>تقویم آموزشی مدرسه</span>
         </button>
@@ -732,7 +782,7 @@
         <!-- Logo & School Identity -->
         <div class="flex items-center gap-3 cursor-pointer shrink-0 whitespace-nowrap" onclick="navigateTo('home')">
           <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-navy-900 via-navy-800 to-turquoise-600 flex items-center justify-center text-white shadow-md shadow-navy-900/15 shrink-0">
-            <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 3L2 8l10 5 10-5-10-5z"/>
               <path d="M6 10.5V16c0 2 2.7 3.5 6 3.5s6-1.5 6-3.5v-5.5"/>
               <path d="M20 9.5v6"/>
@@ -844,10 +894,10 @@
   </header>
 
   <!-- Main Dynamic Viewport -->
-  <main id="app-viewport" class="flex-1"></main>
+  <main id="app-viewport" class="flex-1 min-h-[60vh]"></main>
 
   <!-- Comprehensive Professional Footer -->
-  <footer id="main-footer" class="bg-navy-950 text-slate-300 pt-14 pb-8 border-t border-navy-800 mt-16">
+  <footer id="main-footer" class="bg-navy-950 text-slate-300 pt-14 pb-8 border-t border-navy-800 mt-0">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-10 border-b border-navy-800">
         <!-- Col 1: About School & Portal -->
@@ -950,12 +1000,15 @@
   </script>
 
   <!-- Global Modal Container -->
-  <div id="global-modal-backdrop" class="hidden fixed inset-0 z-50 bg-navy-950/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+  <div id="global-modal-backdrop" role="dialog" aria-modal="true" aria-label="پنجره گفتگو" class="hidden fixed inset-0 z-50 bg-navy-950/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
     <div id="global-modal-box" class="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 relative animate-fade-in"></div>
   </div>
 
+  <!-- Skip link: lets keyboard/screen-reader users jump straight to the content -->
+  <a href="#app-viewport" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:right-2 focus:z-[60] focus:px-4 focus:py-2 focus:rounded-xl focus:bg-navy-950 focus:text-white focus:font-bold focus:shadow-xl">رفتن به محتوای اصلی</a>
+
   <!-- Global Toast Notification -->
-  <div id="toast-container" class="fixed bottom-5 left-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+  <div id="toast-container" role="status" aria-live="polite" aria-atomic="false" class="fixed bottom-5 left-3 sm:left-5 z-50 flex flex-col gap-2 w-[calc(100%-1.5rem)] max-w-sm pointer-events-none"></div>
 
   <!-- Main Application Script -->
   <script>
@@ -1750,7 +1803,7 @@
           id: 'post-14', title: '۵ تکنیک علمی افزایش تمرکز عمیق و تقویت حافظه کاری هنگام درس خواندن', slug: 'deep-focus-working-memory-techniques',
           categoryId: 'cat-11', subcategoryId: 'sub-11-1', contentType: 'tutorial', mediaFormat: 'text', grade: 'همه پایه‌ها', importance: 'بسیار مهم', status: 'published', featured: false, views: 1240, likes: 256, readingTime: '۷ دقیقه', author: 'محمد هادی برخوری مهنی', createdAt: '۱۴۰۵/۰۷/۰۵', updatedAt: '۱۴۰۵/۰۷/۰۶', tags: ['تمرکز', 'حافظه', 'عملکرد مغز', 'حواس‌پرتی'],
           summary: 'راهکار کاربردی «برگه پارکینگ ذهن» برای رهایی از افکار مزاحم حین مطالعه و افزایش بازه تمرکز از ۱۵ دقیقه به ۷۵ دقیقه.', coverType: 'brain', aparatHash: '', videoUrl: '', videoSubtitles: '', audioUrl: '', audioDuration: '', audioTranscript: '', attachments: [], gallery: [],
-          content: '<p>وقتی وسط مطالعه ناگهان یاد یک کار ناتمام، یک پیام یا یک خاطره می‌افتید، به جای مبارزه با آن فکر یا بلند شدن از پشت میز، آن را در ۳ کلمه روی «برگه ثبت حواس‌پرتی» کنار دستتان بنویسید تا مغز مطمئن شود فراموشش نمی‌کند و بلافاصله به خط کتاب برگردید.</p>'
+          content: '<p>وقتی وسط مطالعه ناگهان یاد یک کار ناتمام، یک پیام یا یک خاطره می‌افتید، به‌جای مبارزه با آن فکر یا بلند شدن از پشت میز، آن را در ۳ کلمه روی «برگه ثبت حواس‌پرتی» کنار دستتان بنویسید تا مغز مطمئن شود فراموشش نمی‌کند و بلافاصله به خط کتاب برگردید.</p>'
         },
         {
           id: 'post-15', title: 'مهارت گفت‌وگوی سازنده با خانواده و انتخاب دوستان هم‌مسیر در دبیرستان', slug: 'healthy-family-peer-communication',
@@ -1762,7 +1815,7 @@
           id: 'post-16', title: 'تفکر نقادانه، مسئولیت‌پذیری فردی و بلوغ فکری در آستانه ورود به دانشگاه', slug: 'critical-thinking-maturity-highschool',
           categoryId: 'cat-16', subcategoryId: 'sub-16-1', contentType: 'note', mediaFormat: 'text', grade: 'همه پایه‌ها', importance: 'مهم', status: 'published', featured: false, views: 640, likes: 118, readingTime: '۶ دقیقه', author: 'محمد هادی برخوری مهنی', createdAt: '۱۴۰۵/۰۷/۰۱', updatedAt: '۱۴۰۵/۰۷/۰۲', tags: ['مهارت‌های زندگی', 'تفکر نقاد', 'مسئولیت‌پذیری'],
           summary: 'عبور از بهانه‌جویی و مقصر دانستن شرایط بیرونی؛ چگونه سکان‌دار واقعی زندگی و تصمیمات خود باشیم؟', coverType: 'life', aparatHash: '', videoUrl: '', videoSubtitles: '', audioUrl: '', audioDuration: '', audioTranscript: '', attachments: [], gallery: [],
-          content: '<p>بلوغ فکری زمانی شکل می‌گیرد که نوجوان به جای تمرکز بر عواملی که خارج از کنترل اوست، ۱۰۰ درصد انرژی خود را بر «دایره کنترل و نفوذ شخصی» (تلاش، نظم، انتخاب منابع درست و پشتکار) متمرکز سازد.</p>'
+          content: '<p>بلوغ فکری زمانی شکل می‌گیرد که نوجوان به‌جای تمرکز بر عواملی که خارج از کنترل اوست، ۱۰۰ درصد انرژی خود را بر «دایره کنترل و نفوذ شخصی» (تلاش، نظم، انتخاب منابع درست و پشتکار) متمرکز سازد.</p>'
         },
         {
           id: 'post-17', title: 'آینده‌پژوهی مشاغل ایران و جهان تا سال ۱۴۱۰؛ چه مهارت‌هایی طلایی هستند؟', slug: 'future-careers-iran-world-1410',
@@ -2932,7 +2985,7 @@
             </div>
 
             <div class="flex flex-wrap gap-2 pt-2">
-              <button type="button" onclick="CloudSync.saveTokenAndPublish()" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs transition shadow-sm">
+              <button type="button" onclick="CloudSync.saveTokenAndPublish()" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs transition shadow-sm">
                 💾 ذخیره توکن و انتشار آنلاین
               </button>
               <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
@@ -3037,13 +3090,34 @@
     let isModalOpen = false;
     let _ignoreNextPopstate = false;
 
+    // Remembers which element opened the modal so keyboard focus can be returned on close.
+    let _modalLastFocus = null;
+    const FOCUSABLE_SEL = 'a[href], button:not([disabled]), textarea, input:not([disabled]):not([type="hidden"]), select, [tabindex]:not([tabindex="-1"])';
+
+    function _getModalFocusables() {
+      const box = document.getElementById('global-modal-box');
+      if (!box) return [];
+      return Array.from(box.querySelectorAll(FOCUSABLE_SEL)).filter(function(el) {
+        return !el.hasAttribute('hidden') && el.offsetParent !== null;
+      });
+    }
+
     function openModal(htmlContent, modalId) {
       const backdrop = document.getElementById('global-modal-backdrop');
       const box = document.getElementById('global-modal-box');
       if (!backdrop || !box) return;
 
+      if (!isModalOpen) _modalLastFocus = document.activeElement;
+
       box.innerHTML = htmlContent;
       backdrop.classList.remove('hidden');
+
+      // Move keyboard focus into the dialog so screen readers and Tab start inside it.
+      requestAnimationFrame(function() {
+        const list = _getModalFocusables();
+        if (list.length) { try { list[0].focus({ preventScroll: true }); } catch (e) { list[0].focus(); } }
+        else { try { box.focus({ preventScroll: true }); } catch (e) { box.focus(); } }
+      });
 
       // Modal detection and state push: push history state when opening modals for Back button intercept
       if (!isModalOpen) {
@@ -3063,6 +3137,12 @@
     function closeModal(fromPopstate) {
       const backdrop = document.getElementById('global-modal-backdrop');
       if (backdrop) backdrop.classList.add('hidden');
+
+      // Hand focus back to whatever opened the dialog (only for genuine user closes).
+      if (!fromPopstate && _modalLastFocus && document.contains(_modalLastFocus)) {
+        try { _modalLastFocus.focus({ preventScroll: true }); } catch (e) {}
+      }
+      _modalLastFocus = null;
 
       // When a modal is closed via UI button or backdrop click, gracefully pop the history state
       if (isModalOpen) {
@@ -3114,10 +3194,29 @@
       }
     })();
 
-    // Desktop Escape key listener for modal dismissal
+    // Keyboard handling for the dialog: Escape closes, Tab cycles inside it (focus trap).
     window.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape' && isModalOpen) {
+      if (!isModalOpen) return;
+
+      if (e.key === 'Escape') {
         closeModal();
+        return;
+      }
+
+      if (e.key === 'Tab') {
+        const list = _getModalFocusables();
+        if (!list.length) return;
+        const first = list[0];
+        const last = list[list.length - 1];
+        const active = document.activeElement;
+
+        if (e.shiftKey && (active === first || !document.getElementById('global-modal-box').contains(active))) {
+          e.preventDefault();
+          try { last.focus(); } catch (err) {}
+        } else if (!e.shiftKey && active === last) {
+          e.preventDefault();
+          try { first.focus(); } catch (err) {}
+        }
       }
     });
 
@@ -3385,7 +3484,7 @@
             </div>
             <div class="p-4">
               <div class="flex items-center justify-between text-[11px] text-slate-500 mb-1.5">
-                <button type="button" onclick="navigateTo('category', {id: '${post.categoryId}'})" class="text-turquoise-700 font-bold hover:underline truncate max-w-[190px]">${cat ? cat.title : 'دسته‌بندی عمومی'}</button>
+                <button type="button" onclick="navigateTo('category', {id: '${post.categoryId}'})" class="text-turquoise-700 font-bold hover:underline truncate max-w-[150px] sm:max-w-[190px]">${cat ? cat.title : 'دسته‌بندی عمومی'}</button>
                 <span>👁️ ${(post.views || 0).toLocaleString('fa-IR')} بازدید</span>
               </div>
               <h3 onclick="navigateTo('post', {id: '${post.id}'})" class="text-sm sm:text-base font-extrabold text-navy-900 hover:text-turquoise-600 cursor-pointer line-clamp-2 leading-relaxed mb-2">${post.title}</h3>
@@ -3628,7 +3727,7 @@
                       <p class="font-extrabold text-softyellow-300">⏱️ تایمر مطالعه پومودورو و میز کار دانش‌آموز</p>
                       <p class="text-slate-200 mt-0.5">ثبت ساعت مطالعه، برنامه هفتگی و چک‌لیست روزانه</p>
                     </div>
-                    <button type="button" onclick="navigateTo('tools')" class="px-3.5 py-2 rounded-xl bg-softyellow-400 text-navy-950 font-black text-xs shrink-0 hover:bg-softyellow-300 transition">ورود به ابزارها</button>
+                    <button type="button" onclick="navigateTo('tools')" class="px-3.5 py-2 rounded-xl bg-softyellow-400 text-navy-950 font-extrabold text-xs shrink-0 hover:bg-softyellow-300 transition">ورود به ابزارها</button>
                   </div>
                 </div>
               </div>
@@ -3687,7 +3786,7 @@
                   <div class="absolute top-0 right-0 left-0 h-1.5" style="background: ${inlineGrad};"></div>
                   <div>
                     <div class="flex items-start justify-between gap-3 mb-3.5 pt-1">
-                      <div class="w-13 h-13 w-12 h-12 rounded-2xl bg-gradient-to-br ${cat.color || 'from-navy-800 to-turquoise-600'} text-white flex items-center justify-center text-2xl shadow-md group-hover:scale-105 transition" style="background: ${inlineGrad}; color: #ffffff !important;">
+                      <div class="w-12 h-12 rounded-2xl bg-gradient-to-br ${cat.color || 'from-navy-800 to-turquoise-600'} text-white flex items-center justify-center text-2xl shadow-md group-hover:scale-105 transition" style="background: ${inlineGrad}; color: #ffffff !important;">
                         ${cat.icon}
                       </div>
                       <div class="flex flex-col items-end gap-1">
@@ -3794,7 +3893,7 @@
                   </div>
                   <div class="flex items-center justify-between pt-1">
                     <span class="text-xs text-turquoise-400 font-semibold">مدرس: ${v.author}</span>
-                    <button type="button" onclick="navigateTo('post', {id: '${v.id}'})" class="px-4 py-2 rounded-xl bg-turquoise-500 hover:bg-turquoise-400 text-navy-950 font-black text-xs transition">صفحه کامل ویدئو و جزوه پیوست ←</button>
+                    <button type="button" onclick="navigateTo('post', {id: '${v.id}'})" class="px-4 py-2 rounded-xl bg-turquoise-500 hover:bg-turquoise-400 text-navy-950 font-extrabold text-xs transition">صفحه کامل ویدئو و جزوه پیوست ←</button>
                   </div>
                 </div>
               `).join('')}
@@ -3864,7 +3963,7 @@
               <div class="lg:col-span-6 bg-gradient-to-br from-navy-800 to-navy-950 rounded-3xl p-6 border border-turquoise-500/30 flex flex-col justify-between space-y-5">
                 <div class="space-y-4">
                   <div class="flex items-center gap-4">
-                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-turquoise-400 to-softblue-600 flex items-center justify-center text-navy-950 text-3xl font-black shadow-lg shrink-0">👨‍🏫</div>
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-turquoise-300 to-softblue-500 flex items-center justify-center text-navy-950 text-3xl font-black shadow-lg shrink-0">👨‍🏫</div>
                     <div>
                       <span class="text-xs font-bold text-turquoise-400">معرفی مشاور و اهداف سامانه</span>
                       <h2 class="text-lg sm:text-xl font-black text-white">واحد مشاوره دبیرستان نمونه دولتی پسرانه باقرالعلوم</h2>
@@ -3886,7 +3985,7 @@
                   </div>
                 </div>
                 <div class="flex flex-wrap gap-3 pt-2">
-                  <button type="button" onclick="openAskCounselorModal()" class="px-5 py-2.5 rounded-xl bg-turquoise-500 hover:bg-turquoise-400 text-navy-950 font-black text-xs sm:text-sm transition">
+                  <button type="button" onclick="openAskCounselorModal()" class="px-5 py-2.5 rounded-xl bg-turquoise-500 hover:bg-turquoise-400 text-navy-950 font-extrabold text-xs sm:text-sm transition">
                     ✉️ ارسال سؤال مستقیم برای مشاور
                   </button>
                   <button type="button" onclick="openCounselorModal()" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm transition">
@@ -3899,7 +3998,7 @@
         </section>
 
         <!-- FREQUENTLY ASKED QUESTIONS ON HOME PAGE (سؤالات پرتکرار دانش‌آموزان) -->
-        <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
           <div class="text-center mb-8">
             <span class="text-xs font-extrabold text-turquoise-700 bg-turquoise-50 px-3 py-1 rounded-full border border-turquoise-200">پاسخ به دغدغه‌های دانش‌آموزان</span>
             <h2 class="text-xl sm:text-3xl font-black text-navy-900 mt-2">سؤالات پرتکرار دانش‌آموزان</h2>
@@ -3942,7 +4041,7 @@
             ` : `
               <div class="flex items-center justify-between">
                 <span class="px-2.5 py-1 rounded-lg bg-white/10 text-xs font-bold text-turquoise-300">دبیرستان نمونه دولتی باقرالعلوم</span>
-                <span id="vid-timer-${post.id}" class="text-xs font-mono bg-black/40 px-2.5 py-1 rounded">00:00 / 12:00</span>
+                <span id="vid-timer-${post.id}" dir="ltr" class="text-xs font-mono bg-black/40 px-2.5 py-1 rounded inline-block">00:00 / 12:00</span>
               </div>
               <div class="my-auto text-center space-y-3 max-w-xl mx-auto">
                 <button type="button" onclick="toggleSimulatedVideoPlayback('${post.id}')" id="vid-play-btn-${post.id}" class="w-16 h-16 rounded-full bg-turquoise-500 hover:bg-turquoise-400 text-navy-950 flex items-center justify-center mx-auto shadow-xl shadow-turquoise-500/30 transition text-2xl font-black">▶</button>
@@ -4185,7 +4284,7 @@
               </p>
             </div>
             ${(window.__HAMRAH_IS_APP_MODE || (typeof document !== 'undefined' && document.documentElement.classList.contains('is-mobile-app'))) ? '' : `
-            <button type="button" data-admin-trigger="true" onclick="navigateTo('admin', {tab: 'categories'})" class="admin-panel-trigger px-5 py-3 rounded-2xl bg-turquoise-500 hover:bg-turquoise-400 text-navy-950 font-black text-xs sm:text-sm shrink-0 self-start md:self-auto transition">
+            <button type="button" data-admin-trigger="true" onclick="navigateTo('admin', {tab: 'categories'})" class="admin-panel-trigger px-5 py-3 rounded-2xl bg-turquoise-500 hover:bg-turquoise-400 text-navy-950 font-extrabold text-xs sm:text-sm shrink-0 self-start md:self-auto transition">
               ⚙️ مدیریت دسته‌ها در پنل ادمین
             </button>
             `}
@@ -4557,7 +4656,7 @@
       const recommendedPosts = DB.posts.filter(p => p.id !== post.id && p.status === 'published' && p.featured).slice(0, 3);
 
       return `
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
           <!-- Breadcrumb (مسیر راهنمای صفحات) -->
           <nav class="flex flex-wrap items-center gap-2 text-xs text-slate-500 bg-white px-4 py-2.5 rounded-2xl border border-slate-200/80 shadow-sm">
             <button type="button" onclick="navigateTo('home')" class="hover:text-turquoise-600 font-bold">صفحه اصلی</button>
@@ -4782,7 +4881,7 @@
                       </div>
                     ` : ''}
                   </div>
-                  <button type="button" onclick="startQuiz('${qz.id}')" class="w-full py-3 rounded-2xl bg-navy-900 hover:bg-turquoise-600 text-white font-black text-xs sm:text-sm transition">
+                  <button type="button" onclick="startQuiz('${qz.id}')" class="w-full py-3 rounded-2xl bg-navy-900 hover:bg-turquoise-600 text-white font-extrabold text-xs sm:text-sm transition">
                     ${prevAttempt ? 'شرکت مجدد در آزمون ←' : 'شروع آزمون و دریافت تفسیر آنی ←'}
                   </button>
                   ${AuthService.isAuthenticatedStaff() ? `
@@ -4970,7 +5069,7 @@
       }
 
       return `
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
           <div class="bg-navy-900 rounded-3xl p-6 sm:p-8 text-white space-y-5 shadow-xl">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
@@ -4978,7 +5077,7 @@
                 <h1 class="text-2xl sm:text-3xl font-black mt-2">❓ بانک جامع سؤالات پرتکرار دانش‌آموزان</h1>
                 <p class="text-xs sm:text-sm text-slate-300 mt-1">جستجو در پرسش‌ها و پاسخ‌های تشریحی مشاور به همراه ارجاع به مقالات و ویدئوهای مرتبط</p>
               </div>
-              <button type="button" onclick="openAskCounselorModal()" class="px-5 py-3 rounded-2xl bg-turquoise-500 hover:bg-turquoise-400 text-navy-950 font-black text-xs sm:text-sm shrink-0 self-start sm:self-auto transition">
+              <button type="button" onclick="openAskCounselorModal()" class="px-5 py-3 rounded-2xl bg-turquoise-500 hover:bg-turquoise-400 text-navy-950 font-extrabold text-xs sm:text-sm shrink-0 self-start sm:self-auto transition">
                 + ثبت سؤال جدید توسط دانش‌آموز
               </button>
             </div>
@@ -5050,7 +5149,7 @@
               <div class="py-4">
                 <p class="text-xs text-turquoise-300 font-bold mb-2">درس یا مبحث در حال مطالعه:</p>
                 <input id="timer-subject-input" type="text" value="${STATE.timerSubject}" oninput="STATE.timerSubject=this.value" class="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white text-center text-sm font-bold focus:outline-none focus:border-turquoise-400" />
-                <div id="pomodoro-clock-display" class="text-6xl sm:text-7xl font-black tracking-wider font-mono text-white my-6">${mins}:${secs}</div>
+                <div id="pomodoro-clock-display" dir="ltr" class="text-6xl sm:text-7xl font-black tracking-wider font-mono text-white my-6">${mins}:${secs}</div>
               </div>
 
               <div class="flex justify-center gap-3">
@@ -5242,7 +5341,7 @@
                       <h3 class="text-base sm:text-xl font-black text-navy-900 mt-1">${path.title}</h3>
                       <p class="text-xs text-slate-500 mt-0.5">${path.description}</p>
                     </div>
-                    <div class="text-left sm:text-right shrink-0">
+                    <div class="text-right shrink-0">
                       <span class="text-xs font-extrabold text-emerald-700">میزان پیشرفت شما: ${pct.toLocaleString('fa-IR')}٪ (${doneCount} از ${pathPosts.length} گام)</span>
                       <div class="w-44 bg-slate-200 h-2.5 rounded-full overflow-hidden mt-1">
                         <div class="bg-emerald-500 h-full" style="width:${pct}%"></div>
@@ -6091,7 +6190,7 @@
                 <h2 class="text-lg font-black text-navy-900">📚 مدیریت کامل محتوا، وضعیت انتشار و زباله‌دان</h2>
                 <p class="text-xs text-slate-500">انتشار فوری، ذخیره پیش‌نویس، زمان‌بندی انتشار، آرشیو، انتقال بین دسته‌ها و بازیابی مطالب حذف‌شده</p>
               </div>
-              <button type="button" onclick="openEditorForNewPost()" class="px-5 py-2.5 rounded-2xl bg-turquoise-500 hover:bg-turquoise-400 text-navy-950 font-black text-xs transition">
+              <button type="button" onclick="openEditorForNewPost()" class="px-5 py-2.5 rounded-2xl bg-turquoise-500 hover:bg-turquoise-400 text-navy-950 font-extrabold text-xs transition">
                 + افزودن محتوای جدید
               </button>
             </div>
@@ -6147,7 +6246,7 @@
                           <p class="text-[10px] text-slate-400 font-normal mt-0.5">نویسنده: ${p.author} • ${p.createdAt}</p>
                         </td>
                         <td class="p-3">
-                          <select onchange="movePostCategory('${p.id}', this.value)" class="px-2 py-1 rounded-lg bg-white border border-slate-300 text-[11px] font-bold max-w-[190px]">
+                          <select onchange="movePostCategory('${p.id}', this.value)" class="px-2 py-1 rounded-lg bg-white border border-slate-300 text-[11px] font-bold max-w-[140px] sm:max-w-[190px]">
                             ${DB.categories.map(c => `<option value="${c.id}" ${c.id === p.categoryId ? 'selected' : ''}>${c.title}</option>`).join('')}
                           </select>
                         </td>
@@ -6627,7 +6726,7 @@
                   <p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl font-medium">دانلود نسخه پشتیبان آفلاین، بازیابی اطلاعات و اطمینان از سلامت دیتابیس در کلودفلر و گیت‌هاب</p>
                 </div>
                 <div class="flex gap-2">
-                  <button type="button" onclick="exportDatabaseBackup()" class="px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-navy-950 font-black text-xs sm:text-sm shadow-lg shadow-emerald-500/20 transition flex items-center gap-2">
+                  <button type="button" onclick="exportDatabaseBackup()" class="px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-navy-950 font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-500/20 transition flex items-center gap-2">
                     <span>💾</span>
                     <span>دانلود فایل پشتیبان (JSON)</span>
                   </button>
@@ -6686,7 +6785,7 @@
                   </div>
                 </div>
                 <p class="text-slate-600 leading-relaxed">این فایل یک کپی کامل و دقیق از کل محتوای سایت را با فرمت JSON در کامپیوتر شما ذخیره می‌کند تا در صورت نیاز به سرعت آن را بازگردانید.</p>
-                <button type="button" onclick="exportDatabaseBackup()" class="w-full py-3 rounded-xl bg-navy-900 hover:bg-navy-800 text-white font-black text-xs transition shadow-md flex items-center justify-center gap-2">
+                <button type="button" onclick="exportDatabaseBackup()" class="w-full py-3 rounded-xl bg-navy-900 hover:bg-navy-800 text-white font-extrabold text-xs transition shadow-md flex items-center justify-center gap-2">
                   <span>📥</span>
                   <span>دانلود نسخه پشتیبان پایگاه داده (.json)</span>
                 </button>
@@ -6730,7 +6829,7 @@
                 با کلیک بر روی «انتشار آنلاین»، تمامی ${(DB.categories || []).length.toLocaleString('fa-IR')} دسته‌بندی، زیرعنوان‌ها، مقالات، آزمون‌ها و اخبار مستقیماً روی سرور آنلاین آپدیت شده و بلافاصله برای تمامی دانش‌آموزان و بازدیدکنندگان در تمام دنیا اعمال می‌گردد.
               </p>
               <div class="flex flex-wrap items-center gap-2 pt-1">
-                <button type="button" onclick="CloudSync.publishToCloud()" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-navy-950 font-black text-xs transition shadow-md flex items-center gap-2">
+                <button type="button" onclick="CloudSync.publishToCloud()" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-navy-950 font-extrabold text-xs transition shadow-md flex items-center gap-2">
                   <span>🚀</span>
                   <span>انتشار آنلاین تغییرات فعلی در سایت</span>
                 </button>
@@ -6792,7 +6891,7 @@
                 </div>
               </div>
               <div class="flex flex-wrap items-center gap-2">
-                <button type="button" onclick="CloudSync.publishToCloud()" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-navy-950 font-black text-xs transition flex items-center gap-1.5 shadow-md" title="انتشار فوری تغییرات در سرور آنلاین برای تمام کاربران">
+                <button type="button" onclick="CloudSync.publishToCloud()" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-navy-950 font-extrabold text-xs transition flex items-center gap-1.5 shadow-md" title="انتشار فوری تغییرات در سرور آنلاین برای تمام کاربران">
                   <span>🚀</span>
                   <span>انتشار آنلاین در سایت</span>
                 </button>
@@ -6800,7 +6899,7 @@
                   <span>🌐</span>
                   <span>سرور آنلاین</span>
                 </button>
-                <button type="button" onclick="openEditorForNewPost()" class="px-4 py-2 rounded-xl bg-turquoise-500 hover:bg-turquoise-400 text-navy-950 font-black text-xs transition">+ مطلب جدید</button>
+                <button type="button" onclick="openEditorForNewPost()" class="px-4 py-2 rounded-xl bg-turquoise-500 hover:bg-turquoise-400 text-navy-950 font-extrabold text-xs transition">+ مطلب جدید</button>
                 <button type="button" onclick="navigateTo('home')" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition">👁️ مشاهده نمای عمومی سایت</button>
               </div>
             </div>
@@ -6814,7 +6913,7 @@
                   <p class="text-[11px] text-amber-800 mt-0.5">تغییراتی که اخیراً در پنل داده‌اید هنوز روی سرور منتشر نشده است و دیگران آن را نمی‌بینند.</p>
                 </div>
               </div>
-              <button type="button" onclick="CloudSync.publishToCloud()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shrink-0 transition shadow">
+              <button type="button" onclick="CloudSync.publishToCloud()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shrink-0 transition shadow">
                 🚀 انتشار آنلاین فوری برای همه
               </button>
             </div>
@@ -9120,7 +9219,7 @@ function renderNotFoundView(reasonText) {
           ${SecurityEngine.escapeHtml(reasonText || 'ممکن است آدرس واردشده نامعتبر باشد، مطلب حذف شده باشد، یا هنوز در صف بررسی بوده و تأیید نهایی انتشار توسط مدیر کل را دریافت نکرده باشد.')}
         </p>
         <div class="flex flex-wrap justify-center gap-3 pt-2">
-          <button type="button" onclick="navigateTo('home')" class="px-6 py-3 rounded-2xl bg-navy-900 hover:bg-turquoise-600 text-white font-black text-xs sm:text-sm transition">🏠 بازگشت به صفحه اصلی</button>
+          <button type="button" onclick="navigateTo('home')" class="px-6 py-3 rounded-2xl bg-navy-900 hover:bg-turquoise-600 text-white font-extrabold text-xs sm:text-sm transition">🏠 بازگشت به صفحه اصلی</button>
           <button type="button" onclick="navigateTo('explorer')" class="px-6 py-3 rounded-2xl bg-turquoise-50 hover:bg-turquoise-100 text-turquoise-800 border border-turquoise-200 font-bold text-xs sm:text-sm transition">📚 جستجو در کتابخانه محتوا</button>
           <button type="button" onclick="navigateTo('categories')" class="px-6 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm transition">📂 مشاهده ${(DB.categories || []).length.toLocaleString('fa-IR')} دسته‌بندی</button>
         </div>
@@ -9174,7 +9273,7 @@ renderPostDetailView = function() {
 
   const isApp = Boolean(window.__HAMRAH_IS_APP_MODE || (typeof document !== 'undefined' && document.documentElement.classList.contains('is-mobile-app')));
   const bannerHtml = (!isPublic && !isApp) ? `
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
       <div class="p-4 rounded-2xl bg-amber-100 border-2 border-amber-400 text-amber-950 flex flex-wrap items-center justify-between gap-3 text-xs font-bold">
         <span>👁️ حالت پیش‌نمایش مدیریتی: این مطلب در وضعیت «${WorkflowEngine.STATES[post.workflowState]?.label || post.workflowState}» است و برای عموم دانش‌آموزان قابل مشاهده نیست.</span>
         <button type="button" data-admin-trigger="true" onclick="navigateTo('admin', {tab: 'approvals'})" class="admin-panel-trigger px-3.5 py-1.5 rounded-xl bg-navy-900 text-white">بازگشت به صف تأیید مدیر کل</button>
@@ -9479,7 +9578,7 @@ renderFaqView = function() {
   const catId = STATE.viewParams.cat || 'all';
 
   return `
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
       <div class="bg-navy-900 rounded-3xl p-6 sm:p-8 text-white space-y-5 shadow-xl">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -9488,7 +9587,7 @@ renderFaqView = function() {
             <p class="text-xs sm:text-sm text-slate-300 mt-1">مسیر ۱: سؤالات عمومی (انتشار پس از پاسخ مشاور و تأیید مدیر کل بدون افشای نام) | مسیر ۲: پیام خصوصی محرمانه</p>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button type="button" onclick="openAskCounselorModal('public')" class="px-4 py-2.5 rounded-2xl bg-turquoise-500 hover:bg-turquoise-400 text-navy-950 font-black text-xs transition">+ ثبت سؤال عمومی</button>
+            <button type="button" onclick="openAskCounselorModal('public')" class="px-4 py-2.5 rounded-2xl bg-turquoise-500 hover:bg-turquoise-400 text-navy-950 font-extrabold text-xs transition">+ ثبت سؤال عمومی</button>
             <button type="button" onclick="openAskCounselorModal('private')" class="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs transition">🔒 ارسال پیام خصوصی محرمانه</button>
           </div>
         </div>
@@ -9632,7 +9731,7 @@ function renderMajorsInnerResults() {
                 ${m.furtherStudy ? `<p><strong class="text-navy-900">🎓 ادامه تحصیل:</strong> ${SecurityEngine.escapeHtml(m.furtherStudy)}</p>` : ''}
               </div>
             </div>
-            <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+            <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
               <span>📌 منبع رسمی: ${SecurityEngine.escapeHtml(m.officialSource || 'دفترچه سازمان سنجش آموزش کشور')}</span>
               <span>به‌روزرسانی: ${SecurityEngine.escapeHtml(m.updatedAt || '۱۴۰۵/۰۸/۱۰')}</span>
             </div>
@@ -9944,13 +10043,13 @@ function renderQuizResultsPageView() {
   const history = DB.studentData.quizHistory || [];
 
   return `
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6 animate-fade-in">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6 animate-fade-in">
       <div class="bg-navy-900 rounded-3xl p-6 sm:p-8 text-white flex flex-wrap items-center justify-between gap-4 shadow-xl">
         <div>
           <h1 class="text-2xl sm:text-3xl font-black">📊 کارنامه و گزارش عملکرد آزمون‌های خودارزیابی</h1>
           <p class="text-xs sm:text-sm text-slate-300 mt-1">تاریخچه کامل آزمون‌های انجام‌شده در حساب یا نشست شخصی شما</p>
         </div>
-        <button type="button" onclick="navigateTo('quizzes')" class="px-5 py-2.5 rounded-2xl bg-turquoise-500 text-navy-950 font-black text-xs">شرکت در آزمون جدید ←</button>
+        <button type="button" onclick="navigateTo('quizzes')" class="px-5 py-2.5 rounded-2xl bg-turquoise-500 text-navy-950 font-extrabold text-xs">شرکت در آزمون جدید ←</button>
       </div>
 
       ${history.length ? `
@@ -10369,7 +10468,7 @@ renderToolsView = function() {
             <div class="py-3 space-y-2">
               <label for="timer-subject-input" class="block text-xs text-turquoise-300 font-bold">درس و مبحث در حال مطالعه:</label>
               <input id="timer-subject-input" type="text" value="${SecurityEngine.escapeHtml(STATE.timerSubject)}" oninput="STATE.timerSubject=this.value" class="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white text-center text-sm font-bold focus:outline-none focus:border-turquoise-400" />
-              <div id="pomodoro-clock-display" class="text-6xl sm:text-7xl font-black tracking-wider font-mono text-white my-4">${mins}:${secs}</div>
+              <div id="pomodoro-clock-display" dir="ltr" class="text-6xl sm:text-7xl font-black tracking-wider font-mono text-white my-4">${mins}:${secs}</div>
               <p id="pomodoro-elapsed-badge" class="text-xs font-bold text-emerald-300">زمان واقعی سپری‌شده: ${JalaliDateEngine.toPersianDigits(em)} دقیقه و ${JalaliDateEngine.toPersianDigits(es)} ثانیه</p>
             </div>
 
@@ -10508,10 +10607,10 @@ function renderVideosPageView() {
             <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">${SecurityEngine.escapeHtml(v.summary)}</p>
             ${renderInlineVideoPlayerWidget(v)}
             <div class="flex justify-end">
-              <button type="button" onclick="navigateTo('post', {id: '${SecurityEngine.escapeHtml(v.id)}'})" class="px-5 py-2.5 rounded-xl bg-turquoise-500 text-navy-950 font-black text-xs">مشاهده متن کامل و دانلود جزوه پیوست ←</button>
+              <button type="button" onclick="navigateTo('post', {id: '${SecurityEngine.escapeHtml(v.id)}'})" class="px-5 py-2.5 rounded-xl bg-turquoise-500 text-navy-950 font-extrabold text-xs">مشاهده متن کامل و دانلود جزوه پیوست ←</button>
             </div>
           </div>
-        `).join('')}
+        `).join('') || '<div class="text-center py-14 px-6 bg-white rounded-3xl border border-dashed border-slate-300"><div class="text-4xl mb-3">🎬</div><p class="font-black text-navy-900">هنوز ویدئویی منتشر نشده است.</p><p class="text-xs sm:text-sm text-slate-600 mt-1">به‌محض انتشار اولین ویدئو از سوی واحد مشاوره، همین‌جا نمایش داده می‌شود.</p></div>'}
       </div>
     </div>
   `;
@@ -10521,7 +10620,7 @@ function renderPodcastsPageView() {
   updatePageSeoMetadata('رادیو مشاوره و پادکست‌های صوتی', 'پادکست‌های انگیزشی، مهارت مطالعه و درمان اهمال‌کاری همراه با متن پیاده‌سازی‌شده', 'podcasts', false);
   const audios = (DB.posts || []).filter(p => WorkflowEngine.isPostPublic(p) && (p.contentType === 'audio' || p.mediaFormat === 'audio' || p.audioUrl));
   return `
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
       <div class="bg-gradient-to-r from-amber-700 via-orange-800 to-navy-950 rounded-3xl p-6 sm:p-8 text-white space-y-2 shadow-xl">
         <span class="px-3 py-1 rounded-full bg-white/15 text-amber-200 text-xs font-bold">🎧 رادیو همراه باقرالعلوم</span>
         <h1 class="text-2xl sm:text-3xl font-black">پادکست‌ها و فایل‌های صوتی مشاوره‌ای (${JalaliDateEngine.toPersianDigits(audios.length)} اپیزود)</h1>
@@ -10545,7 +10644,7 @@ function renderPodcastsPageView() {
               <button type="button" onclick="navigateTo('post', {id: '${SecurityEngine.escapeHtml(aud.id)}'})" class="text-xs font-extrabold text-turquoise-700 hover:underline">ورود به صفحه اختصاصی اپیزود ←</button>
             </div>
           </div>
-        `).join('')}
+        `).join('') || '<div class="text-center py-14 px-6 bg-white rounded-3xl border border-dashed border-slate-300 md:col-span-2"><div class="text-4xl mb-3">🎧</div><p class="font-black text-navy-900">هنوز اپیزود صوتی منتشر نشده است.</p><p class="text-xs sm:text-sm text-slate-600 mt-1">پادکست‌های مشاوره پس از تأیید مدیریت در این بخش در دسترس قرار می‌گیرند.</p></div>'}
       </div>
     </div>
   `;
@@ -10555,7 +10654,7 @@ function renderDownloadsPageView() {
   updatePageSeoMetadata('مرکز دانلود جزوات، فرم‌های برنامه‌ریزی و نمونه سؤالات', 'دانلود مستقیم فرم‌های مشاوره‌ای، چک‌لیست‌های امتحان نهایی و جداول زمان‌های نقصانی', 'downloads', false);
   const postsWithFiles = (DB.posts || []).filter(p => WorkflowEngine.isPostPublic(p) && p.attachments && p.attachments.length > 0);
   return `
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
       <div class="bg-navy-900 rounded-3xl p-6 sm:p-8 text-white space-y-2 shadow-xl">
         <span class="px-3 py-1 rounded-full bg-softblue-500/20 text-softblue-200 text-xs font-bold">📥 مرکز دانلود فایل‌های آموزشی</span>
         <h1 class="text-2xl sm:text-3xl font-black">فایل‌های دانلودی، جزوات و فرم‌های استاندارد مشاوره‌ای</h1>
@@ -10573,11 +10672,11 @@ function renderDownloadsPageView() {
               <p class="text-xs text-slate-600">${SecurityEngine.escapeHtml(att.description)}</p>
               <p class="text-[11px] text-slate-400">مطلب مرتبط: <button type="button" onclick="navigateTo('post', {id: '${SecurityEngine.escapeHtml(p.id)}'})" class="text-turquoise-700 font-bold hover:underline">${SecurityEngine.escapeHtml(p.title)}</button></p>
             </div>
-            <button type="button" onclick="downloadAttachment('${SecurityEngine.escapeHtml(p.id)}', '${SecurityEngine.escapeHtml(att.id)}')" class="px-5 py-3 rounded-2xl bg-softblue-600 hover:bg-softblue-700 text-white font-black text-xs shrink-0 transition">
+            <button type="button" onclick="downloadAttachment('${SecurityEngine.escapeHtml(p.id)}', '${SecurityEngine.escapeHtml(att.id)}')" class="px-5 py-3 rounded-2xl bg-softblue-600 hover:bg-softblue-700 text-white font-extrabold text-xs shrink-0 transition">
               ⬇ دانلود مستقیم فایل
             </button>
           </div>
-        `).join('')).join('')}
+        `).join('')).join('') || '<div class="text-center py-14 px-6 bg-white rounded-3xl border border-dashed border-slate-300"><div class="text-4xl mb-3">📥</div><p class="font-black text-navy-900">هنوز فایلی برای دانلود منتشر نشده است.</p><p class="text-xs sm:text-sm text-slate-600 mt-1">جزوات، فرم‌های برنامه‌ریزی و نمونه سؤال‌ها پس از انتشار در همین صفحه قرار می‌گیرند.</p></div>'}
       </div>
     </div>
   `;
@@ -10586,7 +10685,7 @@ function renderDownloadsPageView() {
 function renderCounselorPageView() {
   updatePageSeoMetadata('معرفی کادر مشاوره و هدایت تحصیلی', 'آشنایی با مشاوران و روان‌شناسان دبیرستان نمونه دولتی پسرانه باقرالعلوم و برنامه حضور هفتگی', 'counselor', false);
   return `
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
       <div class="bg-gradient-to-br from-navy-950 via-navy-900 to-turquoise-900 rounded-3xl p-6 sm:p-8 text-white space-y-4 shadow-xl">
         <span class="px-3 py-1 rounded-full bg-turquoise-500/20 text-turquoise-300 text-xs font-bold">واحد مشاوره، روان‌شناسی و هدایت تحصیلی</span>
         <h1 class="text-2xl sm:text-3xl font-black">👨‍🏫 معرفی مشاوران دبیرستان نمونه دولتی پسرانه باقرالعلوم</h1>
@@ -10635,7 +10734,7 @@ function renderAnnouncementsPageView() {
   updatePageSeoMetadata('اطلاعیه‌ها و اخبار آموزشی مدرسه', 'آخرین اطلاعیه‌های کارگاه‌های مشاوره، جلسات اولیا و آزمون‌های دبیرستان نمونه دولتی باقرالعلوم', 'announcements', false);
   const anns = (DB.announcements || []).filter(a => WorkflowEngine.isEntityPublic(a));
   return `
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6 animate-fade-in">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6 animate-fade-in">
       <div class="bg-navy-900 rounded-3xl p-6 sm:p-8 text-white space-y-2 shadow-xl">
         <h1 class="text-2xl sm:text-3xl font-black">📢 اطلاعیه‌ها و اخبار رسمی واحد مشاوره مدرسه</h1>
         <p class="text-xs sm:text-sm text-slate-300">تمامی اطلاعیه‌های منتشرشده پس از تأیید نهایی مدیریت دبیرستان نمونه دولتی پسرانه باقرالعلوم</p>
@@ -10660,7 +10759,7 @@ function renderCalendarPageView() {
   updatePageSeoMetadata('تقویم آموزشی، آزمون‌ها و کارگاه‌های مشاوره', 'تقویم رسمی رویدادهای آموزشی، امتحانات و جلسات مشاوره دبیرستان نمونه دولتی باقرالعلوم', 'calendar', false);
   const events = (DB.calendarEvents || []).filter(ev => WorkflowEngine.isEntityPublic(ev));
   return `
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6 animate-fade-in">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6 animate-fade-in">
       <div class="bg-navy-900 rounded-3xl p-6 sm:p-8 text-white space-y-2 shadow-xl">
         <h1 class="text-2xl sm:text-3xl font-black">🗓️ تقویم رسمی آموزشی و مشاوره‌ای دبیرستان باقرالعلوم</h1>
         <p class="text-xs sm:text-sm text-slate-300">همگام‌سازی‌شده با تقویم رسمی هجری شمسی و روزهای دقیق هفته</p>
@@ -10671,7 +10770,7 @@ function renderCalendarPageView() {
           return `
             <div id="${SecurityEngine.escapeHtml(ev.id)}" class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div class="flex items-center gap-4">
-                <div class="px-4 py-2.5 rounded-2xl bg-navy-900 text-white text-center shrink-0 min-w-[110px]">
+                <div class="px-4 py-2.5 rounded-2xl bg-navy-900 text-white text-center shrink-0 min-w-[92px] sm:min-w-[110px]">
                   <p class="text-xs text-turquoise-300 font-bold">${SecurityEngine.escapeHtml(exactDay)}</p>
                   <p class="text-xs font-extrabold mt-0.5">${SecurityEngine.escapeHtml(ev.date)}</p>
                 </div>
@@ -10708,7 +10807,7 @@ function renderAboutAndContactPageView() {
   const isContact = STATE.currentView === 'contact';
   updatePageSeoMetadata(isContact ? 'تماس با واحد مشاوره و مدرسه' : 'درباره سامانه همراه باقرالعلوم', 'اطلاعات تماس، نشانی، اهداف آموزشی و منشور اخلاقی دبیرستان نمونه دولتی پسرانه باقرالعلوم', isContact ? 'contact' : 'about', false);
   return `
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
       <div class="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-lg space-y-6">
         <span class="px-3 py-1 rounded-full bg-turquoise-50 text-turquoise-800 border border-turquoise-200 text-xs font-bold">دبیرستان نمونه دولتی پسرانه باقرالعلوم</span>
         <h1 class="text-2xl sm:text-3xl font-black text-navy-900">درباره سامانه جامع «همراه باقرالعلوم» و راه‌های ارتباطی</h1>
@@ -10727,7 +10826,7 @@ function renderAboutAndContactPageView() {
             <p class="text-slate-600">دانش‌آموزان و اولیای گرامی می‌توانند پرسش‌های عمومی یا پیام‌های خصوصی محرمانه خود را از طریق درگاه امن سایت ارسال نمایند.</p>
             <div class="flex flex-wrap gap-2 pt-1">
               <button type="button" onclick="openAskCounselorModal('public')" class="px-4 py-2 rounded-xl bg-navy-900 text-white text-xs font-bold">ثبت سؤال عمومی</button>
-              <button type="button" onclick="openAskCounselorModal('private')" class="px-4 py-2 rounded-xl bg-turquoise-600 text-white text-xs font-bold">🔒 ارسال پیام محرمانه</button>
+              <button type="button" onclick="openAskCounselorModal('private')" class="px-4 py-2 rounded-xl bg-turquoise-600 hover:bg-turquoise-500 text-white text-xs font-bold">🔒 ارسال پیام محرمانه</button>
             </div>
           </div>
         </div>
@@ -10739,7 +10838,7 @@ function renderAboutAndContactPageView() {
 function renderPrivacyAndTermsPageView() {
   updatePageSeoMetadata('سیاست حفظ حریم خصوصی و شرایط استفاده', 'قوانین حفاظت از داده‌های شخصی دانش‌آموزان زیر ۱۸ سال، سیاست نگهداری داده‌ها و شرایط استفاده', 'privacy', false);
   return `
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
       <div class="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-lg space-y-6 text-xs sm:text-sm leading-loose text-slate-700">
         <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">حفاظت ویژه از اطلاعات دانش‌آموزان (زیر ۱۸ سال)</span>
         <h1 class="text-2xl sm:text-3xl font-black text-navy-900">🛡️ منشور حریم خصوصی، امنیت اطلاعات و شرایط استفاده</h1>
@@ -11009,7 +11108,7 @@ openSwitchUserModal = function(redirectParams) {
           <p id="auth-error-msg" class="hidden text-rose-600 font-bold p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs"></p>
 
           <div class="pt-2">
-            <button type="button" onclick="submitRealLoginForm()" class="w-full py-3 rounded-xl bg-navy-900 hover:bg-turquoise-600 text-white font-black text-xs transition shadow-md flex items-center justify-center gap-2">
+            <button type="button" onclick="submitRealLoginForm()" class="w-full py-3 rounded-xl bg-navy-900 hover:bg-turquoise-600 text-white font-extrabold text-xs transition shadow-md flex items-center justify-center gap-2">
               <span>🔐</span>
               <span>بررسی هویت و ورود به پنل مدیریت</span>
             </button>
@@ -13852,7 +13951,7 @@ function syncStaticShellWithSiteSettings() {
         <div class="flex items-center gap-2 min-w-0">
           <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-softyellow-400 text-navy-950 shrink-0 whitespace-nowrap">${SecurityEngine.escapeHtml(s.topBarBadge)}</span>
           <span id="top-announcement-text" class="text-slate-200 font-medium">${SecurityEngine.escapeHtml(s.topBarAnnouncement)}</span>
-          ${isLive ? `<button type="button" onclick="LiveVisualCMS.openQuickSiteTextModal('topbar')" class="live-cms-control px-2 py-0.5 rounded bg-turquoise-500 text-navy-950 font-black text-[10px] shrink-0">✏️ ویرایش نوار بالا</button>` : ''}
+          ${isLive ? `<button type="button" onclick="LiveVisualCMS.openQuickSiteTextModal('topbar')" class="live-cms-control px-2 py-0.5 rounded bg-turquoise-500 text-navy-950 font-extrabold text-[10px] shrink-0">✏️ ویرایش نوار بالا</button>` : ''}
         </div>
         <div class="flex items-center gap-4 text-xs text-turquoise-400 shrink-0">
           <button type="button" onclick="navigateTo('tools', {tab: 'calendar'})" class="hover:underline flex items-center gap-1">
@@ -13874,7 +13973,7 @@ function syncStaticShellWithSiteSettings() {
     if (logoContainer) {
       logoContainer.innerHTML = `
         <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-navy-900 via-navy-800 to-turquoise-600 flex items-center justify-center text-white shadow-md shadow-navy-900/15 shrink-0">
-          <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 3L2 8l10 5 10-5-10-5z"/>
             <path d="M6 10.5V16c0 2 2.7 3.5 6 3.5s6-1.5 6-3.5v-5.5"/>
             <path d="M20 9.5v6"/>
@@ -14267,7 +14366,7 @@ renderCounselorPageView = function() {
   const isLive = LiveVisualCMS.isActive();
   updatePageSeoMetadata('معرفی کادر مشاوره و هدایت تحصیلی', `آشنایی با مشاوران ${s.schoolName}`, 'counselor', false);
   return `
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
       <div class="bg-gradient-to-br from-navy-950 via-navy-900 to-turquoise-900 rounded-3xl p-6 sm:p-8 text-white space-y-4 shadow-xl">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <span class="px-3 py-1 rounded-full bg-turquoise-500/20 text-turquoise-300 text-xs font-bold">واحد مشاوره، روان‌شناسی و هدایت تحصیلی</span>
@@ -14407,7 +14506,7 @@ renderCalendarPageView = function() {
   updatePageSeoMetadata('تقویم آموزشی، آزمون‌ها و کارگاه‌های مشاوره', `تقویم رسمی رویدادهای آموزشی ${s.schoolName}`, 'calendar', false);
   const events = (DB.calendarEvents || []).filter(ev => WorkflowEngine.isEntityPublic(ev));
   return `
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6 animate-fade-in">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6 animate-fade-in">
       <div class="bg-navy-900 rounded-3xl p-6 sm:p-8 text-white space-y-2 shadow-xl">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <h1 class="text-2xl sm:text-3xl font-black">🗓️ تقویم رسمی آموزشی و مشاوره‌ای ${SecurityEngine.escapeHtml(s.schoolName)}</h1>
@@ -14422,7 +14521,7 @@ renderCalendarPageView = function() {
           return `
             <div id="${safeId}" class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div class="flex items-center gap-4">
-                <div class="px-4 py-2.5 rounded-2xl bg-navy-900 text-white text-center shrink-0 min-w-[110px]">
+                <div class="px-4 py-2.5 rounded-2xl bg-navy-900 text-white text-center shrink-0 min-w-[92px] sm:min-w-[110px]">
                   <p class="text-xs text-turquoise-300 font-bold">${SecurityEngine.escapeHtml(exactDay)}</p>
                   <p class="text-xs font-extrabold mt-0.5">${SecurityEngine.escapeHtml(ev.date)}</p>
                 </div>
@@ -14480,7 +14579,7 @@ renderCategoriesListView = function() {
 
   html = html.replace(
     '⚙️ مدیریت دسته‌ها در پنل ادمین\n            </button>',
-    '⚙️ مدیریت دسته‌ها در پنل ادمین</button><button type="button" onclick="LiveVisualCMS.openQuickCategoryModal(null)" class="live-cms-control px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-navy-950 font-black text-xs sm:text-sm shrink-0 transition">+ افزودن دسته‌بندی جدید در همین صفحه</button>'
+    '⚙️ مدیریت دسته‌ها در پنل ادمین</button><button type="button" onclick="LiveVisualCMS.openQuickCategoryModal(null)" class="live-cms-control px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-navy-950 font-extrabold text-xs sm:text-sm shrink-0 transition">+ افزودن دسته‌بندی جدید در همین صفحه</button>'
   );
 
   (DB.categories || []).forEach(cat => {
@@ -14510,8 +14609,8 @@ renderVideosPageView = function() {
   const videos = (DB.posts || []).filter(p => WorkflowEngine.isPostPublic(p) && (p.contentType === 'video' || p.mediaFormat === 'video' || p.aparatHash || p.videoUrl));
   videos.forEach(v => {
     const safeId = SecurityEngine.escapeHtml(v.id);
-    const needle = `onclick="navigateTo('post', {id: '${safeId}'})" class="px-5 py-2.5 rounded-xl bg-turquoise-500 text-navy-950 font-black text-xs">مشاهده متن کامل و دانلود جزوه پیوست ←</button>`;
-    const rep = `onclick="LiveVisualCMS.openQuickPostModal('${safeId}')" class="live-cms-control px-3.5 py-2.5 rounded-xl bg-amber-400 text-navy-950 font-black text-xs ml-2">✏️ ویرایش ویدئو و زیرنویس</button><button type="button" onclick="LiveVisualCMS.deletePostLive('${safeId}')" class="live-cms-control px-3.5 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-xs ml-2">🗑️ حذف ویدئو</button><button type="button" ${needle}`;
+    const needle = `onclick="navigateTo('post', {id: '${safeId}'})" class="px-5 py-2.5 rounded-xl bg-turquoise-500 text-navy-950 font-extrabold text-xs">مشاهده متن کامل و دانلود جزوه پیوست ←</button>`;
+    const rep = `onclick="LiveVisualCMS.openQuickPostModal('${safeId}')" class="live-cms-control px-3.5 py-2.5 rounded-xl bg-amber-400 text-navy-950 font-extrabold text-xs ml-2">✏️ ویرایش ویدئو و زیرنویس</button><button type="button" onclick="LiveVisualCMS.deletePostLive('${safeId}')" class="live-cms-control px-3.5 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-xs ml-2">🗑️ حذف ویدئو</button><button type="button" ${needle}`;
     html = html.replace(needle, rep);
   });
   return html;
@@ -14553,7 +14652,7 @@ renderAboutAndContactPageView = function() {
   const isContact = STATE.currentView === 'contact';
   updatePageSeoMetadata(isContact ? 'تماس با واحد مشاوره و مدرسه' : `درباره سامانه ${s.siteTitle}`, `اطلاعات تماس، نشانی و اهداف ${s.schoolName}`, isContact ? 'contact' : 'about', false);
   return `
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
       <div class="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-lg space-y-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <span class="px-3 py-1 rounded-full bg-turquoise-50 text-turquoise-800 border border-turquoise-200 text-xs font-bold">${SecurityEngine.escapeHtml(s.schoolName)}</span>
@@ -14576,7 +14675,7 @@ renderAboutAndContactPageView = function() {
             <p class="text-slate-600">دانش‌آموزان و اولیای گرامی می‌توانند پرسش‌های عمومی یا پیام‌های خصوصی محرمانه خود را از طریق درگاه امن سایت ارسال نمایند.</p>
             <div class="flex flex-wrap gap-2 pt-1">
               <button type="button" onclick="openAskCounselorModal('public')" class="px-4 py-2 rounded-xl bg-navy-900 text-white text-xs font-bold">ثبت سؤال عمومی</button>
-              <button type="button" onclick="openAskCounselorModal('private')" class="px-4 py-2 rounded-xl bg-turquoise-600 text-white text-xs font-bold">🔒 ارسال پیام محرمانه</button>
+              <button type="button" onclick="openAskCounselorModal('private')" class="px-4 py-2 rounded-xl bg-turquoise-600 hover:bg-turquoise-500 text-white text-xs font-bold">🔒 ارسال پیام محرمانه</button>
             </div>
           </div>
         </div>
@@ -14962,7 +15061,7 @@ renderCounselorPageView = function() {
   updatePageSeoMetadata(`معرفی مشاور مدرسه — ${c.name}`, `صفحه رسمی معرفی ${c.name}، مشاور ${s.schoolName}`, 'counselor', false);
 
   return `
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fade-in">
       <div class="bg-gradient-to-br from-navy-950 via-navy-900 to-turquoise-900 rounded-3xl p-6 sm:p-10 text-white space-y-5 shadow-xl border border-turquoise-500/30">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <span class="px-3.5 py-1 rounded-full bg-turquoise-500/20 text-turquoise-300 text-xs font-bold border border-turquoise-400/30">تنها مشاور رسمی مدرسه و مدیر انحصاری سامانه</span>
@@ -15051,7 +15150,7 @@ openSwitchUserModal = function(redirectParams) {
           <p id="auth-error-msg" class="hidden text-rose-600 font-bold p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs"></p>
 
           <div class="pt-2">
-            <button type="button" onclick="submitRealLoginForm()" class="w-full py-3 rounded-xl bg-navy-900 hover:bg-turquoise-600 text-white font-black text-xs transition shadow-md flex items-center justify-center gap-2">
+            <button type="button" onclick="submitRealLoginForm()" class="w-full py-3 rounded-xl bg-navy-900 hover:bg-turquoise-600 text-white font-extrabold text-xs transition shadow-md flex items-center justify-center gap-2">
               <span>🔐</span>
               <span>بررسی هویت و ورود به پنل مدیریت</span>
             </button>
@@ -15174,7 +15273,7 @@ const SUBCATEGORY_ENRICHMENT_MAP = {
 
   'sub-15-1': { icon: '⚖️', color: 'from-orange-500 to-red-800', accent: '#ea580c', description: 'شناسایی و درمان کمال‌گرایی منفی (تفکر صفر یا صدی) که مانع شروع درس خواندن می‌شود.' },
   'sub-15-2': { icon: '⚡', color: 'from-amber-500 to-orange-700', accent: '#d97706', description: 'کاربرد قانون ۲ دقیقه، تکنیک ۵ ثانیه و شروع با اولویت‌ترین درس روز.' },
-  'sub-15-3': { icon: '🔗', color: 'from-turquoise-600 to-navy-900', accent: '#0891b2', description: 'ساخت زنجیره عادت‌های کوچک و پیوسته روزانه به جای تصمیمات هیجانی و موقت.' },
+  'sub-15-3': { icon: '🔗', color: 'from-turquoise-600 to-navy-900', accent: '#0891b2', description: 'ساخت زنجیره عادت‌های کوچک و پیوسته روزانه به‌جای تصمیمات هیجانی و موقت.' },
 
   'sub-16-1': { icon: '💡', color: 'from-emerald-600 to-navy-900', accent: '#059669', description: 'پرورش تفکر نقادانه، تحلیل منطقی مسائل و مهارت تصمیم‌گیری آگاهانه در زندگی.' },
   'sub-16-2': { icon: '🌟', color: 'from-softblue-500 to-navy-900', accent: '#2563eb', description: 'مسئولیت‌پذیری فردی، خودمدیریتی و عبور از بهانه‌جویی در آستانه ورود به دانشگاه.' },
@@ -15536,7 +15635,7 @@ renderCategoriesListView = function() {
           </p>
         </div>
         ${isLive ? `
-          <button type="button" onclick="LiveVisualCMS.openQuickCategoryModal(null)" class="live-cms-control px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-navy-950 font-black text-xs sm:text-sm shrink-0 shadow-lg transition">
+          <button type="button" onclick="LiveVisualCMS.openQuickCategoryModal(null)" class="live-cms-control px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-navy-950 font-extrabold text-xs sm:text-sm shrink-0 shadow-lg transition">
             + افزودن دسته‌بندی اصلی جدید
           </button>
         ` : ''}
@@ -15592,7 +15691,7 @@ renderCategoriesListView = function() {
                     <button type="button" onclick="deleteCategoryById('${safeCatId}')" class="px-2.5 py-1.5 rounded-lg bg-rose-100 text-rose-700 font-bold">🗑️ حذف</button>
                   </div>
                 ` : ''}
-                <button type="button" onclick="navigateTo('category', {id: '${safeCatId}'})" class="w-full py-2.5 rounded-xl bg-navy-900 hover:bg-turquoise-600 text-white font-black text-xs transition shadow-sm">
+                <button type="button" onclick="navigateTo('category', {id: '${safeCatId}'})" class="w-full py-2.5 rounded-xl bg-navy-900 hover:bg-turquoise-600 text-white font-extrabold text-xs transition shadow-sm">
                   ورود به دسته‌بندی و مشاهده کارت‌های زیرعنوان ←
                 </button>
               </div>
@@ -15625,7 +15724,7 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
     }
 
     /* Section background differentiation so the site never feels flat or lifeless white */
-    #app-main > section:nth-of-type(even) {
+    #app-viewport > section:nth-of-type(even) {
       background: linear-gradient(180deg, #dce7f5 0%, #e7f0fa 100%) !important;
       border-top: 1px solid #cbd5e1 !important;
       border-bottom: 1px solid #cbd5e1 !important;
@@ -15636,7 +15735,8 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
     .text-navy-900 { color: #091936 !important; }
     .text-navy-800 { color: #0d254c !important; }
     .text-navy-700 { color: #163a70 !important; }
-    .text-turquoise-600 { color: #0d9488 !important; }
+    /* AA fix: #0d9488 on turquoise-50/100 was 3.6:1 — #0f766e gives 5.3:1 */
+    .text-turquoise-600 { color: #0f766e !important; }
     .text-turquoise-700 { color: #0f766e !important; }
     .text-turquoise-800 { color: #115e59 !important; }
     .text-turquoise-900 { color: #134e4a !important; }
@@ -15696,7 +15796,8 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
     .bg-navy-900 { background-color: #091936 !important; }
     .bg-navy-800 { background-color: #0d254c !important; }
     .bg-navy-700 { background-color: #163a70 !important; }
-    .bg-turquoise-600 { background-color: #0d9488 !important; }
+    /* AA fix: white on #0d9488 was 3.74:1 — #0f766e gives 5.5:1 */
+    .bg-turquoise-600 { background-color: #0f766e !important; }
     .bg-turquoise-500 { background-color: #14b8a6 !important; }
     .bg-turquoise-100 { background-color: #ccfbf1 !important; }
     .bg-turquoise-50 { background-color: #f0fdfa !important; }
@@ -15704,12 +15805,17 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
     .bg-softyellow-100 { background-color: #fef3c7 !important; }
     .bg-softyellow-50 { background-color: #fffbeb !important; }
 
-    /* Guaranteed Gradient Engine: fixes Tailwind CDN async missing --tw-gradient-stops */
+    /* Guaranteed Gradient Engine: fixes Tailwind CDN async missing --tw-gradient-stops.
+       IMPORTANT: this fallback must ONLY restore gradients whose colours the project
+       really wants, and must NEVER hijack light-tinted cards (e.g. the daily-tips
+       cards `from-softyellow-50 to-white`), because a dark gradient behind dark
+       text makes the text unreadable. Light gradients are re-declared explicitly
+       just below ("Light gradient cards") instead of being flattened here. */
     .bg-gradient-to-br,
     .bg-gradient-to-r,
     .bg-gradient-to-l,
     .bg-gradient-to-b {
-      background-image: linear-gradient(135deg, #091936 0%, #0d254c 55%, #0d9488 100%) !important;
+      background-image: linear-gradient(135deg, #091936 0%, #0d254c 55%, #0f766e 100%);
     }
     .from-navy-900.via-navy-800.to-turquoise-900,
     .from-navy-900.via-navy-800.to-turquoise-600,
@@ -15717,13 +15823,13 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
     .from-navy-800.to-turquoise-700,
     .from-navy-900.to-turquoise-700,
     .from-navy-900.to-navy-700 {
-      background-image: linear-gradient(135deg, #091936 0%, #0d254c 52%, #0d9488 100%) !important;
+      background-image: linear-gradient(135deg, #091936 0%, #0d254c 52%, #0f766e 100%) !important;
     }
     .from-turquoise-600.to-navy-800,
     .from-turquoise-500.to-emerald-600,
     .from-teal-600.to-navy-800,
     .from-teal-600.to-emerald-600 {
-      background-image: linear-gradient(135deg, #0d9488 0%, #047857 50%, #091936 100%) !important;
+      background-image: linear-gradient(135deg, #0f766e 0%, #047857 50%, #091936 100%) !important;
     }
     .from-softblue-600.to-navy-800,
     .from-softblue-500.to-indigo-700,
@@ -15793,6 +15899,157 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
     }
     .subcat-graphical-card:hover {
       background: linear-gradient(180deg, #ffffff 0%, #e6f7f5 100%) !important;
+    }
+
+    /* ============================================================================
+       TOUCH TARGETS & KEYBOARD FOCUS  (audit items 2-7 and 3-15)
+       Applied only for coarse pointers (phones/tablets) so the desktop layout
+       keeps its exact current proportions. Inline text links are excluded.
+       ============================================================================ */
+    @media (pointer: coarse) {
+      button:not(.no-tap-target):not([data-no-tap]),
+      a[role="button"]:not(.no-tap-target) {
+        min-height: 36px;
+      }
+      header button, header [onclick],
+      #app-viewport button:not(.no-tap-target) {
+        min-height: 40px;
+      }
+    }
+
+    /* Keyboard focus ring that stays visible on dark panels and saturated chips. */
+    .bg-navy-950:focus-visible, .bg-navy-900:focus-visible,
+    .bg-navy-800:focus-visible, .bg-turquoise-600:focus-visible,
+    .bg-rose-600:focus-visible {
+      outline: 3px solid #fef3c7 !important;
+      outline-offset: 2px;
+    }
+
+    /* ============================================================================
+       ACCESSIBILITY & PRINT POLISH
+       - Respects the OS "reduce motion" preference (floatSlow/ping/bounce/pulse).
+       - Printing an article / checklist / form: drops the dark header, footer,
+         navigation and floating controls so the paper version stays readable.
+       ============================================================================ */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+      }
+      .animate-float,
+      .animate-ping,
+      .animate-bounce,
+      .animate-pulse {
+        animation: none !important;
+      }
+    }
+
+    @media print {
+      @page { margin: 14mm; }
+      html, body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 11.5pt !important;
+      }
+      #top-announcement-bar,
+      #main-footer,
+      #toast-container,
+      .live-cms-control,
+      #mobile-menu,
+      #header-admin-btn,
+      #header-student-btn {
+        display: none !important;
+      }
+      #main-header {
+        position: static !important;
+        box-shadow: none !important;
+        border-bottom: 1px solid #cbd5e1 !important;
+        background: #ffffff !important;
+      }
+      #app-viewport > section:nth-of-type(even) {
+        background: transparent !important;
+        border: 0 !important;
+      }
+      /* keep colours that carry meaning, but stop heavy dark blocks from flooding ink */
+      .bg-navy-950, .bg-navy-900, .bg-navy-800, .hero-pattern, .category-hero-banner {
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      .hero-pattern *, .category-hero-banner * { color: #000000 !important; }
+      .card-elevated, article, .rounded-2xl, .rounded-3xl {
+        box-shadow: none !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 8pt; color: #475569; }
+    }
+
+    /* ============================================================================
+       BRAND GRADIENT PALETTE (audit 1-3)
+       db.json gives each of the 18 categories its own from-*/to-* pair, but only a
+       handful had rules, so the rest fell back to one identical navy/teal block.
+       Defining the missing stop tokens lets every category paint its own colour
+       again. Text on those cards is forced white by the card markup.
+       ============================================================================ */
+    .from-amber-500 { --tw-gradient-from: #f59e0b; }
+    .from-amber-600 { --tw-gradient-from: #d97706; }
+    .from-blue-600 { --tw-gradient-from: #2563eb; }
+    .from-blue-700 { --tw-gradient-from: #1d4ed8; }
+    .from-cyan-500 { --tw-gradient-from: #06b6d4; }
+    .from-emerald-500 { --tw-gradient-from: #10b981; }
+    .from-emerald-600 { --tw-gradient-from: #059669; }
+    .from-fuchsia-600 { --tw-gradient-from: #c026d3; }
+    .from-indigo-500 { --tw-gradient-from: #6366f1; }
+    .from-lime-600 { --tw-gradient-from: #65a30d; }
+    .from-orange-500 { --tw-gradient-from: #f97316; }
+    .from-rose-500 { --tw-gradient-from: #f43f5e; }
+    .from-rose-600 { --tw-gradient-from: #e11d48; }
+    .from-sky-500 { --tw-gradient-from: #0ea5e9; }
+    .from-softblue-500 { --tw-gradient-from: #3b82f6; }
+    .from-teal-500 { --tw-gradient-from: #14b8a6; }
+    .from-turquoise-600 { --tw-gradient-from: #0f766e; }
+    .from-violet-600 { --tw-gradient-from: #7c3aed; }
+    .to-blue-800 { --tw-gradient-to: #1e40af; }
+    .to-emerald-800 { --tw-gradient-to: #065f46; }
+    .to-indigo-900 { --tw-gradient-to: #312e81; }
+    .to-navy-900 { --tw-gradient-to: #0f2442; }
+    .to-navy-950 { --tw-gradient-to: #09162a; }
+    .to-orange-700 { --tw-gradient-to: #c2410c; }
+    .to-purple-900 { --tw-gradient-to: #581c87; }
+    .to-red-800 { --tw-gradient-to: #991b1b; }
+    .to-red-900 { --tw-gradient-to: #7f1d1d; }
+    .to-slate-900 { --tw-gradient-to: #0f172a; }
+    .to-stone-800 { --tw-gradient-to: #292524; }
+    .to-green-900 { --tw-gradient-to: #14532d; }
+    .to-teal-800 { --tw-gradient-to: #115e59; }
+
+    /* ============================================================================
+       LIGHT GRADIENT CARDS (restore the intended soft/cream surfaces)
+       These are written after the gradient engine on purpose, so they win by
+       source order without needing to fight the dark fallback above.
+       Text on these surfaces is dark (navy-900 / slate-600), so the background
+       MUST stay light. Contrast verified: navy-900 = 17:1, slate-600 = 7.4:1.
+       ============================================================================ */
+    .bg-gradient-to-br.from-softyellow-50,
+    .bg-gradient-to-r.from-softyellow-50,
+    .bg-gradient-to-b.from-softyellow-50,
+    .bg-gradient-to-l.from-softyellow-50 {
+      background-image: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%) !important;
+    }
+    .bg-gradient-to-br.from-softyellow-100,
+    .bg-gradient-to-r.from-softyellow-100 {
+      background-image: linear-gradient(135deg, #fef3c7 0%, #ffffff 100%) !important;
+    }
+    /* soft yellow -> turquoise ribbon (daily-tip highlight strip in the hero card) */
+    .bg-gradient-to-r.from-softyellow-400\/20.to-turquoise-500\/20,
+    .bg-gradient-to-br.from-softyellow-400\/20.to-turquoise-500\/20 {
+      background-image: linear-gradient(135deg, rgba(251,191,36,0.20) 0%, rgba(20,184,166,0.16) 100%) !important;
+    }
+    .bg-gradient-to-br.from-slate-50,
+    .bg-gradient-to-r.from-slate-50 {
+      background-image: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%) !important;
     }
   </style>
 
@@ -16397,18 +16654,18 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
           banner.innerHTML = `
             <div class="p-5 rounded-3xl bg-gradient-to-r from-navy-950 via-navy-900 to-turquoise-900 text-white shadow-2xl border-2 border-turquoise-400 flex flex-wrap items-center justify-between gap-4">
               <div class="space-y-1">
-                <span class="px-2.5 py-0.5 rounded-full bg-turquoise-400 text-navy-950 font-black text-xs">موتور ویرایشگر جامع ۱۰۰٪ سایت (v4.0)</span>
+                <span class="px-2.5 py-0.5 rounded-full bg-turquoise-400 text-navy-950 font-extrabold text-xs">موتور ویرایشگر جامع ۱۰۰٪ سایت (v4.0)</span>
                 <h2 class="text-base sm:text-xl font-black">🛠️ میز فرمان و یکپارچه‌سازی تمام بخش‌های سایت</h2>
                 <p class="text-xs text-slate-300">جابجایی مستقیم شماره‌ها (مثلاً ۳ و ۶)، تبدیل عنوان اصلی و فرعی، مدیریت تقویم، آزمون‌ها، سؤالات پرتکرار، رشته‌ها و اطلاعات مشاور:</p>
               </div>
               <div class="flex flex-wrap items-center gap-2">
-                <button type="button" onclick="UnifiedCMSStudio.openStudio('categories')" class="px-3.5 py-2 rounded-xl bg-turquoise-400 hover:bg-turquoise-300 text-navy-950 font-black text-xs shadow">📂 ۱. عناوین اصلی و فرعی</button>
+                <button type="button" onclick="UnifiedCMSStudio.openStudio('categories')" class="px-3.5 py-2 rounded-xl bg-turquoise-400 hover:bg-turquoise-300 text-navy-950 font-extrabold text-xs shadow">📂 ۱. عناوین اصلی و فرعی</button>
                 <button type="button" onclick="UnifiedCMSStudio.openStudio('posts')" class="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/20">🎬 ۲. مقالات، فیلم و پادکست</button>
                 <button type="button" onclick="UnifiedCMSStudio.openStudio('modules')" class="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/20">🗓️ ۳. تقویم، نکات و حذف بخش‌ها</button>
                 <button type="button" onclick="UnifiedCMSStudio.openStudio('faqs_quizzes')" class="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/20">❓ ۴. آزمون‌ها و سؤالات پرتکرار</button>
                 <button type="button" onclick="UnifiedCMSStudio.openStudio('majors_paths')" class="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/20">🎓 ۵. رشته‌ها، دانشگاه و مسیرها</button>
                 <button type="button" onclick="UnifiedCMSStudio.openStudio('identity')" class="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/20">👨‍🏫 ۶. مشاور، هدر، فوتر و ابزارها</button>
-                <button type="button" onclick="CloudSync.publishToCloud()" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-navy-950 font-black text-xs shadow-lg">☁️ انتشار دائمی در سرور</button>
+                <button type="button" onclick="CloudSync.publishToCloud()" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-navy-950 font-extrabold text-xs shadow-lg">☁️ انتشار دائمی در سرور</button>
               </div>
             </div>
           `;
@@ -16435,17 +16692,17 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
         bar = document.createElement('div');
         bar.id = 'hamrah-gestalt-command-bar';
         bar.setAttribute('data-admin-trigger', 'true');
-        bar.className = 'fixed bottom-5 right-5 z-50 flex flex-col gap-2';
+        bar.className = 'fixed bottom-5 right-3 sm:right-5 z-50 flex flex-col gap-2 max-w-[calc(100%-1.5rem)]';
         document.body.appendChild(bar);
       }
 
       const dirty = window.STATE && window.STATE.adminHasUnpublishedChanges;
       bar.innerHTML = `
         <div class="flex items-center gap-2 bg-navy-950/95 text-white p-2 rounded-2xl shadow-2xl border-2 border-turquoise-400 backdrop-blur-md">
-          <button type="button" onclick="UnifiedCMSStudio.openStudio('categories')" class="px-4 py-2 rounded-xl bg-gradient-to-r from-turquoise-500 to-softblue-600 text-navy-950 font-black text-xs hover:opacity-95 transition flex items-center gap-1.5 shadow">
+          <button type="button" onclick="UnifiedCMSStudio.openStudio('categories')" class="px-4 py-2 rounded-xl bg-gradient-to-r from-turquoise-500 to-softblue-600 text-navy-950 font-extrabold text-xs hover:opacity-95 transition flex items-center gap-1.5 shadow">
             <span>🛠️ میز فرمان و ویرایش ۱۰۰٪ سایت</span>
           </button>
-          <button type="button" onclick="CloudSync.publishToCloud()" class="px-3.5 py-2 rounded-xl ${dirty ? 'bg-amber-400 text-navy-950 animate-pulse' : 'bg-emerald-600 text-white'} font-black text-xs hover:opacity-95 transition">
+          <button type="button" onclick="CloudSync.publishToCloud()" class="px-3.5 py-2 rounded-xl ${dirty ? 'bg-amber-400 text-navy-950 animate-pulse' : 'bg-emerald-600 text-white'} font-extrabold text-xs hover:opacity-95 transition">
             ${dirty ? '☁️ انتشار آنلاین تغییرات (!)' : '☁️ انتشار در سرور'}
           </button>
         </div>
@@ -16592,7 +16849,7 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
               <p class="text-[11px] text-slate-500">تمامی تغییرات به صورت زنجیره‌ای و خودکار در کل صفحات سایت هماهنگ می‌شوند.</p>
             </div>
             <div class="flex items-center gap-2">
-              <button type="button" onclick="CloudSync.publishToCloud()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow">
+              <button type="button" onclick="CloudSync.publishToCloud()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow">
                 ☁️ انتشار دائمی در سرور
               </button>
               <button type="button" onclick="closeModal()" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-600 font-bold text-sm">✕</button>
@@ -16688,7 +16945,7 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
             <div class="p-4 rounded-2xl border-2 ${cat.active === false ? 'border-rose-200 bg-rose-50/30' : 'border-slate-200 bg-white'} space-y-3 shadow-sm">
               <div class="flex flex-wrap items-center justify-between gap-2">
                 <div class="flex items-center gap-2">
-                  <span class="px-2.5 py-1 rounded-lg bg-navy-900 text-turquoise-300 font-black text-xs">شماره ${toFaNum(idx + 1)}</span>
+                  <span class="px-2.5 py-1 rounded-lg bg-navy-900 text-turquoise-300 font-extrabold text-xs">شماره ${toFaNum(idx + 1)}</span>
                   <span class="text-xl">${escHtml(cat.icon || '📘')}</span>
                   <strong class="text-sm font-black text-navy-900">${escHtml(cat.title)}</strong>
                   ${cat.active === false ? `<span class="px-2 py-0.5 rounded bg-rose-100 text-rose-700 text-[10px] font-bold">مخفی</span>` : ''}
