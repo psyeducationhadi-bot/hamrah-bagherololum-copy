@@ -6091,6 +6091,12 @@
   "counselorMessages": [],
   "auditLogs": [
     {
+      "id": "alog-1794540367482",
+      "actor": "محمد هادی برخوری مهنی",
+      "action": "انتشار آنلاین تغییرات سایت در سرور",
+      "time": "۱۴۰۵/۰۸/۱۴ - 06:56"
+    },
+    {
       "id": "alog-1794540357307",
       "actor": "محمد هادی برخوری مهنی",
       "action": "انتشار آنلاین تغییرات سایت در سرور",
@@ -6213,8 +6219,8 @@
       "schedule": "شنبه 7 الی 14"
     }
   ],
-  "lastLocalEdit": 1794540365197,
-  "lastPublished": 1794540365197,
-  "lastPublishedDateFa": "۱۴۰۵/۸/۲۲ ۶:۵۶:۰۵",
+  "lastLocalEdit": 1794540370318,
+  "lastPublished": 1794540370318,
+  "lastPublishedDateFa": "۱۴۰۵/۸/۲۲ ۶:۵۶:۱۰",
   "customPageTexts": {}
 }
