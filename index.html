@@ -2619,14 +2619,30 @@
       const clone = JSON.parse(JSON.stringify(sourceDb));
       if (Array.isArray(clone.posts)) {
         clone.posts.forEach(p => {
-          if (typeof p.audioUrl === 'string' && p.audioUrl.startsWith('data:audio/wav;base64,')) {
+          if (typeof p.audioUrl === 'string' && (p.audioUrl.startsWith('data:audio/wav;base64,') || p.audioUrl.startsWith('blob:'))) {
             p.audioUrl = '';
           }
+          if (typeof p.customCoverDataUrl === 'string' && p.customCoverDataUrl.startsWith('blob:')) {
+            p.customCoverDataUrl = '';
+          }
+          if (typeof p.uploadedVideoDataUrl === 'string' && p.uploadedVideoDataUrl.startsWith('blob:')) {
+            p.uploadedVideoDataUrl = '';
+          }
+          if (Array.isArray(p.attachments)) {
+            p.attachments.forEach(att => {
+              if (typeof att.url === 'string' && att.url.startsWith('blob:')) att.url = '';
+              if (typeof att.dataUrl === 'string' && att.dataUrl.startsWith('blob:')) att.dataUrl = '';
+            });
+          }
         });
+      }
+      if (Array.isArray(clone.media)) {
+        clone.media = clone.media.filter(m => !(typeof m.url === 'string' && m.url.startsWith('blob:')));
       }
       // Security & Privacy Hardening: Never export active sessions, audit logs or private student profiles
       clone.sessions = [];
       clone.adminAuditLogs = [];
+      clone.auditLogs = [];
       clone.studentProfiles = {};
       clone.studentNotes = [];
       clone.studySessions = [];
@@ -2708,27 +2724,57 @@
           });
 
           let sha = '';
+          let remoteDb = null;
           if (getRes.ok) {
             const data = await getRes.json();
             sha = data.sha;
+            if (data && data.content) {
+              try {
+                const decoded = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
+                remoteDb = JSON.parse(decoded);
+              } catch (_) {}
+            }
           } else if (getRes.status === 401 || getRes.status === 403) {
             showToast('❌ توکن دسترسی معتبر نیست یا منقضی شده است.', 'error');
             this.openConfigModal(true);
             return;
           }
 
-          DB.lastPublished = Date.now();
-          DB.lastPublishedDateFa = new Date().toLocaleDateString('fa-IR') + ' ' + new Date().toLocaleTimeString('fa-IR');
-          DB.lastLocalEdit = DB.lastPublished;
-          if (window.STATE) {
-            window.STATE.adminHasUnpublishedChanges = false;
+          // محافظت در برابر بازنویسی کارهای دستگاه دیگر (Conflict Protection)
+          const localLastSync = (DB && DB.lastPublished) || 0;
+          const remoteLastPublished = (remoteDb && remoteDb.lastPublished) || 0;
+          if (remoteLastPublished > localLastSync && localLastSync > 0) {
+            const rDate = remoteDb.lastPublishedDateFa || 'اخیر';
+            const proceed = confirm(`⚠️ اخطار تداخل دو دستگاه:\nنسخه جدیدتری از سایت در تاریخ [${rDate}] توسط دستگاه دیگری روی سرور منتشر شده است!\n\nاگر اکنون منتشر کنید، تغییرات آن دستگاه ممکن است حذف شوند.\n\nتوصیه: انصراف داده و ابتدا دکمه «دریافت آخرین نسخه از سرور» را بزنید.\n\nآیا با مسئولیت خود مایل به بازنویسی اجباری سرور هستید؟`);
+            if (!proceed) {
+              showToast('انتشار لغو شد. لطفاً ابتدا آخرین داده‌ها را از سرور دریافت نمایید.', 'warning');
+              return;
+            }
           }
-          saveDatabase(DB);
+
+          // هشدار در صورت وجود آدرس‌های موقت blob در پست‌ها
+          let hasBlob = false;
+          (DB.posts || []).forEach(p => {
+            if ((p.customCoverDataUrl && p.customCoverDataUrl.startsWith('blob:')) ||
+                (p.uploadedVideoDataUrl && p.uploadedVideoDataUrl.startsWith('blob:')) ||
+                (p.audioUrl && p.audioUrl.startsWith('blob:'))) {
+              hasBlob = true;
+            }
+          });
+          if (hasBlob) {
+            showToast('⚠️ توجه: رسانه‌های با آدرس موقت مرورگر (blob) جهت جلوگیری از خرابی لینک برای کاربران پاکسازی شدند.', 'warning');
+          }
+
+          const publishNow = Date.now();
+          const publishDateFa = new Date().toLocaleDateString('fa-IR') + ' ' + new Date().toLocaleTimeString('fa-IR');
 
           const cleanDb = typeof getCleanDatabaseForStorage === 'function' ? getCleanDatabaseForStorage(DB) : DB;
+          cleanDb.lastPublished = publishNow;
+          cleanDb.lastPublishedDateFa = publishDateFa;
+          cleanDb.lastLocalEdit = publishNow;
 
           const payload = {
-            message: `Update site database from Admin CMS [${DB.lastPublishedDateFa}]`,
+            message: `Update site database from Admin CMS [${publishDateFa}]`,
             content: this.utf8ToBase64(JSON.stringify(cleanDb, null, 2)),
             branch: this.BRANCH
           };
@@ -2746,6 +2792,9 @@
           });
 
           if (putRes.ok) {
+            DB.lastPublished = publishNow;
+            DB.lastPublishedDateFa = publishDateFa;
+            DB.lastLocalEdit = publishNow;
             localStorage.setItem(this.LAST_SYNC_KEY, new Date().toISOString());
             if (window.STATE) {
               window.STATE.adminHasUnpublishedChanges = false;
@@ -2904,6 +2953,40 @@
         } else {
           showToast('لطفاً توکن را وارد کنید.', 'error');
         }
+      },
+
+      initAutoSyncChecker() {
+        if (this._syncInterval) return;
+        const checkUpdates = async () => {
+          if (document.hidden) return;
+          if (window.STATE && window.STATE.adminHasUnpublishedChanges) return;
+          try {
+            const res = await fetch(`./${this.FILE_PATH}?_t=${Date.now()}`, { cache: 'no-store' });
+            if (res.ok) {
+              const remote = await res.json();
+              if (remote && remote.lastPublished && remote.lastPublished > (DB.lastPublished || 0)) {
+                if (!document.getElementById('cloud-update-available-banner')) {
+                  const banner = document.createElement('div');
+                  banner.id = 'cloud-update-available-banner';
+                  banner.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-navy-950 to-turquoise-900 text-white px-4 py-2.5 rounded-2xl shadow-2xl border-2 border-turquoise-400 flex items-center gap-3 text-xs font-bold animate-bounce';
+                  banner.innerHTML = `
+                    <span>✨ نسخه جدیدی از مطالب در سرور منتشر شده است!</span>
+                    <button type="button" onclick="CloudSync.fetchFromCloud(true); this.parentElement.remove();" class="px-3 py-1 rounded-xl bg-turquoise-400 hover:bg-turquoise-300 text-navy-950 font-black shadow transition">
+                      🔄 دریافت نسخه جدید
+                    </button>
+                    <button type="button" onclick="this.parentElement.remove()" class="text-slate-400 hover:text-white font-bold">✕</button>
+                  `;
+                  document.body.appendChild(banner);
+                }
+              }
+            }
+          } catch (_) {}
+        };
+
+        this._syncInterval = setInterval(checkUpdates, 180000);
+        window.addEventListener('focus', () => {
+          setTimeout(checkUpdates, 1500);
+        });
       }
     };
 
@@ -7060,8 +7143,11 @@
       const cat = DB.categories.find(c => c.id === catId);
       const inp = document.getElementById('cat-edit-title-' + catId);
       if (!cat || !inp || !inp.value.trim()) return;
-      cat.title = inp.value.trim();
-      logAdminAction(`ویرایش عنوان دسته‌بندی به «${cat.title}»`);
+      const rawVal = inp.value.trim();
+      const cleanT = (typeof stripNumberPrefix === 'function') ? stripNumberPrefix(rawVal) : rawVal.replace(/^[\s\u200c]*[۰-۹0-9]+(?:[\s\.\-\)_،:؛]+|[۰-۹0-9]*[\s\.\-\)_،:؛]+)/, '').trim();
+      cat.cleanTitle = cleanT;
+      cat.title = cleanT;
+      logAdminAction(`ویرایش عنوان دسته‌بندی به «${cleanT}»`);
       saveDatabase(DB, true);
       showToast('عنوان دسته‌بندی به‌روزرسانی شد.', 'success');
       renderApp();
@@ -11185,7 +11271,7 @@ window.restoreAutoSavedDraftToEditor = function() {
   showToast(`پیش‌نویس خودکار مورخ ${d.savedAt} بازیابی شد.`, 'success');
 };
 
-// Fix #15: Validated Async Media & Attachment Upload into IndexedDB
+// Fix #15: Validated Async Media & Attachment Upload into IndexedDB & Portable DataURLs
 handleEditorMediaUpload = async function(ev, kind) {
   const file = ev.target.files && ev.target.files[0];
   if (!file) return;
@@ -11196,7 +11282,20 @@ handleEditorMediaUpload = async function(ev, kind) {
     ev.target.value = '';
     return;
   }
+  let dataUrl = '';
+  if (file.size <= 2.5 * 1024 * 1024) {
+    try {
+      dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.onerror = e => reject(e);
+        reader.readAsDataURL(file);
+      });
+    } catch (_) {}
+  }
   const saved = await MediaStorageIDB.saveMediaFile(file, catType);
+  const mediaUrl = dataUrl || saved.objectUrl;
+
   DB.media = DB.media || [];
   DB.media.unshift({
     id: saved.mediaId,
@@ -11204,19 +11303,23 @@ handleEditorMediaUpload = async function(ev, kind) {
     mimeType: file.type,
     sizeLabel: check.formattedSize,
     category: catType,
-    url: saved.objectUrl,
+    url: mediaUrl,
     uploadedBy: STATE.currentUser ? STATE.currentUser.name : 'مدیر',
     createdAt: JalaliDateEngine.nowDateTime()
   });
   if (catType === 'audio') {
-    _tempEditorAudioDataUrl = saved.objectUrl;
-    showToast(`فایل صوتی معتبر «${file.name}» (${check.formattedSize}) در فضای رسانه ذخیره شد.`, 'success');
+    _tempEditorAudioDataUrl = mediaUrl;
+    if (!dataUrl) {
+      showToast(`⚠️ فایل صوتی بزرگتر از ۲.۵ مگابایت است. برای دسترسی سراسری آنلاین از لینک وب استفاده کنید.`, 'warning');
+    } else {
+      showToast(`فایل صوتی «${file.name}» (${check.formattedSize}) آماده انتشار شد.`, 'success');
+    }
   } else if (catType === 'video') {
-    _tempEditorVideoDataUrl = saved.objectUrl;
-    showToast(`فایل ویدئویی معتبر «${file.name}» (${check.formattedSize}) در فضای رسانه ذخیره شد.`, 'success');
+    _tempEditorVideoDataUrl = mediaUrl;
+    showToast(`برای ویدئو پیشنهاد می‌شود از آپارات استفاده کنید. فایل ویدئویی ذخیره شد.`, 'info');
   } else {
-    _tempEditorCoverDataUrl = saved.objectUrl;
-    showToast(`تصویر کاور معتبر «${file.name}» (${check.formattedSize}) ذخیره شد.`, 'success');
+    _tempEditorCoverDataUrl = mediaUrl;
+    showToast(`تصویر کاور «${file.name}» (${check.formattedSize}) بارگذاری و آماده انتشار شد.`, 'success');
   }
   saveDatabase();
 };
@@ -11230,9 +11333,20 @@ handleEditorAttachmentFile = async function(ev) {
     ev.target.value = '';
     return;
   }
+  let dataUrl = '';
+  if (file.size <= 2.5 * 1024 * 1024) {
+    try {
+      dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.onerror = e => reject(e);
+        reader.readAsDataURL(file);
+      });
+    } catch (_) {}
+  }
   const saved = await MediaStorageIDB.saveMediaFile(file, 'attachment');
   _pendingAttachmentSize = check.formattedSize;
-  _pendingAttachmentDataUrl = saved.objectUrl;
+  _pendingAttachmentDataUrl = dataUrl || saved.objectUrl;
   const nameInp = document.getElementById('ed-att-name');
   if (nameInp && !nameInp.value) nameInp.value = file.name;
   showToast(`فایل پیوست «${file.name}» (${check.formattedSize}) اعتبارسنجی امنیتی شد و آماده افزودن است.`, 'success');
@@ -12757,10 +12871,12 @@ const LiveVisualCMS = {
       showToast('عنوان دسته‌بندی را وارد نمایید.', 'warning');
       return;
     }
+    const cleanT = (typeof stripNumberPrefix === 'function') ? stripNumberPrefix(title) : title.replace(/^[\s\u200c]*[۰-۹0-9]+(?:[\s\.\-\)_،:؛]+|[۰-۹0-9]*[\s\.\-\)_،:؛]+)/, '').trim();
     if (catId) {
       const cat = (DB.categories || []).find(c => c.id === catId);
       if (cat) {
-        cat.title = title;
+        cat.cleanTitle = cleanT;
+        cat.title = cleanT;
         cat.icon = icon;
         cat.description = description;
         saveDatabase(DB, true);
@@ -12778,10 +12894,11 @@ const LiveVisualCMS = {
       approvalStatus: isSuper ? 'Approved' : 'Pending',
       icon,
       color: 'from-turquoise-600 to-navy-900',
-      title,
+      cleanTitle: cleanT,
+      title: cleanT,
       slug: 'cat-' + Date.now(),
       description,
-      subcategories: [{ id: 'sub-' + Date.now(), parentId: null, title: 'مباحث عمومی ' + title }]
+      subcategories: [{ id: 'sub-' + Date.now(), parentId: null, cleanTitle: 'مباحث عمومی ' + cleanT, title: 'مباحث عمومی ' + cleanT }]
     });
     saveDatabase();
     closeModal();
@@ -12793,10 +12910,11 @@ const LiveVisualCMS = {
     const cat = (DB.categories || []).find(c => c.id === catId);
     const title = SecurityEngine.escapeHtml(document.getElementById('qc-new-sub')?.value.trim());
     if (!cat || !title) return;
+    const cleanSub = (typeof stripNumberPrefix === 'function') ? stripNumberPrefix(title) : title.replace(/^[\s\u200c]*[۰-۹0-9]+(?:[\s\.\-\)_،:؛]+|[۰-۹0-9]*[\s\.\-\)_،:؛]+)/, '').trim();
     cat.subcategories = cat.subcategories || [];
-    cat.subcategories.push({ id: 'sub-' + Date.now(), parentId: null, title });
+    cat.subcategories.push({ id: 'sub-' + Date.now(), parentId: null, cleanTitle: cleanSub, title: cleanSub });
     saveDatabase();
-    showToast(`زیرعنوان «${title}» اضافه شد.`, 'success');
+    showToast(`زیرعنوان «${cleanSub}» اضافه شد.`, 'success');
     this.openQuickCategoryModal(catId);
     renderApp();
   },
@@ -13070,10 +13188,12 @@ const LiveVisualCMS = {
     const description = SecurityEngine.escapeHtml(document.getElementById('qqz-desc')?.value.trim() || '');
     const newQ = SecurityEngine.escapeHtml(document.getElementById('qqz-new-q')?.value.trim() || '');
     if (!title) return;
+    const cleanT = (typeof stripNumberPrefix === 'function') ? stripNumberPrefix(title) : title.replace(/^[\s\u200c]*[۰-۹0-9]+(?:[\s\.\-\)_،:؛]+|[۰-۹0-9]*[\s\.\-\)_،:؛]+)/, '').trim();
     if (qzId) {
       const ex = (DB.quizzes || []).find(q => q.id === qzId);
       if (ex) {
-        ex.title = title;
+        ex.cleanTitle = cleanT;
+        ex.title = cleanT;
         ex.category = category;
         ex.description = description;
         if (newQ) {
@@ -13092,7 +13212,8 @@ const LiveVisualCMS = {
     } else {
       DB.quizzes.push({
         id: 'quiz-' + Date.now(),
-        title, category, duration: '۳ دقیقه', icon: '🧭', description,
+        cleanTitle: cleanT,
+        title: cleanT, category, duration: '۳ دقیقه', icon: '🧭', description,
         approvalStatus: AuthService.isSuperAdmin() ? 'Approved' : 'Pending',
         questions: [
           {
@@ -15815,8 +15936,14 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
 
         db.categories.forEach((cat, idx) => {
           cat.order = idx + 1;
-          const clean = stripNumberPrefix(cat.cleanTitle || cat.title);
-          cat.cleanTitle = clean;
+          let clean;
+          if (cat._lastFormattedTitle && cat.title && cat.title !== cat._lastFormattedTitle) {
+            clean = stripNumberPrefix(cat.title);
+            cat.cleanTitle = clean;
+          } else {
+            clean = stripNumberPrefix(cat.cleanTitle || cat.title);
+            cat.cleanTitle = clean;
+          }
 
           if (cat.active !== false) {
             activeCounter++;
@@ -15826,13 +15953,19 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
             cat.displayNumber = idx + 1;
             cat.title = `${toFaNum(idx + 1)}. ${clean}`;
           }
+          cat._lastFormattedTitle = cat.title;
           cat.approvedBy = cFull;
 
           if (!Array.isArray(cat.subcategories)) cat.subcategories = [];
           cat.subcategories.forEach((sub, sIdx) => {
             sub.order = sIdx + 1;
-            sub.cleanTitle = stripNumberPrefix(sub.cleanTitle || sub.title);
+            if (sub._lastFormattedTitle && sub.title && sub.title !== sub._lastFormattedTitle) {
+              sub.cleanTitle = stripNumberPrefix(sub.title);
+            } else {
+              sub.cleanTitle = stripNumberPrefix(sub.cleanTitle || sub.title);
+            }
             sub.title = sub.cleanTitle;
+            sub._lastFormattedTitle = sub.title;
             if (sub.parentId && !cat.subcategories.some(x => x.id === sub.parentId && x.id !== sub.id)) {
               sub.parentId = null;
             }
@@ -15944,9 +16077,16 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
         const flatQ = [];
         const flatOpt = [];
         db.quizzes.forEach((qz, qzIdx) => {
-          const cleanQz = stripNumberPrefix(qz.cleanTitle || qz.title);
-          qz.cleanTitle = cleanQz;
+          let cleanQz;
+          if (qz._lastFormattedTitle && qz.title && qz.title !== qz._lastFormattedTitle) {
+            cleanQz = stripNumberPrefix(qz.title);
+            qz.cleanTitle = cleanQz;
+          } else {
+            cleanQz = stripNumberPrefix(qz.cleanTitle || qz.title);
+            qz.cleanTitle = cleanQz;
+          }
           qz.title = `${toFaNum(qzIdx + 1)}. ${cleanQz}`;
+          qz._lastFormattedTitle = qz.title;
 
           (qz.interpretations || []).forEach(interp => {
             if (Array.isArray(interp.recommendedPosts)) {
@@ -18073,6 +18213,9 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
       renderApp();
     }
     GestaltEngine.syncDOM();
+    if (typeof CloudSync !== 'undefined' && CloudSync.initAutoSyncChecker) {
+      CloudSync.initAutoSyncChecker();
+    }
   }
 
   if (document.readyState === 'loading') {
