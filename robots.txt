@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /#/admin
 
 Sitemap: https://hamrah-bagherololum-copy.psyeducation-hadi.workers.dev/sitemap.xml

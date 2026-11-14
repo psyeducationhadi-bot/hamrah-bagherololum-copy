@@ -5,7 +5,7 @@
  * Fallback: Persian RTL offline.html on navigation network failure
  */
 
-const CACHE_NAME = 'hamrah-bagherololum-v1';
+const CACHE_NAME = 'hamrah-bagherololum-v2';
 const OFFLINE_URL = './offline.html';
 
 // Static assets pre-cached during service worker installation
@@ -101,7 +101,7 @@ self.addEventListener('fetch', (event) => {
                         request.destination === 'style' ||
                         request.destination === 'font' ||
                         request.destination === 'script' ||
-                        /\.(png|jpe?g|gif|svg|ico|webp|css|woff2?|ttf|js)$/i.test(url.pathname);
+                        /\.(png|jpe?g|gif|svg|ico|webp|css|woff2?|ttf|js|xml|txt)$/i.test(url.pathname);
 
   // C. Dynamic data requests (db.json, /api/, and non-static Cloudflare Workers endpoints)
   // Strict Network-First (cache: 'no-store') — ensures live updates from Admin Panel

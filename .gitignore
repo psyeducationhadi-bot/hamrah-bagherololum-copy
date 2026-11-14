@@ -12,4 +12,5 @@ build/
 local.properties
 KEYSTORE_CREDENTIALS.txt
 *.keystore.txt
+.github/
 
