@@ -5820,18 +5820,7 @@
               </button>
             `).join('')}
           </div>
-          <div class="pt-3 border-t border-slate-200 space-y-2 text-xs">
-            <p class="font-bold text-navy-900">ثبت‌نام سریع دانش‌آموز جدید دبیرستان باقرالعلوم:</p>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <input id="reg-student-name" type="text" placeholder="نام و نام خانوادگی..." class="px-3 py-2 rounded-xl border border-slate-300" />
-              <select id="reg-student-grade" class="px-3 py-2 rounded-xl border border-slate-300 font-bold">
-                <option value="پایه دهم">پایه دهم</option>
-                <option value="پایه یازدهم">پایه یازدهم</option>
-                <option value="پایه دوازدهم">پایه دوازدهم</option>
-              </select>
-              <button type="button" onclick="registerQuickStudent()" class="px-4 py-2 rounded-xl bg-turquoise-600 text-white font-bold">ثبت‌نام و ورود</button>
-            </div>
-          </div>
+          
         </div>
       `);
     }
@@ -5872,8 +5861,8 @@
 
     function openSitemapModal() {
       const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-        DB.categories.map(c => `  <url><loc>https://bagherololum-counseling.ir/category/${c.slug}</loc><priority>0.9</priority></url>`).join('\n') + '\n' +
-        DB.posts.filter(p=>p.status==='published').map(p => `  <url><loc>https://bagherololum-counseling.ir/post/${p.slug}</loc><priority>0.8</priority></url>`).join('\n') +
+        DB.categories.map(c => `  <url><loc>https://hamrah-bagherololum-copy.psyeducation-hadi.workers.dev/category/${c.slug}</loc><priority>0.9</priority></url>`).join('\n') + '\n' +
+        DB.posts.filter(p=>p.status==='published').map(p => `  <url><loc>https://hamrah-bagherololum-copy.psyeducation-hadi.workers.dev/post/${p.slug}</loc><priority>0.8</priority></url>`).join('\n') +
         `\n</urlset>`;
       openModal(`
         <div class="space-y-4">
@@ -8244,7 +8233,7 @@ function upgradeAndMigrateDatabaseV3(rawDb) {
     requireSuperAdminApproval: true,
     allowGuestPublicAccess: true,
     retentionPolicyDays: 365,
-    canonicalDomain: 'https://bagherololum-counseling.ir'
+    canonicalDomain: 'https://hamrah-bagherololum-copy.psyeducation-hadi.workers.dev'
   };
   base.backupRecords = base.backupRecords || [];
   base.sessions = base.sessions || [];
@@ -8881,7 +8870,7 @@ function updatePageSeoMetadata(title, description, canonicalPath, isNoIndex, sch
     canon.setAttribute('rel', 'canonical');
     document.head.appendChild(canon);
   }
-  const domain = (DB.siteSettings && DB.siteSettings.canonicalDomain) || 'https://bagherololum-counseling.ir';
+  const domain = (DB.siteSettings && DB.siteSettings.canonicalDomain) || 'https://hamrah-bagherololum-copy.psyeducation-hadi.workers.dev';
   canon.setAttribute('href', `${domain}/${canonicalPath || ''}`);
 
   let ldScript = document.getElementById('seo-jsonld-script');
@@ -11105,7 +11094,7 @@ registerQuickStudent = function() {
 
 // Fix #16: Real Sitemap.xml & Robots.txt File Generators and Downloaders
 function buildRealSitemapXmlString() {
-  const domain = (DB.siteSettings && DB.siteSettings.canonicalDomain) || 'https://bagherololum-counseling.ir';
+  const domain = (DB.siteSettings && DB.siteSettings.canonicalDomain) || 'https://hamrah-bagherololum-copy.psyeducation-hadi.workers.dev';
   const publicPages = ['', 'categories', 'explorer', 'videos', 'podcasts', 'downloads', 'quizzes', 'faq', 'tools', 'majors', 'counselor', 'announcements', 'calendar', 'about', 'contact', 'privacy', 'terms'];
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
   publicPages.forEach(p => {
@@ -11122,7 +11111,7 @@ function buildRealSitemapXmlString() {
 }
 
 function buildRealRobotsTxtString() {
-  const domain = (DB.siteSettings && DB.siteSettings.canonicalDomain) || 'https://bagherololum-counseling.ir';
+  const domain = (DB.siteSettings && DB.siteSettings.canonicalDomain) || 'https://hamrah-bagherololum-copy.psyeducation-hadi.workers.dev';
   return `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /#/admin\nDisallow: /student-portal\nDisallow: /#/student-portal\nDisallow: /quiz-results\nDisallow: /#/quiz-results\n\nSitemap: ${domain}/sitemap.xml\n`;
 }
 

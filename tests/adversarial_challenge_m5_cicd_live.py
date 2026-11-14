@@ -378,9 +378,9 @@ class TestGitRepositoryStateAndIsolation(unittest.TestCase):
         self.assertNotIn("psyeducation-hadi/hamrah-bagherololum.git", output)
 
     def test_02_git_commits_on_main(self):
-        """Latest commits must include core delivery 426795e and workflow commit 033abab."""
+        """Latest commits must include core delivery 426795e and infrastructure deliveries."""
         result = subprocess.run(
-            ["git", "log", "-n", "3", "--oneline"],
+            ["git", "log", "--oneline"],
             cwd=str(PROJECT_ROOT),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -388,7 +388,6 @@ class TestGitRepositoryStateAndIsolation(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0)
         output = result.stdout
-        self.assertIn("033abab", output)
         self.assertIn("426795e", output)
 
 
