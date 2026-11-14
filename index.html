@@ -851,13 +851,6 @@
             <span class="hidden sm:inline">حالت مطالعه</span>
           </button>
 
-          <!-- Student Portal Button -->
-          <button type="button" id="header-student-btn" onclick="handleUserPortalClick()" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-softblue-50 text-softblue-700 hover:bg-softblue-100 border border-softblue-200 transition flex items-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-            <span id="header-user-label">پنل دانش‌آموز</span>
-          </button>
-
-          
 
           <!-- Admin CMS Button -->
           <button type="button" id="header-admin-btn" data-admin-trigger="true" onclick="navigateTo('admin')" class="admin-panel-trigger px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-navy-900 text-white hover:bg-navy-800 shadow-sm transition flex items-center gap-1.5">
@@ -3698,7 +3691,7 @@
     }
 
     function handleUserPortalClick() {
-      navigateTo('student-portal');
+      navigateTo('home');
     }
 
     // =========================================================================
@@ -4922,9 +4915,6 @@
                 <span class="px-3 py-1 rounded-full bg-turquoise-500/20 text-turquoise-300 border border-turquoise-400/30 text-xs font-bold">ابزارهای تعاملی خودسنجی و رشد فردی</span>
                 <h1 class="text-2xl sm:text-3xl font-black mt-2">🧭 مرکز آزمون‌ها و پرسشنامه‌های خودارزیابی دانش‌آموز</h1>
               </div>
-              <button type="button" onclick="navigateTo('student-portal')" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20">
-                📊 مشاهده کارنامه‌های ذخیره‌شده من (${DB.studentData.quizHistory.length.toLocaleString('fa-IR')})
-              </button>
             </div>
             <div class="p-4 rounded-2xl bg-amber-500/15 border border-amber-400/40 text-xs sm:text-sm text-amber-200 leading-relaxed flex items-start gap-2.5">
               <span class="text-lg">⚠️</span>
@@ -7656,7 +7646,7 @@
           viewport.innerHTML = renderMajorsView();
           break;
         case 'student-portal':
-          viewport.innerHTML = renderStudentPortalView();
+          viewport.innerHTML = renderHomeView();
           break;
         case 'admin':
           viewport.innerHTML = renderAdminView();
@@ -9249,7 +9239,7 @@ function handleHashChangeRoute() {
   if (head === 'contact') return navigateTo('contact', {}, true);
   if (head === 'privacy') return navigateTo('privacy', {}, true);
   if (head === 'terms') return navigateTo('terms', {}, true);
-  if (head === 'student-portal') return navigateTo('student-portal', {}, true);
+  if (head === 'student-portal') return navigateTo('home', {}, true);
   if (head === 'admin') return navigateTo('admin', { tab: arg1 || 'dashboard' }, true);
 
   navigateTo('404', { invalidPath: rawHash }, true);
@@ -11221,21 +11211,6 @@ openSwitchUserModal = function(redirectParams) {
           </div>
         </div>
       `}
-
-      <!-- Optional Student Registration -->
-      <div class="pt-3 border-t border-slate-200 space-y-2 text-xs">
-        <p class="font-bold text-navy-900">ایجاد حساب اختیاری دانش‌آموز جدید (با رمز عبور اختصاصی و فضای شخصی ایزوله):</p>
-        <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
-          <input id="reg-student-name" type="text" placeholder="نام و نام خانوادگی..." class="px-3 py-2 rounded-xl border border-slate-300" />
-          <input id="reg-student-pass" type="password" placeholder="رمز عبور دلخواه..." class="px-3 py-2 rounded-xl border border-slate-300 font-mono text-left" dir="ltr" />
-          <select id="reg-student-grade" class="px-3 py-2 rounded-xl border border-slate-300 font-bold">
-            <option value="پایه دهم">پایه دهم</option>
-            <option value="پایه یازدهم">پایه یازدهم</option>
-            <option value="پایه دوازدهم">پایه دوازدهم</option>
-          </select>
-          <button type="button" onclick="registerQuickStudent()" class="px-4 py-2 rounded-xl bg-turquoise-600 text-white font-bold">ثبت‌نام امن</button>
-        </div>
-      </div>
     </div>
   `);
 };
@@ -15291,25 +15266,6 @@ openSwitchUserModal = function(redirectParams) {
             </button>
           </div>
         </div>
-
-        <!-- Student Optional Portal -->
-        <details class="pt-2 border-t border-slate-200 text-xs text-slate-600">
-          <summary class="font-bold cursor-pointer hover:text-navy-900 select-none py-1">
-            🎓 ورود / ثبت‌نام اختیاری دانش‌آموزان (صرفاً ابزارهای مطالعه شخصی)
-          </summary>
-          <div class="mt-3 space-y-2.5 p-3 rounded-xl bg-slate-100 border border-slate-200">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <input id="reg-student-name" type="text" placeholder="نام دانش‌آموز..." class="px-3 py-2 rounded-xl border border-slate-300 bg-white" />
-              <input id="reg-student-pass" type="password" placeholder="رمز دلخواه..." class="px-3 py-2 rounded-xl border border-slate-300 bg-white font-mono text-left" dir="ltr" />
-              <select id="reg-student-grade" class="px-3 py-2 rounded-xl border border-slate-300 bg-white font-bold">
-                <option value="پایه دهم">پایه دهم</option>
-                <option value="پایه یازدهم">پایه یازدهم</option>
-                <option value="پایه دوازدهم">پایه دوازدهم</option>
-              </select>
-            </div>
-            <button type="button" onclick="registerQuickStudent()" class="w-full py-2 rounded-xl bg-turquoise-600 hover:bg-turquoise-500 text-white font-bold text-xs">ورود دانش‌آموز</button>
-          </div>
-        </details>
       `}
     </div>
   `);
