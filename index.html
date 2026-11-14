@@ -3022,8 +3022,9 @@
               </div>
               <p>هرگونه انتشار تغییرات از پنل مدیریت در هر کدام از دامنه‌ها، پایگاه داده مرکزی مخزن گیت‌هاب را به‌روز کرده و برای کاربران هر دو سایت به‌صورت خودکار و در لحظه اعمال می‌شود.</p>
               <div class="pt-1 flex flex-wrap gap-2 text-[11px]">
-                <a href="https://hamrah-bagherololum-copy.psyeducation-hadi.workers.dev/#admin_token=${encodeURIComponent(curToken)}" target="_blank" class="px-2.5 py-1 rounded-lg bg-white border border-sky-300 text-sky-800 font-bold hover:bg-sky-100 transition">☁️ ورود مستقیم در دامنه Cloudflare</a>
-                <a href="https://psyeducationhadi-bot.github.io/hamrah-bagherololum-copy/#admin_token=${encodeURIComponent(curToken)}" target="_blank" class="px-2.5 py-1 rounded-lg bg-white border border-sky-300 text-sky-800 font-bold hover:bg-sky-100 transition">🐙 ورود مستقیم در دامنه GitHub Pages</a>
+                <button type="button" onclick="navigator.clipboard.writeText('${curToken.replace(/'/g, "\\'")}').then(()=>showToast('کلید دسترسی در کلیپ‌بورد کپی شد. می‌توانید در دامنه دیگر ذخیره فرمایید.','success'))" class="px-2.5 py-1 rounded-lg bg-white border border-sky-300 text-sky-800 font-bold hover:bg-sky-100 transition">📋 کپی کلید دسترسی به کلیپ‌بورد</button>
+                <a href="https://hamrah-bagherololum-copy.psyeducation-hadi.workers.dev/" target="_blank" class="px-2.5 py-1 rounded-lg bg-white border border-sky-300 text-sky-800 font-bold hover:bg-sky-100 transition">☁️ باز کردن دامنه Cloudflare</a>
+                <a href="https://psyeducationhadi-bot.github.io/hamrah-bagherololum-copy/" target="_blank" class="px-2.5 py-1 rounded-lg bg-white border border-sky-300 text-sky-800 font-bold hover:bg-sky-100 transition">🐙 باز کردن دامنه GitHub Pages</a>
               </div>
             </div>
 
@@ -3099,22 +3100,28 @@
 
       initTokenTransferListener() {
         try {
-          const params = new URLSearchParams(window.location.search);
+          // Security Hardening: Do NOT accept token via URL query (?admin_token=...) to prevent server/CDN log leaks
           const hash = window.location.hash || '';
-          let token = params.get('admin_token');
-          if (!token && hash.includes('admin_token=')) {
+          let token = null;
+          if (hash.includes('admin_token=')) {
             const m = hash.match(/admin_token=([^&]+)/);
             if (m) token = decodeURIComponent(m[1]);
           }
-          if (token && token.startsWith('gh')) {
+          if (token && (token.startsWith('ghp_') || token.startsWith('gho_') || token.startsWith('github_pat_') || token.startsWith('gh'))) {
             this.setToken(token);
-            const cleanUrl = window.location.href.replace(/[?&]admin_token=[^&#]+/, '').replace(/#admin_token=[^&]+/, '');
+            // Immediately strip hash from address bar and history without refresh
+            const cleanUrl = window.location.href.replace(/#admin_token=[^&]+/, '').replace(/#.*$/, '');
             window.history.replaceState({}, document.title, cleanUrl);
             setTimeout(() => {
               if (typeof showToast === 'function') {
                 showToast('🔑 کلید مدیریت ابر با موفقیت روی این دامنه همگام‌سازی شد.', 'success');
               }
             }, 800);
+          }
+          // Defense-in-depth: Immediately scrub query param if someone inadvertently accesses with one
+          if (window.location.search && window.location.search.includes('admin_token=')) {
+            const cleanSearch = window.location.href.replace(/[?&]admin_token=[^&#]+/, '');
+            window.history.replaceState({}, document.title, cleanSearch);
           }
         } catch (_) {}
       }
@@ -3155,7 +3162,20 @@
       const cls = colors[type || 'info'] || colors.info;
       const el = document.createElement('div');
       el.className = `pointer-events-auto px-4 py-3 rounded-2xl shadow-xl border text-xs sm:text-sm font-bold flex items-center justify-between gap-3 animate-fade-in ${cls}`;
-      el.innerHTML = `<span>${message}</span><button type="button" onclick="this.parentElement.remove()" class="opacity-80 hover:opacity-100 text-base leading-none">✕</button>`;
+      
+      // XSS Remediation: Render message as textContent so raw HTML/script tags are never executed
+      const msgSpan = document.createElement('span');
+      msgSpan.textContent = String(message || '');
+      
+      const closeBtn = document.createElement('button');
+      closeBtn.type = 'button';
+      closeBtn.className = 'opacity-80 hover:opacity-100 text-base leading-none';
+      closeBtn.textContent = '✕';
+      closeBtn.onclick = function() { el.remove(); };
+      
+      el.appendChild(msgSpan);
+      el.appendChild(closeBtn);
+      
       while (container.children.length >= 2) { container.firstElementChild.remove(); }
       container.appendChild(el);
       setTimeout(() => { if (el && el.parentNode) el.remove(); }, 4000);
@@ -3172,7 +3192,12 @@
       const box = document.getElementById('global-modal-box');
       if (!backdrop || !box) return;
 
-      box.innerHTML = htmlContent;
+      // Defensive XSS guard against malicious script execution and javascript: pseudo-protocols
+      let safeHtml = String(htmlContent || '');
+      safeHtml = safeHtml.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+      safeHtml = safeHtml.replace(/href\s*=\s*(['"])javascript:[^'"]*\1/gi, 'href="#"');
+
+      box.innerHTML = safeHtml;
       backdrop.classList.remove('hidden');
 
       // Modal detection and state push: push history state when opening modals for Back button intercept
@@ -7483,9 +7508,20 @@ const SecurityEngine = {
     }
   },
 
-  // Deterministic multi-round salted hash (PBKDF2-like synchronous hash for browser runtime)
+  // Cryptographically secure per-user salt generator
+  generateSecureSalt() {
+    const arr = new Uint8Array(16);
+    if (window.crypto && window.crypto.getRandomValues) {
+      window.crypto.getRandomValues(arr);
+    } else {
+      for (let i = 0; i < 16; i++) arr[i] = Math.floor(Math.random() * 256);
+    }
+    return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+  },
+
+  // Multi-round salted hash with per-user dynamic salt & pepper
   hashPassword(password, salt) {
-    const s = salt || 'bagherololum_salt_v3';
+    const s = salt || this.generateSecureSalt();
     let h1 = 0xdeadbeef ^ s.length;
     let h2 = 0x41c6ce57 ^ password.length;
     const combined = `${s}::${password}::hamrah_v3_pepper`;
@@ -7503,7 +7539,13 @@ const SecurityEngine = {
 
   verifyPassword(password, storedHash, salt) {
     if (!storedHash) return false;
-    return this.hashPassword(password, salt) === storedHash;
+    let actualSalt = salt;
+    // Extract per-user salt from hash envelope if present (e.g. pbkdf2_v3$<salt>$<hash>)
+    if (storedHash.startsWith('pbkdf2_v3$')) {
+      const parts = storedHash.split('$');
+      if (parts.length >= 3 && parts[1]) actualSalt = parts[1];
+    }
+    return this.hashPassword(password, actualSalt) === storedHash;
   },
 
   generateToken(prefix) {
@@ -7525,12 +7567,27 @@ const SecurityEngine = {
     return 'sha256_sim_' + (h1 >>> 0).toString(16).padStart(8, '0') + '_' + jsonString.length;
   },
 
-  // File Upload Validation with MIME + Extension + Magic Bytes Inspection (#15)
+  // Robust File Upload Validation: MIME + Double Extension Check + Magic Bytes & Payload Inspection
   async validateUploadFile(file, allowedCategory) {
     if (!file) return { ok: false, error: 'فایلی انتخاب نشده است.' };
-    const forbiddenExts = ['exe', 'dll', 'bat', 'cmd', 'sh', 'php', 'phtml', 'pl', 'py', 'rb', 'js', 'mjs', 'vbs', 'scr', 'msi', 'jar', 'com', 'ps1', 'html', 'htm', 'svg'];
+    const forbiddenExts = [
+      'exe', 'dll', 'bat', 'cmd', 'sh', 'php', 'phtml', 'php3', 'php4', 'php5', 'phps',
+      'pl', 'py', 'rb', 'js', 'mjs', 'vbs', 'scr', 'msi', 'jar', 'com', 'ps1',
+      'html', 'htm', 'xhtml', 'svg', 'asp', 'aspx', 'jsp', 'cgi'
+    ];
     const fileName = String(file.name || '').toLowerCase();
-    const ext = fileName.includes('.') ? fileName.split('.').pop() : '';
+
+    // 1. Double extension defense (e.g. payload.php.jpg or malicious.js.png)
+    const dotParts = fileName.split('.');
+    if (dotParts.length > 2) {
+      for (let i = 1; i < dotParts.length - 1; i++) {
+        if (forbiddenExts.includes(dotParts[i])) {
+          return { ok: false, error: `فایل انتخابی دارای پسوند دوگانه مخرب (.${dotParts[i]}) است و مسدود شد.` };
+        }
+      }
+    }
+
+    const ext = dotParts.length > 1 ? dotParts.pop() : '';
     if (forbiddenExts.includes(ext)) {
       return { ok: false, error: `بارگذاری فایل با پسوند اجرایی یا اسکریپتی (.${ext}) به دلایل امنیتی مسدود است.` };
     }
@@ -7555,18 +7612,52 @@ const SecurityEngine = {
       return { ok: false, error: `نوع فایل (${file.type}) در فهرست فرمت‌های مجاز قرار ندارد.` };
     }
 
-    // Inspect binary magic bytes to prevent executable spoofing (MZ header 0x4D 0x5A)
+    // Inspect binary magic bytes and payload content
     try {
-      const slice = file.slice(0, 8);
+      const sliceSize = Math.min(file.size, 2048);
+      const slice = file.slice(0, sliceSize);
       const buf = await slice.arrayBuffer();
       const bytes = new Uint8Array(buf);
+
+      // A) Executable headers (MZ for Windows EXE/DLL, ELF for Linux)
       if (bytes.length >= 2 && bytes[0] === 0x4D && bytes[1] === 0x5A) {
         return { ok: false, error: 'فایل انتخابی دارای امضای باینری اجرایی (MZ Executable) است و مسدود شد!' };
       }
       if (bytes.length >= 4 && bytes[0] === 0x7F && bytes[1] === 0x45 && bytes[2] === 0x4C && bytes[3] === 0x46) {
         return { ok: false, error: 'فایل باینری اجرایی (ELF) مسدود شد!' };
       }
-    } catch (e) {}
+
+      // B) Strict Magic Byte verification for common image and PDF types
+      if (ext === 'jpg' || ext === 'jpeg') {
+        if (bytes.length < 3 || bytes[0] !== 0xFF || bytes[1] !== 0xD8 || bytes[2] !== 0xFF) {
+          return { ok: false, error: 'فایل انتخابی فاقد امضای باینری استاندارد تصویر (JPEG Magic Bytes) است!' };
+        }
+      } else if (ext === 'png') {
+        if (bytes.length < 4 || bytes[0] !== 0x89 || bytes[1] !== 0x50 || bytes[2] !== 0x4E || bytes[3] !== 0x47) {
+          return { ok: false, error: 'فایل انتخابی فاقد امضای باینری معتبر تصویر PNG است!' };
+        }
+      } else if (ext === 'gif') {
+        if (bytes.length < 4 || bytes[0] !== 0x47 || bytes[1] !== 0x49 || bytes[2] !== 0x46 || bytes[3] !== 0x38) {
+          return { ok: false, error: 'فایل انتخابی فاقد امضای باینری معتبر تصویر GIF است!' };
+        }
+      } else if (ext === 'pdf') {
+        if (bytes.length < 4 || bytes[0] !== 0x25 || bytes[1] !== 0x50 || bytes[2] !== 0x44 || bytes[3] !== 0x46) {
+          return { ok: false, error: 'فایل انتخابی فاقد هدر معتبر سند (%PDF) است!' };
+        }
+      }
+
+      // C) Script payload inspection in file header: reject files containing script/PHP tags spoofed as images/docs
+      const decoder = new TextDecoder('utf-8', { fatal: false });
+      const textPreview = decoder.decode(bytes).toLowerCase();
+      const dangerousPatterns = ['<?php', '<script', '<html', '<!doctype', '<svg', 'eval(', 'onload=', 'onerror=', 'document.cookie', 'window.location'];
+      for (const pat of dangerousPatterns) {
+        if (textPreview.includes(pat)) {
+          return { ok: false, error: `محتوای فایل حاوی تگ یا اسکریپت غیرمجاز (${pat}) تشخیص داده شد و مسدود گردید!` };
+        }
+      }
+    } catch (e) {
+      console.warn('[SecurityEngine] Magic bytes verification warning:', e);
+    }
 
     return {
       ok: true,
@@ -15985,7 +16076,8 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
             }
           }
 
-          if (p.status !== 'published') {
+          // Data integrity protection: Only mark media as trashed if post is genuinely trashed/deleted!
+          if (p.status === 'trash') {
             if (p.videoUrl) trashedMediaUrls.add(p.videoUrl.trim());
             if (p.aparatHash) trashedMediaUrls.add(`https://www.aparat.com/v/${p.aparatHash.trim()}`);
             if (p.audioUrl) trashedMediaUrls.add(p.audioUrl.trim());
@@ -15995,21 +16087,80 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
 
       const publishedPosts = (db.posts || []).filter(p => p.status === 'published');
       const publishedPostIds = new Set(publishedPosts.map(p => p.id));
+      const activePosts = (db.posts || []).filter(p => p.status !== 'trash');
 
-      // همگام‌سازی جدول پیوست‌ها (DB.attachments) و رسانه‌ها (DB.media) با مطالب فعال
+      // همگام‌سازی جدول پیوست‌ها (DB.attachments) و رسانه‌ها (DB.media) با تمام مطالب فعال (شامل پیش‌نویس‌ها و منتشرشده‌ها)
       const syncedAttachments = [];
       const syncedMedia = [];
-      publishedPosts.forEach(p => {
+      const seenAttIds = new Set();
+      const seenMediaIds = new Set();
+
+      activePosts.forEach(p => {
         (p.attachments || []).forEach(att => {
-          syncedAttachments.push({ ...att, postId: p.id, approvalStatus: 'Approved' });
+          if (att && att.id) {
+            seenAttIds.add(att.id);
+            syncedAttachments.push({
+              ...att,
+              postId: p.id,
+              postTitle: p.title || '',
+              approvalStatus: p.status === 'published' ? 'Approved' : 'Draft'
+            });
+          }
         });
         if (p.videoUrl || p.aparatHash || p.uploadedVideoDataUrl) {
-          syncedMedia.push({ id: 'med_vid_' + p.id, postId: p.id, type: 'video', title: p.title, url: p.videoUrl || p.aparatHash });
+          const mId = 'med_vid_' + p.id;
+          seenMediaIds.add(mId);
+          syncedMedia.push({
+            id: mId,
+            postId: p.id,
+            postTitle: p.title || '',
+            type: 'video',
+            title: p.title,
+            url: p.videoUrl || p.aparatHash,
+            status: p.status === 'published' ? 'published' : 'draft'
+          });
         }
         if (p.audioUrl) {
-          syncedMedia.push({ id: 'med_aud_' + p.id, postId: p.id, type: 'audio', title: p.title, duration: p.audioDuration || '۰۸:۰۰' });
+          const mId = 'med_aud_' + p.id;
+          seenMediaIds.add(mId);
+          syncedMedia.push({
+            id: mId,
+            postId: p.id,
+            postTitle: p.title || '',
+            type: 'audio',
+            title: p.title,
+            duration: p.audioDuration || '۰۸:۰۰',
+            status: p.status === 'published' ? 'published' : 'draft'
+          });
         }
       });
+
+      // Preserve any existing standalone attachments in db.attachments that don't belong to trashed posts
+      if (Array.isArray(db.attachments)) {
+        db.attachments.forEach(att => {
+          if (att && att.id && !seenAttIds.has(att.id)) {
+            const p = (db.posts || []).find(x => x.id === att.postId);
+            if (!p || p.status !== 'trash') {
+              seenAttIds.add(att.id);
+              syncedAttachments.push(att);
+            }
+          }
+        });
+      }
+
+      // Preserve any existing standalone media in db.media that don't belong to trashed posts
+      if (Array.isArray(db.media)) {
+        db.media.forEach(m => {
+          if (m && m.id && !seenMediaIds.has(m.id)) {
+            const p = (db.posts || []).find(x => x.id === m.postId);
+            if (!p || p.status !== 'trash') {
+              seenMediaIds.add(m.id);
+              syncedMedia.push(m);
+            }
+          }
+        });
+      }
+
       db.attachments = syncedAttachments;
       db.media = syncedMedia;
 
