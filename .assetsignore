@@ -15,5 +15,4 @@ android/**
 tests/**
 .github/**
 *.md
-*.js
-!sw.js
+test_*.js

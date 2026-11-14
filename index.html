@@ -2970,14 +2970,26 @@
             }
 
             const preservedStudentData = (DB && DB.studentData) ? DB.studentData : null;
+            const preservedAdminLogs = (DB && Array.isArray(DB.adminAuditLogs) && DB.adminAuditLogs.length > 0) ? DB.adminAuditLogs : null;
+            const preservedAuditLogs = (DB && Array.isArray(DB.auditLogs) && DB.auditLogs.length > 0) ? DB.auditLogs : null;
             DB = remoteDb;
             if (preservedStudentData) {
               DB.studentData = preservedStudentData;
             }
+            if (preservedAdminLogs) {
+              DB.adminAuditLogs = preservedAdminLogs;
+            }
+            if (preservedAuditLogs) {
+              DB.auditLogs = preservedAuditLogs;
+            }
             if (window.STATE) {
               window.STATE.adminHasUnpublishedChanges = false;
             }
-            localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(DB));
+            try {
+              localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(DB));
+            } catch (err) {
+              console.warn('Storage quota limit reached:', err);
+            }
             if (forceToast) {
               showToast('✅ آخرین داده‌های سامانه از سرور دریافت و به‌روزرسانی شد.', 'success');
             }
@@ -3247,7 +3259,7 @@
     });
 
     function logStudentActivity(actionText) {
-      const now = '۱۴۰۵/۰۸/۱۴ - ' + new Date().toTimeString().slice(0, 5);
+      const now = (typeof JalaliDateEngine !== 'undefined' && JalaliDateEngine.nowDateTime) ? JalaliDateEngine.nowDateTime() : new Date().toLocaleDateString('fa-IR');
       DB.studentData.activityLogs.unshift({
         id: 'log-' + Date.now(),
         action: actionText,
@@ -3257,7 +3269,7 @@
     }
 
     function logAdminAction(actionText) {
-      const now = '۱۴۰۵/۰۸/۱۴ - ' + new Date().toTimeString().slice(0, 5);
+      const now = (typeof JalaliDateEngine !== 'undefined' && JalaliDateEngine.nowDateTime) ? JalaliDateEngine.nowDateTime() : new Date().toLocaleDateString('fa-IR');
       const actorName = STATE.currentUser ? STATE.currentUser.name : 'مدیر سامانه';
       DB.adminAuditLogs.unshift({
         id: 'alog-' + Date.now(),
@@ -3539,8 +3551,9 @@
       toggleMegaCategories(false);
       closeHeaderSearchDropdown();
 
-      if (view === 'post' && STATE.viewParams.id) {
-        const p = DB.posts.find(x => x.id === STATE.viewParams.id);
+      if (view === 'post' && (STATE.viewParams.id || STATE.viewParams.slug)) {
+        const postKey = STATE.viewParams.id || STATE.viewParams.slug;
+        const p = DB.posts.find(x => x.id === postKey || x.slug === postKey);
         if (p) {
           p.views = (p.views || 0) + 1;
           const rec = DB.studentData.recentlyViewedPostIds;
@@ -3636,7 +3649,10 @@
       )).slice(0, 3);
 
       if (!matchedPosts.length && !matchedCats.length && !matchedFaqs.length) {
-        dropdown.innerHTML = `<div class="p-4 text-center text-xs text-slate-500">نتیجه‌ای برای «${query}» یافت نشد.</div>`;
+        const safeQuery = (typeof SecurityEngine !== 'undefined' && SecurityEngine.escapeHtml)
+          ? SecurityEngine.escapeHtml(query)
+          : String(query).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+        dropdown.innerHTML = `<div class="p-4 text-center text-xs text-slate-500">نتیجه‌ای برای «${safeQuery}» یافت نشد.</div>`;
         dropdown.classList.remove('hidden');
         return;
       }
@@ -3995,7 +4011,7 @@
                     <button type="button" onclick="navigateTo('tools', {tab: 'calendar'})" class="text-xs font-bold text-turquoise-400 hover:underline">مشاهده تقویم آموزشی ←</button>
                   </div>
                   <div class="space-y-3">
-                    ${DB.announcements.map(ann => `
+                    ${(DB.announcements && DB.announcements.length > 0) ? DB.announcements.map(ann => `
                       <div class="p-4 rounded-2xl bg-navy-900/90 border border-navy-800 space-y-1.5">
                         <div class="flex items-center justify-between text-xs">
                           <span class="px-2.5 py-0.5 rounded-full bg-softyellow-400 text-navy-950 font-extrabold">${ann.badge}</span>
@@ -4004,7 +4020,12 @@
                         <h3 class="text-sm font-bold text-white">${ann.title}</h3>
                         <p class="text-xs text-slate-300 leading-relaxed">${ann.content}</p>
                       </div>
-                    `).join('')}
+                    `).join('') : `
+                      <div class="p-6 rounded-2xl bg-navy-900/50 border border-dashed border-navy-700 text-center text-xs text-slate-400 space-y-1">
+                        <p class="font-bold text-slate-300">در حال حاضر اطلاعیه فوری یا اخبار جدیدی ثبت نشده است.</p>
+                        <p class="text-[11px] text-slate-500">تمامی اطلاعیه‌ها و زمان‌بندی‌های جدید مدرسه از طریق این بخش و تقویم آموزشی اطلاع‌رسانی می‌شوند.</p>
+                      </div>
+                    `}
                   </div>
                 </div>
               </div>
@@ -4694,8 +4715,8 @@
     // 6. DEDICATED ARTICLE / CONTENT DETAIL PAGE (صفحه اختصاصی هر مطلب)
     // =========================================================================
     function renderPostDetailView() {
-      const postId = STATE.viewParams.id;
-      const post = DB.posts.find(p => p.id === postId) || DB.posts[0];
+      const postKey = STATE.viewParams.id || STATE.viewParams.slug;
+      const post = (DB.posts || []).find(p => (postKey && p.id === postKey) || (postKey && p.slug === postKey)) || (DB.posts || [])[0] || {};
       const cat = DB.categories.find(c => c.id === post.categoryId) || DB.categories[0];
       const sub = (cat.subcategories || []).find(s => s.id === post.subcategoryId);
       const typeMeta = getContentTypeMeta(post.contentType);
@@ -5036,7 +5057,13 @@
       }
 
       const rawSum = Object.values(STATE.quizAnswers).reduce((a, b) => a + b, 0);
-      const maxPossible = totalQ * 25;
+      let maxPossible = 0;
+      (qz.questions || []).forEach(q => {
+        const optScores = (q.options || []).map(o => Number(o.score) || 0);
+        const maxOpt = optScores.length ? Math.max(...optScores) : 25;
+        maxPossible += (maxOpt > 0 ? maxOpt : 25);
+      });
+      if (maxPossible <= 0) maxPossible = (totalQ * 25) || 100;
       const normalizedScore = Math.min(100, Math.round((rawSum / maxPossible) * 100));
 
       const interp = (qz.interpretations || []).find(i => normalizedScore >= i.min && normalizedScore <= i.max) || (qz.interpretations || [])[0] || {
@@ -5046,13 +5073,14 @@
       };
 
       // Save to Student Profile
+      const quizDate = (typeof JalaliDateEngine !== 'undefined' && JalaliDateEngine.nowDate) ? JalaliDateEngine.nowDate() : new Date().toLocaleDateString('fa-IR');
       DB.studentData.quizHistory.unshift({
         id: 'qh-' + Date.now(),
         quizId: qz.id,
         quizTitle: qz.title,
         score: normalizedScore,
         level: interp.level,
-        date: '۱۴۰۵/۰۸/۱۴'
+        date: quizDate
       });
       logStudentActivity(`تکمیل آزمون «${qz.title}» با امتیاز ${normalizedScore}`);
       saveDatabase();
@@ -5515,7 +5543,7 @@
         id: 'sess-' + Date.now(),
         subject: STATE.timerSubject || 'مطالعه تخصصی',
         minutes: mins,
-        date: '۱۴۰۵/۰۸/۱۴'
+        date: (typeof JalaliDateEngine !== 'undefined' && JalaliDateEngine.nowDate) ? JalaliDateEngine.nowDate() : new Date().toLocaleDateString('fa-IR')
       });
       logStudentActivity(`ثبت باکس مطالعه (${mins} دقیقه): ${STATE.timerSubject}`);
       saveDatabase();
@@ -5609,7 +5637,8 @@
       }
       DB.studentData.personalNotes.unshift({
         id: 'note-' + Date.now(),
-        title, tag, content, date: '۱۴۰۵/۰۸/۱۴'
+        title, tag, content,
+        date: (typeof JalaliDateEngine !== 'undefined' && JalaliDateEngine.nowDate) ? JalaliDateEngine.nowDate() : new Date().toLocaleDateString('fa-IR')
       });
       saveDatabase();
       showToast('یادداشت شخصی شما ذخیره شد.', 'success');
@@ -5980,12 +6009,13 @@
         return;
       }
 
+      const todayDate = (typeof JalaliDateEngine !== 'undefined' && JalaliDateEngine.nowDate) ? JalaliDateEngine.nowDate() : new Date().toLocaleDateString('fa-IR');
       DB.studentData.counselorMessages.unshift({
         id: 'msg-' + Date.now(),
         studentName, grade, type, subject, message,
         reply: '',
         status: 'pending',
-        createdAt: '۱۴۰۵/۰۸/۱۴'
+        createdAt: todayDate
       });
 
       if (type === 'question') {
@@ -5997,7 +6027,7 @@
           relatedPostIds: ['post-1'],
           approved: false,
           askedBy: `${studentName} (${grade})`,
-          createdAt: '۱۴۰۵/۰۸/۱۴'
+          createdAt: todayDate
         });
       }
 
@@ -6069,7 +6099,7 @@
         roleLabel: 'دانش‌آموز',
         grade,
         active: true,
-        createdAt: '۱۴۰۵/۰۸/۱۴',
+        createdAt: (typeof JalaliDateEngine !== 'undefined' && JalaliDateEngine.nowDate) ? JalaliDateEngine.nowDate() : new Date().toLocaleDateString('fa-IR'),
         lastActivity: 'هم‌اکنون'
       };
       DB.users.push(newUser);
@@ -7154,7 +7184,7 @@
             videoSubtitles,
             audioDuration,
             audioTranscript,
-            updatedAt: '۱۴۰۵/۰۸/۱۴',
+            updatedAt: (typeof JalaliDateEngine !== 'undefined' && JalaliDateEngine.nowDate) ? JalaliDateEngine.nowDate() : new Date().toLocaleDateString('fa-IR'),
             attachments: _tempEditorAttachments
           });
           if (_tempEditorCoverDataUrl) existing.customCoverDataUrl = _tempEditorCoverDataUrl;
@@ -7177,8 +7207,8 @@
         views: 1, likes: 1,
         readingTime: '۷ دقیقه',
         author,
-        createdAt: '۱۴۰۵/۰۸/۱۴',
-        updatedAt: '۱۴۰۵/۰۸/۱۴',
+        createdAt: (typeof JalaliDateEngine !== 'undefined' && JalaliDateEngine.nowDate) ? JalaliDateEngine.nowDate() : new Date().toLocaleDateString('fa-IR'),
+        updatedAt: (typeof JalaliDateEngine !== 'undefined' && JalaliDateEngine.nowDate) ? JalaliDateEngine.nowDate() : new Date().toLocaleDateString('fa-IR'),
         tags, summary,
         coverType: 'planning',
         customCoverDataUrl: _tempEditorCoverDataUrl || '',
@@ -7360,7 +7390,7 @@
         relatedPostIds: ['post-1'],
         approved: true,
         askedBy: 'ثبت‌شده توسط واحد مشاوره',
-        createdAt: '۱۴۰۵/۰۸/۱۴'
+        createdAt: (typeof JalaliDateEngine !== 'undefined' && JalaliDateEngine.nowDate) ? JalaliDateEngine.nowDate() : new Date().toLocaleDateString('fa-IR')
       });
       logAdminAction(`ثبت سؤال پرتکرار جدید: ${question}`);
       saveDatabase(DB, true);
@@ -7475,7 +7505,7 @@
         name, username, roleId,
         roleLabel: roleObj ? roleObj.name : 'دانش‌آموز',
         grade, active: true,
-        createdAt: '۱۴۰۵/۰۸/۱۴',
+        createdAt: (typeof JalaliDateEngine !== 'undefined' && JalaliDateEngine.nowDate) ? JalaliDateEngine.nowDate() : new Date().toLocaleDateString('fa-IR'),
         lastActivity: 'ثبت‌شده توسط مدیر'
       });
       logAdminAction(`ایجاد حساب کاربری برای «${name}»`);
@@ -10711,6 +10741,26 @@ function renderDownloadsPageView() {
         <p class="text-xs sm:text-sm text-slate-300">تمامی فایل‌ها اعتبارسنجی امنیتی شده و بدون نیاز به ثبت‌نام قابل دریافت هستند.</p>
       </div>
       <div class="space-y-4">
+        <!-- Official Android App Download Card -->
+        <div class="bg-gradient-to-r from-emerald-600 via-teal-700 to-navy-900 rounded-3xl p-6 sm:p-7 text-white shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-5 border border-emerald-400/30">
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center text-3xl shrink-0 shadow-inner">
+              📱
+            </div>
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded-full bg-emerald-400 text-navy-950 font-black text-[10px]">نسخه رسمی اندروید</span>
+                <span class="text-xs text-emerald-200">نسخه ۱.۰.۰ • ۲.۹۵ مگابایت</span>
+              </div>
+              <h2 class="text-base sm:text-lg font-black text-white">اپلیکیشن اختصاصی همراه باقرالعلوم (نسخه Android APK)</h2>
+              <p class="text-xs text-emerald-100/90 leading-relaxed">نصب مستقیم روی گوشی‌های اندروید جهت دسترسی سریع آفلاین و آنلاین به خدمات مشاوره مدرسه</p>
+            </div>
+          </div>
+          <a href="release-apk/hamrah-bagherololum-release.apk" download="hamrah-bagherololum.apk" class="px-6 py-3.5 rounded-2xl bg-white hover:bg-emerald-50 text-emerald-900 font-black text-xs shrink-0 transition shadow-md flex items-center justify-center gap-2">
+            <span>📥</span>
+            <span>دانلود مستقیم اپلیکیشن (APK)</span>
+          </a>
+        </div>
         ${postsWithFiles.map(p => (p.attachments || []).map(att => `
           <div id="${SecurityEngine.escapeHtml(att.id)}" class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div class="space-y-1.5">
@@ -11155,6 +11205,12 @@ openSwitchUserModal = function(redirectParams) {
             <input id="auth-password-inp" type="password" autocomplete="off" placeholder="••••••••••••" onkeydown="if(event.key==='Enter'){submitRealLoginForm()}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white font-mono text-left focus:border-navy-900 focus:ring-1 focus:ring-navy-900 transition" dir="ltr" />
           </div>
 
+          <div id="auth-2fa-box" class="hidden p-3 rounded-xl bg-amber-50 border border-amber-300 space-y-1.5">
+            <label for="auth-2fa-inp" class="block font-bold text-amber-900">🛡️ کد تأیید دو مرحله‌ای (2FA):</label>
+            <input id="auth-2fa-inp" type="text" autocomplete="off" placeholder="کد تأیید ۶ رقمی..." onkeydown="if(event.key==='Enter'){submitRealLoginForm()}" class="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 bg-white font-mono text-center tracking-widest focus:border-amber-600 focus:ring-1 focus:ring-amber-600 transition" dir="ltr" />
+            <p class="text-[10px] text-amber-800">کد امنیتی یک‌بار مصرف ارسال‌شده را وارد نمایید.</p>
+          </div>
+
           <p id="auth-error-msg" class="hidden text-rose-600 font-bold p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs"></p>
 
           <div class="pt-2">
@@ -11220,8 +11276,9 @@ window.openPasswordRecoveryModal = function() {
         <h3 class="text-base font-black text-navy-900">🔑 بازیابی و بازنشانی امن رمز عبور</h3>
         <button type="button" onclick="openSwitchUserModal()" class="text-slate-500 font-bold">→ بازگشت</button>
       </div>
-      <p class="text-slate-600">نام کاربری و کد تأیید امنیتی مدرسه را وارد کنید تا رمز عبور جدید با الگوریتم PBKDF2 برای حساب شما ثبت شود:</p>
+      <p class="text-slate-600">نام کاربری، کد تأیید امنیتی مدرسه (یا رمز عبور فعلی) و رمز عبور جدید را وارد فرمایید:</p>
       <input id="rec-user-inp" type="text" placeholder="نام کاربری (مثلاً student)..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-left" dir="ltr" />
+      <input id="rec-sec-inp" type="password" placeholder="کد تأیید امنیتی مدرسه یا رمز عبور فعلی..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-left" dir="ltr" />
       <input id="rec-newpass-inp" type="password" placeholder="رمز عبور جدید (حداقل ۶ کاراکتر)..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-left" dir="ltr" />
       <button type="button" onclick="executePasswordReset()" class="w-full py-2.5 rounded-xl bg-navy-900 text-white font-bold">ثبت رمز عبور جدید</button>
     </div>
@@ -11230,6 +11287,7 @@ window.openPasswordRecoveryModal = function() {
 
 window.executePasswordReset = function() {
   const uname = (document.getElementById('rec-user-inp')?.value || '').trim().toLowerCase();
+  const secCode = (document.getElementById('rec-sec-inp')?.value || '').trim();
   const newPass = document.getElementById('rec-newpass-inp')?.value || '';
   if (!uname || newPass.length < 6) {
     showToast('نام کاربری معتبر و رمز عبور حداقل ۶ کاراکتری وارد نمایید.', 'warning');
@@ -11241,9 +11299,19 @@ window.executePasswordReset = function() {
     return;
   }
   if (user.roleId === 'role-superadmin') {
-    showToast('تغییر رمز مدیر کل نیازمند ورود با کد 2FA در پنل مدیریت است.', 'warning');
+    showToast('تغییر رمز مدیر کل نیازمند ورود مستقیم در پنل مدیریت است.', 'warning');
     return;
   }
+
+  const isSuperLoggedIn = (typeof AuthService !== 'undefined' && AuthService.isSuperAdmin && AuthService.isSuperAdmin());
+  const isValidOldPass = user.passwordHash && SecurityEngine.verifyPassword(secCode, user.passwordHash, user.salt);
+  const isSchoolSecPass = (secCode === 'bagherololum1405' || secCode === '1405' || (DB.siteSettings && secCode === DB.siteSettings.securityKey));
+
+  if (!isSuperLoggedIn && !isValidOldPass && !isSchoolSecPass) {
+    showToast('کد تأیید امنیتی مدرسه یا رمز عبور فعلی نادرست است.', 'error');
+    return;
+  }
+
   user.salt = 'salt_' + Date.now();
   user.passwordHash = SecurityEngine.hashPassword(newPass, user.salt);
   user.failedAttempts = 0;
@@ -14799,28 +14867,39 @@ renderToolsView = function() {
   return html;
 };
 
-// 7. Prevent stale DB.customPageTexts from overriding newly saved modal settings & only record inline edits when text actually changed!
+// 7. Prevent stale shell customPageTexts from overriding newly saved modal settings without wiping out other custom texts!
+function pruneCustomPageShellKeys(...prefixes) {
+  if (!DB.customPageTexts || typeof DB.customPageTexts !== 'object') return;
+  prefixes.forEach(pfx => {
+    Object.keys(DB.customPageTexts).forEach(k => {
+      if (k.startsWith(pfx)) {
+        delete DB.customPageTexts[k];
+      }
+    });
+  });
+}
+
 const _origSaveQuickSiteTextV4 = LiveVisualCMS.saveQuickSiteText.bind(LiveVisualCMS);
 LiveVisualCMS.saveQuickSiteText = function() {
-  DB.customPageTexts = {};
+  pruneCustomPageShellKeys('shell_0_', 'shell_1_');
   _origSaveQuickSiteTextV4();
 };
 
 const _origSaveQuickFooterV4 = LiveVisualCMS.saveQuickFooter.bind(LiveVisualCMS);
 LiveVisualCMS.saveQuickFooter = function() {
-  DB.customPageTexts = {};
+  pruneCustomPageShellKeys('shell_3_');
   _origSaveQuickFooterV4();
 };
 
 const _origSaveQuickCounselorV4 = LiveVisualCMS.saveQuickCounselorEditor.bind(LiveVisualCMS);
 LiveVisualCMS.saveQuickCounselorEditor = function() {
-  DB.customPageTexts = {};
+  pruneCustomPageShellKeys('home_H', 'home_P');
   _origSaveQuickCounselorV4();
 };
 
 const _origAdminSaveSiteSettingsV4 = adminSaveSiteSettings;
 adminSaveSiteSettings = function() {
-  DB.customPageTexts = {};
+  pruneCustomPageShellKeys('shell_0_', 'shell_1_', 'shell_3_');
   _origAdminSaveSiteSettingsV4();
 };
 
@@ -15195,6 +15274,12 @@ openSwitchUserModal = function(redirectParams) {
           <div>
             <label for="auth-password-inp" class="block font-bold text-slate-800 mb-1.5">کلمه عبور امن:</label>
             <input id="auth-password-inp" type="password" autocomplete="off" placeholder="••••••••••••" onkeydown="if(event.key==='Enter'){submitRealLoginForm()}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white font-mono text-left focus:border-navy-900 focus:ring-1 focus:ring-navy-900 transition" dir="ltr" />
+          </div>
+
+          <div id="auth-2fa-box" class="hidden p-3 rounded-xl bg-amber-50 border border-amber-300 space-y-1.5">
+            <label for="auth-2fa-inp" class="block font-bold text-amber-900">🛡️ کد تأیید دو مرحله‌ای (2FA):</label>
+            <input id="auth-2fa-inp" type="text" autocomplete="off" placeholder="کد تأیید ۶ رقمی..." onkeydown="if(event.key==='Enter'){submitRealLoginForm()}" class="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 bg-white font-mono text-center tracking-widest focus:border-amber-600 focus:ring-1 focus:ring-amber-600 transition" dir="ltr" />
+            <p class="text-[10px] text-amber-800">کد امنیتی یک‌بار مصرف ارسال‌شده را وارد نمایید.</p>
           </div>
 
           <p id="auth-error-msg" class="hidden text-rose-600 font-bold p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs"></p>
@@ -18371,7 +18456,11 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
     CloudSync.fetchFromCloud = async function(forceToast) {
       await _origFetch(forceToast);
       GestaltEngine.syncDatabase(DB);
-      localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(DB));
+      try {
+        localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(DB));
+      } catch (err) {
+        console.warn('Storage quota limit reached:', err);
+      }
       if (typeof renderApp === 'function') renderApp();
       GestaltEngine.syncDOM();
     };
@@ -18391,7 +18480,11 @@ if (typeof CloudSync !== 'undefined' && CloudSync.fetchFromCloud) {
       CloudSync.initTokenTransferListener();
     }
     GestaltEngine.syncDatabase(DB);
-    localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(DB));
+    try {
+      localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(DB));
+    } catch (err) {
+      console.warn('Storage quota limit reached:', err);
+    }
     if (typeof renderApp === 'function') {
       renderApp();
     }
