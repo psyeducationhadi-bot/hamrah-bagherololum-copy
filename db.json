@@ -3215,8 +3215,8 @@
   "roles": [
     {
       "id": "role-superadmin",
-      "name": "مشاور مدرسه و مدیر کل سامانه",
-      "description": "تنها فرد مجاز جهت درج مطلب، ویرایش محتوا، مدیریت دسته‌بندی‌ها و پاسخگویی به سؤالات (منحصراً استاد محمد هادی برخوری مهنی)",
+      "name": "مشاور مدرسه و مدیریت محتوا",
+      "description": "مدیریت و درج مطلب، ویرایش محتوا، دسته‌بندی‌ها و پاسخگویی به سؤالات مشاوره‌ای دانش‌آموزان",
       "permissions": [
         "all",
         "publish_final",
@@ -3246,10 +3246,10 @@
       "username": "hadi_admin",
       "roleId": "role-superadmin",
       "roleLabel": "مشاور مدرسه",
-      "grade": "تنها مشاور و مدیر مجاز سامانه",
+      "grade": "کادر مشاوره و هدایت تحصیلی",
       "active": true,
       "salt": "sec_salt_9f82b71e",
-      "passwordHash": "pbkdf2_v3$sec_salt_9f82b71e$27fb9660e010ff8f",
+      "passwordHash": "pbkdf2_v3$sec_salt_9f82b71e$4511dc35ca01ecbe",
       "twoFactorEnabled": false,
       "failedAttempts": 0,
       "lockedUntil": 0,
@@ -6261,7 +6261,7 @@
     "requireSuperAdminApproval": true,
     "allowGuestPublicAccess": true,
     "retentionPolicyDays": 365,
-    "canonicalDomain": "https://hamrah-bagherololum-copy.psyeducation-hadi.workers.dev",
+    "canonicalDomain": "https://psyeducationhadi-bot.github.io/hamrah-bagherololum-copy",
     "versionBadge": "نسخه جامع",
     "topBarBadge": "اطلاعیه مهم",
     "topBarAnnouncement": "برای شناخت بهتر خودت، یادگیری مؤثرتر و ساختن آینده‌ای موفق‌تر",
@@ -6285,7 +6285,9 @@
       "showCounselorBox": true,
       "showHomeFaq": true,
       "showCalendar": true
-    }
+    },
+    "counselorRubikaUrl": "https://rubika.ir/hadi_barkhori",
+    "googleSheetsWebhookUrl": ""
   },
   "backupRecords": [],
   "sessions": [],
@@ -6296,7 +6298,7 @@
       "id": "cns-1",
       "icon": "🎓",
       "name": "محمد هادی برخوری مهنی",
-      "role": "مشاور دبیرستان نمونه دولتی پسرانه باقرالعلوم و مدیر کل سامانه",
+      "role": "مشاور دبیرستان نمونه دولتی پسرانه باقرالعلوم",
       "bio": "مسئول واحد مشاوره، هدایت تحصیلی، برنامه‌ریزی کنکور و امتحانات نهایی دبیرستان نمونه دولتی پسرانه باقرالعلوم (پایه‌های دهم، یازدهم و دوازدهم). تمامی مطالب، آزمون‌ها و پاسخ‌های مشاوره‌ای این سامانه منحصراً توسط ایشان تدوین و منتشر می‌گردد.",
       "schedule": "شنبه 7 الی 14"
     }
@@ -6309,5 +6311,84 @@
     "contactExtra": "جهت هماهنگی جلسات مشاوره فردی یا اولیا، در ساعات حضور مراجعه فرمایید.",
     "privacyText": "تمامی اطلاعات شخصی، یادداشت‌ها و نتایج آزمون‌های دانش‌آموزان به صورت رمزنگاری‌شده و محرمانه نگهداری می‌شود.",
     "termsText": "استفاده از تمامی محتواهای آموزشی، ویدئوها، پادکست‌ها و جزوات این سامانه برای دانش‌آموزان دبیرستان نمونه دولتی باقرالعلوم آزاد و رایگان است."
+  },
+  "quickCompass": {
+    "enabled": true,
+    "title": "🧭 قطب‌نمای سریع: همین الان تو چه وضعیتی هستی؟",
+    "subtitle": "روی دغدغه یا وضعیت فعلی‌ات کلیک کن تا کوتاه‌ترین مسیر حل مسئله را ببینی:",
+    "items": [
+      {
+        "id": "cmp-1",
+        "icon": "🔥",
+        "title": "حوصله شروع درس رو ندارم و مدام عقب می‌ندازم!",
+        "badge": "قانون ۲ دقیقه + پادکست رهایی از اهمال‌کاری ←",
+        "targetType": "category",
+        "targetValue": "cat-15",
+        "colorVar": "var(--co)"
+      },
+      {
+        "id": "cmp-2",
+        "icon": "📅",
+        "title": "برنامه‌م به هم ریخته و می‌خوام اصولی برنامه‌ریزی کنم",
+        "badge": "فرمول تستی/تشریحی + جدول خام برنامه ←",
+        "targetType": "category",
+        "targetValue": "cat-4",
+        "colorVar": "var(--gold)"
+      },
+      {
+        "id": "cmp-3",
+        "icon": "🏅",
+        "title": "می‌خوام تو امتحانات نهایی نمره ۲۰ بگیرم",
+        "badge": "کلیدواژه‌نویسی نهایی + بارم‌بندی خرداد ←",
+        "targetType": "category",
+        "targetValue": "cat-7",
+        "colorVar": "var(--aq)"
+      },
+      {
+        "id": "cmp-4",
+        "icon": "📝",
+        "title": "تو جلسه آزمون وقت کم میارم یا بی‌دقتی می‌کنم",
+        "badge": "ویدئوی ضربدر و منها + استراتژی بازگشت ←",
+        "targetType": "category",
+        "targetValue": "cat-6",
+        "colorVar": "var(--sk)"
+      },
+      {
+        "id": "cmp-5",
+        "icon": "📱",
+        "title": "گوشی و فضای مجازی تمرکزم رو نابود کرده!",
+        "badge": "پروتکل سم‌زدایی دوپامین + تمرکز عمیق ←",
+        "targetType": "category",
+        "targetValue": "cat-13",
+        "colorVar": "var(--li)"
+      },
+      {
+        "id": "cmp-6",
+        "icon": "🌿",
+        "title": "استرس دارم و نیاز به آرامش فوری ذهن دارم",
+        "badge": "تمرین ۶۰ ثانیه‌ای تنفس مربعی (۴-۴-۴-۴) ←",
+        "targetType": "modal",
+        "targetValue": "zenBreathing",
+        "colorVar": "var(--aq)"
+      },
+      {
+        "id": "cmp-7",
+        "icon": "🛟",
+        "title": "از بودجه‌بندی عقب افتادم و تراز آزمونم افت کرده",
+        "badge": "پروتکل جبران اورژانسی + اولویت‌بندی بودجه ←",
+        "targetType": "category",
+        "targetValue": "cat-18",
+        "colorVar": "var(--co)"
+      },
+      {
+        "id": "cmp-8",
+        "icon": "🧭",
+        "title": "نمی‌دونم سبک یادگیری و نقاط قوت من چیه",
+        "badge": "۹ آزمون استعدادیابی و خودشناسی ←",
+        "targetType": "view",
+        "targetValue": "quizzes",
+        "colorVar": "var(--pk)"
+      }
+    ]
   }
 }
