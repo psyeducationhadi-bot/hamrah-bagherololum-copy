@@ -1,0 +1,32 @@
+{
+  "name": "hamrah-bagherololum-copy",
+  "version": "3.0.0",
+  "description": "Hamrah Bagherololum - Premium Persian Educational Platform (PWA & Android TWA)",
+  "private": true,
+  "scripts": {
+    "test": "python tests/run_e2e_tests.py",
+    "test:verbose": "python tests/run_e2e_tests.py -v",
+    "test:m1": "npm run typecheck && python tests/run_e2e_tests.py",
+    "test:json": "python tests/run_e2e_tests.py --json",
+    "dev": "python scripts/dev_server.py",
+    "dev:simple": "python -m http.server 8000",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {},
+  "keywords": [
+    "education",
+    "persian",
+    "iran",
+    "konkur",
+    "shamsi-calendar",
+    "pomodoro",
+    "study-planner",
+    "pwa",
+    "twa"
+  ],
+  "author": "PsyEducation Hadi Bot",
+  "license": "UNLICENSED"
+}
